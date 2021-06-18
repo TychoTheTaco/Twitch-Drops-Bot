@@ -3,3 +3,6 @@ node_modules
 
 # Crededntials
 credentials
+
+# Browser cookies
+cookies.json
