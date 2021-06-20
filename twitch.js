@@ -153,9 +153,9 @@ async function claimDropReward(credentials, dropId) {
             }
         }
     );
-    // TODO: verify success?
-    console.log(response);
-    //console.log(response['data']['data'])
+    if ('errors' in response.data){
+        throw new Error(JSON.stringify(response.data['errors']));
+    }
 }
 
 module.exports = {
