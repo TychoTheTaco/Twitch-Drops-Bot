@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const {ArgumentParser} = require('argparse');
 
 const twitch = require('./twitch');
 
@@ -50,16 +51,22 @@ async function login(page, username, password) {
     await page.goto('https://www.twitch.tv/login');
 
     // Enter username
-    await page.focus('#login-username');
-    await page.keyboard.type(username);
+    if (username !== undefined) {
+        await page.focus('#login-username');
+        await page.keyboard.type(username);
+    }
 
     // Enter password
-    await page.focus('#password-input');
-    await page.keyboard.type(password);
+    if (password !== undefined) {
+        await page.focus('#password-input');
+        await page.keyboard.type(password);
+    }
 
     // Login
-    await page.click('[data-a-target="passport-login-button"]');
-    await page.waitForNavigation();
+    if (username !== undefined && password !== undefined) {
+        await page.click('[data-a-target="passport-login-button"]');
+        await page.waitForNavigation();
+    }
 }
 
 async function claimDrop(credentials, page, drop) {
@@ -239,12 +246,33 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
 (async () => {
 
+    // Parse arguments
+    const parser = new ArgumentParser();
+    parser.add_argument('--config', {default: 'config.json'});
+    parser.add_argument('--username', '-u');
+    parser.add_argument('--password', '-p');
+    const args = parser.parse_args();
+
     // Load config file
-    const config = require('./config.json');
+    let config = {};
+    try {
+        config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+    } catch (error) {
+        console.log('Failed to read config file!');
+        console.error(error);
+        process.exit(1);
+    }
+
+    // Override config with command line arguments
+    if (args['username'] !== undefined){
+        config['username'] = args['username'];
+    }
+    if (args['password'] !== undefined){
+        config['password'] = args['password'];
+    }
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
-        headless: true,
         executablePath: config['browser'],
         args: [
             '--mute-audio',
@@ -255,7 +283,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
     });
     const page = await browser.newPage();
 
-    // Automatically stop this program if the browser is closed or page is closed
+    // Automatically stop this program if the browser or page is closed
     const onBrowserOrPageClosed = () => {
         console.log('Browser was disconnected or tab was closed! Exiting...');
         process.exit(1);
@@ -263,31 +291,78 @@ async function processCampaign(page, campaign, twitchCredentials) {
     browser.on('disconnected', onBrowserOrPageClosed);
     page.on('close', onBrowserOrPageClosed);
 
-    // Load Twitch credentials
-    const twitchCredentials = require('./credentials/twitch-bf.json'); // TODO: MUST DELETE COOKIES IF CHANGING ACCOUNT
-
-    // Seems to be the default hard-coded client ID
-    // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-    twitchCredentials['client_id'] = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
-
     // Check if we have saved cookies
     const cookiesPath = './cookies.json';
+    let requireLogin = false;
     if (fs.existsSync(cookiesPath)) {
 
-        // Restore cookies from previous session
-        console.log('Restoring cookies from last session.')
+        // Load cookies
         const cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
-        await page.setCookie(...cookies);
+
+        // Check if these cookies match the login credentials provided in the config (if any)
+        if (config['username'] !== undefined){
+            for (const cookie of cookies){
+                if (cookie['name'] === 'name' || cookie['name'] === 'login'){
+                    if (cookie['value'] === config['username']){
+
+                        // Restore cookies from previous session
+                        console.log('Restoring cookies from last session.');
+                        await page.setCookie(...cookies);
+
+                    } else {
+                        // Saved cookies are for a different account, let's delete them
+                        console.log('Saved cookies are for a different account.')
+                        fs.unlinkSync(cookiesPath);
+
+                        // We need to login again
+                        requireLogin = true;
+                    }
+                    break;
+                }
+            }
+        }
 
     } else {
+        requireLogin = true;
+    }
+
+    if (requireLogin) {
+        // Start browser and open a new tab.
+        const browser = await puppeteer.launch({headless: false, executablePath: config['browser']});
+        const loginPage = await browser.newPage();
+
+        // Automatically stop this program if the browser or page is closed
+        const onBrowserOrPageClosed = () => {
+            console.log('Browser was disconnected or tab was closed! Exiting...');
+            process.exit(1);
+        }
+        browser.on('disconnected', onBrowserOrPageClosed);
+        loginPage.on('close', onBrowserOrPageClosed);
 
         // Login to Twitch
         console.log('Logging in to Twitch...');
-        await login(page, twitchCredentials['username'], twitchCredentials['password']);
+        await login(loginPage, config['username'], config['password']);
         console.log('Login successful.');
 
         // Save cookies for next time
-        fs.writeFileSync(cookiesPath, JSON.stringify(await page.cookies()));
+        const cookies = await loginPage.cookies();
+        fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
+        await page.setCookie(...cookies);
+
+        browser.off('disconnected', onBrowserOrPageClosed);
+        loginPage.off('close', onBrowserOrPageClosed);
+
+        // Close browser
+        await browser.close();
+    }
+
+    // Twitch credentials for API interactions
+    const twitchCredentials = {
+
+        // Seems to be the default hard-coded client ID
+        // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
+        'client_id': 'kimne78kx3ncx6brgo4mv6wki5h1ko'
+
     }
 
     // Get some data from the cookies
@@ -307,6 +382,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
         }
     }
 
+    const completedCampaigns = new Set();
     while (true) {
 
         // Update drop campaigns
@@ -317,7 +393,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
         // Add to pending
         const pending = [];
         campaigns.forEach(campaign => {
-            if (config['games'].includes(campaign['game']['id'])) {
+            if (config['games'].includes(campaign['game']['id']) && !completedCampaigns.has(campaign['id'])) {
                 pending.push(campaign);
             }
         });
@@ -349,6 +425,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
             try {
                 await processCampaign(page, campaign, twitchCredentials);
+                completedCampaigns.add(campaign['id']);
             } catch (error) {
                 if (error instanceof NoStreamsError) {
                     console.log('No streams!');
