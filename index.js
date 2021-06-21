@@ -236,7 +236,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
             }
 
             // Claim the drop
-            await claimDrop(twitchCredentials, page, inventoryDrop);
+            await claimDrop(twitchCredentials, page, await getInventoryDrop(twitchCredentials, campaign['id'], drop['id']));
 
             break;
         }
