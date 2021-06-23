@@ -65,8 +65,11 @@ async function login(page, username, password) {
     // Login
     if (username !== undefined && password !== undefined) {
         await page.click('[data-a-target="passport-login-button"]');
-        await page.waitForNavigation();
     }
+
+    // Wait for redirect to main Twitch page. The timeout is unlimited here because we may be prompted for
+    // additional authentication.
+    await page.waitForNavigation({timeout: 0});
 }
 
 async function claimDrop(credentials, page, drop) {
@@ -244,6 +247,25 @@ async function processCampaign(page, campaign, twitchCredentials) {
     }
 }
 
+function areCookiesValid(cookies, username) {
+    let isOauthTokenFound = false;
+    for (const cookie of cookies) {
+
+        // Check if these cookies match the specified username
+        if (cookie['name'] === 'name' || cookie['name'] === 'login') {
+            if (cookie['value'] !== username) {
+                return false;
+            }
+        }
+
+        // Check if we have an OAuth token
+        if (cookie['name'] === 'auth-token'){
+            isOauthTokenFound = true;
+        }
+    }
+    return isOauthTokenFound;
+}
+
 (async () => {
 
     // Parse arguments
@@ -264,10 +286,10 @@ async function processCampaign(page, campaign, twitchCredentials) {
     }
 
     // Override config with command line arguments
-    if (args['username'] !== undefined){
+    if (args['username'] !== undefined) {
         config['username'] = args['username'];
     }
-    if (args['password'] !== undefined){
+    if (args['password'] !== undefined) {
         config['password'] = args['password'];
     }
 
@@ -299,27 +321,22 @@ async function processCampaign(page, campaign, twitchCredentials) {
         // Load cookies
         const cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
 
-        // Check if these cookies match the login credentials provided in the config (if any)
-        if (config['username'] !== undefined){
-            for (const cookie of cookies){
-                if (cookie['name'] === 'name' || cookie['name'] === 'login'){
-                    if (cookie['value'] === config['username']){
+        // Make sure these cookies are valid
+        if (areCookiesValid(cookies, config['username'])){
 
-                        // Restore cookies from previous session
-                        console.log('Restoring cookies from last session.');
-                        await page.setCookie(...cookies);
+            // Restore cookies from previous session
+            console.log('Restoring cookies from last session.');
+            await page.setCookie(...cookies);
 
-                    } else {
-                        // Saved cookies are for a different account, let's delete them
-                        console.log('Saved cookies are for a different account.')
-                        fs.unlinkSync(cookiesPath);
+        } else {
 
-                        // We need to login again
-                        requireLogin = true;
-                    }
-                    break;
-                }
-            }
+            // Saved cookies are invalid, let's delete them
+            console.log('Saved cookies are invalid.')
+            fs.unlinkSync(cookiesPath);
+
+            // We need to login again
+            requireLogin = true;
+
         }
 
     } else {

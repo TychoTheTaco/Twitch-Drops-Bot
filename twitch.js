@@ -91,7 +91,7 @@ async function getDropEnabledStreams(credentials, game) {
                     "includeRestricted": [
                         "SUB_ONLY_LIVE"
                     ],
-                    "sort": "RECENT",
+                    "sort": "VIEWER_COUNT",
                     "recommendationsContext": {
                         "platform": "web"
                     },
@@ -100,7 +100,7 @@ async function getDropEnabledStreams(credentials, game) {
                         "c2542d6d-cd10-4532-919b-3d19f30a768b"  // "Drops enabled"
                     ]
                 },
-                "sortTypeIsRecency": true,
+                "sortTypeIsRecency": false,
                 "limit": 30
             },
             "extensions": {
