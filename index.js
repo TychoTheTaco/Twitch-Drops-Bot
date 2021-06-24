@@ -2,6 +2,9 @@
 
 const fs = require('fs');
 const {ArgumentParser} = require('argparse');
+const path = require('path');
+
+const cliProgress = require('cli-progress');
 
 const twitch = require('./twitch');
 
@@ -93,6 +96,18 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
     let wasInventoryDropNull = false;
 
+    const requiredMinutesWatched = drop['requiredMinutesWatched'];
+
+    // Create progress bar
+    const progressBar = new cliProgress.SingleBar(
+        {
+            stopOnComplete: true,
+            format: 'Watching stream |{bar}| {percentage}% | {value} / {total} minutes | Remaining: {remaining} minutes'
+        },
+        cliProgress.Presets.shades_classic
+    );
+    progressBar.start(requiredMinutesWatched, 0);
+
     // Check for drop progress
     let lastMinutesWatched = -1;
     while (true) {
@@ -105,6 +120,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
             // If the drop was null twice in a row, then something is wrong
             if (wasInventoryDropNull) {
+                progressBar.stop();
                 throw new Error('Drop was still null after sleep!');
             }
 
@@ -112,17 +128,17 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         } else {
 
             const currentMinutesWatched = inventoryDrop['self']['currentMinutesWatched'];
-            const requiredMinutesWatched = inventoryDrop['requiredMinutesWatched'];
-            console.log('Progress:', currentMinutesWatched, '/', requiredMinutesWatched, 'minutes.');
+            progressBar.update(currentMinutesWatched, {'remaining': requiredMinutesWatched - currentMinutesWatched});
 
             // Check if we have completed the drop
             if (currentMinutesWatched >= requiredMinutesWatched) {
-                console.log('Drop completed!');
+                progressBar.stop();
                 return;
             }
 
             // Make sure drop progress has increased. If it hasn't, then something is wrong.
             if (currentMinutesWatched <= lastMinutesWatched) {
+                progressBar.stop();
                 throw new NoProgressError();
             }
 
@@ -259,7 +275,7 @@ function areCookiesValid(cookies, username) {
         }
 
         // Check if we have an OAuth token
-        if (cookie['name'] === 'auth-token'){
+        if (cookie['name'] === 'auth-token') {
             isOauthTokenFound = true;
         }
     }
@@ -270,19 +286,49 @@ function areCookiesValid(cookies, username) {
 
     // Parse arguments
     const parser = new ArgumentParser();
-    parser.add_argument('--config', {default: 'config.json'});
+    parser.add_argument('--config', '-c', {default: 'config.json'});
     parser.add_argument('--username', '-u');
     parser.add_argument('--password', '-p');
     const args = parser.parse_args();
 
     // Load config file
+    console.log('Loading config file:', args['config']);
     let config = {};
-    try {
-        config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
-    } catch (error) {
-        console.log('Failed to read config file!');
-        console.error(error);
-        process.exit(1);
+    if (fs.existsSync(args['config'])){
+        try {
+            config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+        } catch (error) {
+            console.error('Failed to read config file!');
+            console.error(error);
+            process.exit(1);
+        }
+    } else {
+
+        console.warn('Config file does not exist! Creating a default...');
+
+        // Path to the local chromium installation
+        let browser_path = path.join(path.dirname(require.resolve("puppeteer/package.json")), '.local-chromium');
+        browser_path = path.join(browser_path, fs.readdirSync(browser_path)[0]);
+        browser_path = path.join(browser_path, fs.readdirSync(browser_path)[0]);
+        if (browser_path.includes('chrome-linux')){
+            browser_path = path.join(browser_path, 'chrome');
+        } else if (browser_path.includes('chrome-win')){
+            browser_path = path.join(browser_path, 'chrome.exe');
+        }
+
+        // Create default config
+        const default_config = {
+            'browser': browser_path,
+            'games': []
+        }
+
+        // Save default config
+        fs.writeFileSync(args['config'], JSON.stringify(default_config));
+        console.log('Config saved to', args['config']);
+    }
+
+    if (config['games'] === undefined){
+        config['games'] = [];
     }
 
     // Override config with command line arguments
@@ -322,7 +368,7 @@ function areCookiesValid(cookies, username) {
         const cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
 
         // Make sure these cookies are valid
-        if (areCookiesValid(cookies, config['username'])){
+        if (areCookiesValid(cookies, config['username'])) {
 
             // Restore cookies from previous session
             console.log('Restoring cookies from last session.');
@@ -410,7 +456,7 @@ function areCookiesValid(cookies, username) {
         // Add to pending
         const pending = [];
         campaigns.forEach(campaign => {
-            if (config['games'].includes(campaign['game']['id']) && !completedCampaigns.has(campaign['id'])) {
+            if ((config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) && !completedCampaigns.has(campaign['id'])) {
                 pending.push(campaign);
             }
         });
