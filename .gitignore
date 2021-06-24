@@ -6,3 +6,6 @@ credentials
 
 # Browser cookies
 cookies.json
+
+# Config file
+config.json
