@@ -106,7 +106,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         },
         cliProgress.Presets.shades_classic
     );
-    progressBar.start(requiredMinutesWatched, 0);
+    progressBar.start(requiredMinutesWatched, 0, {'remaining': requiredMinutesWatched});
 
     // Check for drop progress
     let lastMinutesWatched = -1;
@@ -200,7 +200,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
     const drops = details['timeBasedDrops'];
 
     for (const drop of drops) {
-        console.log('Drop:', drop['name']);
+        console.log('Drop:', drop['benefitEdges'][0]['benefit']['name']);
 
         // Check if we already claimed this drop
         if (await isDropClaimed(twitchCredentials, drop)) {
@@ -337,6 +337,11 @@ function areCookiesValid(cookies, username) {
     }
     if (args['password'] !== undefined) {
         config['password'] = args['password'];
+    }
+
+    // Make username lowercase
+    if (config.hasOwnProperty('username')){
+        config['username'] = config['username'].toLowerCase();
     }
 
     // Start browser and open a new tab.
