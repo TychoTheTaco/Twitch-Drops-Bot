@@ -3,6 +3,7 @@
 const fs = require('fs');
 const {ArgumentParser} = require('argparse');
 const path = require('path');
+const prompt = require('prompt');
 
 const cliProgress = require('cli-progress');
 
@@ -50,29 +51,123 @@ async function getActiveDropCampaigns(credentials) {
     });
 }
 
-async function login(page, username, password) {
+async function login(config) {
+
+    // Start browser and open a new tab.
+    const browser = await puppeteer.launch({headless: config['headless_login'], executablePath: config['browser']});
+    const page = await browser.newPage();
+
+    // Automatically stop this program if the browser or page is closed
+    const onBrowserOrPageClosed = () => {
+        console.log('Browser was disconnected or tab was closed! Exiting...');
+        process.exit(1);
+    }
+    browser.on('disconnected', onBrowserOrPageClosed);
+    page.on('close', onBrowserOrPageClosed);
+
+    // Go to login page
     await page.goto('https://www.twitch.tv/login');
 
     // Enter username
+    const username = config['username'];
     if (username !== undefined) {
         await page.focus('#login-username');
         await page.keyboard.type(username);
     }
 
     // Enter password
+    const password = config['password'];
     if (password !== undefined) {
         await page.focus('#password-input');
         await page.keyboard.type(password);
     }
 
-    // Login
+    // Click login button
     if (username !== undefined && password !== undefined) {
         await page.click('[data-a-target="passport-login-button"]');
+    }
+
+    if (config['headless_login']) {
+        while (true) {
+
+            // TODO: This loop and try/catch statements could be replaced with Promise.any(), but it seems that Node.js 14 does not support it.
+
+            // Check for email verification code
+            try {
+                console.log('Checking for email verification...');
+                await page.waitForXPath('//*[contains(text(), "please enter the 6-digit code we sent")]');
+                console.log('Email verification found.');
+
+                // Prompt user for code
+                prompt.start();
+                const result = await asyncPrompt(['code']);
+                const code = result['code'];
+                prompt.stop();
+
+                // Enter code
+                const first_input = await page.waitForXPath('(//input)[1]');
+                await first_input.click();
+                await page.keyboard.type(code);
+                break;
+            } catch (error) {
+                console.log(error);
+            }
+
+            // Check for 2FA code
+            try {
+                console.log('Checking for 2FA verification...');
+                await page.waitForXPath('//*[contains(text(), "Enter the code found in your authenticator app")]');
+                console.log('2FA verification found.');
+
+                // Prompt user for code
+                prompt.start();
+                const result = await asyncPrompt(['code']);
+                const code = result['code'];
+                prompt.stop();
+
+                // Enter code
+                const first_input = await page.waitForXPath('(//input[@type="text"])');
+                await first_input.click();
+                await page.keyboard.type(code);
+
+                // Click submit
+                const button = await page.waitForXPath('//button[@target="submit_button"]');
+                await button.click();
+
+                break;
+            } catch (error) {
+                console.log(error);
+            }
+
+            console.log('No extra verification found!');
+            break;
+        }
     }
 
     // Wait for redirect to main Twitch page. The timeout is unlimited here because we may be prompted for
     // additional authentication.
     await page.waitForNavigation({timeout: 0});
+
+    const cookies = await page.cookies();
+
+    browser.off('disconnected', onBrowserOrPageClosed);
+    page.off('close', onBrowserOrPageClosed);
+
+    // Close browser
+    await browser.close();
+
+    return cookies;
+}
+
+async function asyncPrompt(schema) {
+    return new Promise((resolve, reject) => {
+        prompt.get(schema, (error, result) => {
+            if (error) {
+                reject(error);
+            }
+            resolve(result);
+        });
+    });
 }
 
 async function claimDrop(credentials, page, drop) {
@@ -282,21 +377,22 @@ function areCookiesValid(cookies, username) {
     return isOauthTokenFound;
 }
 
-(async () => {
+function overrideConfigurationWithArguments(config, args) {
+    const override = (key) => {
+        if (args[key] !== undefined) {
+            config[key] = args[key];
+        }
+    }
+    override('username');
+    override('password');
+    override('headless_login');
+}
 
-    // Parse arguments
-    const parser = new ArgumentParser();
-    parser.add_argument('--config', '-c', {default: 'config.json'});
-    parser.add_argument('--username', '-u');
-    parser.add_argument('--password', '-p');
-    const args = parser.parse_args();
-
-    // Load config file
-    console.log('Loading config file:', args['config']);
-    let config = {};
-    if (fs.existsSync(args['config'])){
+function loadConfigFile(file_path){
+    console.log('Loading config file:', file_path);
+    if (fs.existsSync(file_path)) {
         try {
-            config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+            return JSON.parse(fs.readFileSync(file_path, {encoding: 'utf-8'}));
         } catch (error) {
             console.error('Failed to read config file!');
             console.error(error);
@@ -310,37 +406,48 @@ function areCookiesValid(cookies, username) {
         let browser_path = path.join(path.dirname(require.resolve("puppeteer/package.json")), '.local-chromium');
         browser_path = path.join(browser_path, fs.readdirSync(browser_path)[0]);
         browser_path = path.join(browser_path, fs.readdirSync(browser_path)[0]);
-        if (browser_path.includes('chrome-linux')){
+        if (browser_path.includes('chrome-linux')) {
             browser_path = path.join(browser_path, 'chrome');
-        } else if (browser_path.includes('chrome-win')){
+        } else if (browser_path.includes('chrome-win')) {
             browser_path = path.join(browser_path, 'chrome.exe');
         }
 
         // Create default config
-        const default_config = {
+        const config = {
             'browser': browser_path,
             'games': []
         }
 
         // Save default config
-        fs.writeFileSync(args['config'], JSON.stringify(default_config));
-        console.log('Config saved to', args['config']);
-    }
+        fs.writeFileSync(file_path, JSON.stringify(config));
+        console.log('Config saved to', file_path);
 
-    if (config['games'] === undefined){
+        return config;
+    }
+}
+
+(async () => {
+
+    // Parse arguments
+    const parser = new ArgumentParser();
+    parser.add_argument('--config', '-c', {default: 'config.json'});
+    parser.add_argument('--username', '-u');
+    parser.add_argument('--password', '-p');
+    parser.add_argument('--headless-login', {default: false, action: 'store_true'});
+    const args = parser.parse_args();
+
+    // Load config file
+    const config = loadConfigFile(args['config']);
+
+    // Override config with command line arguments
+    overrideConfigurationWithArguments(config, args);
+
+    if (config['games'] === undefined) {
         config['games'] = [];
     }
 
-    // Override config with command line arguments
-    if (args['username'] !== undefined) {
-        config['username'] = args['username'];
-    }
-    if (args['password'] !== undefined) {
-        config['password'] = args['password'];
-    }
-
     // Make username lowercase
-    if (config.hasOwnProperty('username')){
+    if (config.hasOwnProperty('username')) {
         config['username'] = config['username'].toLowerCase();
     }
 
@@ -395,33 +502,10 @@ function areCookiesValid(cookies, username) {
     }
 
     if (requireLogin) {
-        // Start browser and open a new tab.
-        const browser = await puppeteer.launch({headless: false, executablePath: config['browser']});
-        const loginPage = await browser.newPage();
-
-        // Automatically stop this program if the browser or page is closed
-        const onBrowserOrPageClosed = () => {
-            console.log('Browser was disconnected or tab was closed! Exiting...');
-            process.exit(1);
-        }
-        browser.on('disconnected', onBrowserOrPageClosed);
-        loginPage.on('close', onBrowserOrPageClosed);
-
-        // Login to Twitch
-        console.log('Logging in to Twitch...');
-        await login(loginPage, config['username'], config['password']);
-        console.log('Login successful.');
-
-        // Save cookies for next time
-        const cookies = await loginPage.cookies();
+        console.log('Logging in...');
+        const cookies = await login(config);
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
         await page.setCookie(...cookies);
-
-        browser.off('disconnected', onBrowserOrPageClosed);
-        loginPage.off('close', onBrowserOrPageClosed);
-
-        // Close browser
-        await browser.close();
     }
 
     // Twitch credentials for API interactions
@@ -477,18 +561,6 @@ function areCookiesValid(cookies, username) {
             if (!campaign['self']['isAccountConnected']) {
                 console.warn('Twitch account not linked! Skipping this campaign.');
                 continue;
-            }
-
-            // Check campaign status
-            switch (campaign['status']) {
-                case 'UPCOMING':
-                    console.log('This campaign is not active yet.');
-                    pending.push(campaign);
-                    continue;
-
-                case 'EXPIRED':
-                    console.log('This campaign has expired.');
-                    break;
             }
 
             try {
