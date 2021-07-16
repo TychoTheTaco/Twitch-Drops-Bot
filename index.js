@@ -7,6 +7,8 @@ const prompt = require('prompt');
 
 const cliProgress = require('cli-progress');
 
+const FastPriorityQueue = require('fastpriorityqueue');
+
 const twitch = require('./twitch');
 
 // Using puppeteer-extra to add plugins
@@ -27,6 +29,11 @@ class NoStreamsError extends Error {
 
 class NoProgressError extends Error {
 
+}
+
+function onBrowserOrPageClosed() {
+    console.log('Browser was disconnected or tab was closed! Exiting...');
+    process.exit(1);
 }
 
 async function getInventoryDrop(credentials, campaignId, dropId) {
@@ -58,10 +65,6 @@ async function login(config) {
     const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
-    const onBrowserOrPageClosed = () => {
-        console.log('Browser was disconnected or tab was closed! Exiting...');
-        process.exit(1);
-    }
     browser.on('disconnected', onBrowserOrPageClosed);
     page.on('close', onBrowserOrPageClosed);
 
@@ -216,7 +219,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             // If the drop was null twice in a row, then something is wrong
             if (wasInventoryDropNull) {
                 progressBar.stop();
-                throw new Error('Drop was still null after sleep!');
+                throw new Error('Drop was not found in your inventory! Either the campaign has ended or no progress is being made towards the drop.');
             }
 
             wasInventoryDropNull = true;
@@ -314,11 +317,18 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
         const failures = {};
 
+        const failedStreams = new Set();
+
         while (true) {
 
-            // Get list of valid streams
-            const streams = await twitch.getDropEnabledStreams(twitchCredentials, campaign['game']['displayName']);
+            // Get a list of active streams that have drops enabled
+            let streams = await twitch.getDropEnabledStreams(twitchCredentials, campaign['game']['displayName']);
             console.log('Found', streams.length, 'streams');
+
+            // Filter out streams that failed too many times
+            streams = streams.filter(stream => {
+                return failedStreams.has(stream);
+            });
 
             // If there are no steams, try the next campaign
             if (streams.length === 0) {
@@ -344,7 +354,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
                 if (failures[stream] >= 3) {
                     console.log('Stream failed too many times. Giving up...')
-                    break;
+                    failedStreams.add(stream);
                 }
                 continue;
             }
@@ -362,10 +372,12 @@ function areCookiesValid(cookies, username) {
     let isOauthTokenFound = false;
     for (const cookie of cookies) {
 
-        // Check if these cookies match the specified username
-        if (cookie['name'] === 'name' || cookie['name'] === 'login') {
-            if (cookie['value'] !== username) {
-                return false;
+        // Check if these cookies match the specified username (if any)
+        if (username !== undefined) {
+            if (cookie['name'] === 'name' || cookie['name'] === 'login') {
+                if (cookie['value'] !== username) {
+                    return false;
+                }
             }
         }
 
@@ -388,7 +400,7 @@ function overrideConfigurationWithArguments(config, args) {
     override('headless_login');
 }
 
-function loadConfigFile(file_path){
+function loadConfigFile(file_path) {
     console.log('Loading config file:', file_path);
     if (fs.existsSync(file_path)) {
         try {
@@ -434,6 +446,7 @@ function loadConfigFile(file_path){
     parser.add_argument('--username', '-u');
     parser.add_argument('--password', '-p');
     parser.add_argument('--headless-login', {default: false, action: 'store_true'});
+    parser.add_argument('--headful', {default: false, action: 'store_true'})
     const args = parser.parse_args();
 
     // Load config file
@@ -441,6 +454,11 @@ function loadConfigFile(file_path){
 
     // Override config with command line arguments
     overrideConfigurationWithArguments(config, args);
+
+    if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
+        parser.error("You must provide a username and password to use headless login!");
+        process.exit(1);
+    }
 
     if (config['games'] === undefined) {
         config['games'] = [];
@@ -453,6 +471,7 @@ function loadConfigFile(file_path){
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
+        headless: !config['headful'],
         executablePath: config['browser'],
         args: [
             '--mute-audio',
@@ -464,10 +483,6 @@ function loadConfigFile(file_path){
     const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
-    const onBrowserOrPageClosed = () => {
-        console.log('Browser was disconnected or tab was closed! Exiting...');
-        process.exit(1);
-    }
     browser.on('disconnected', onBrowserOrPageClosed);
     page.on('close', onBrowserOrPageClosed);
 
@@ -543,18 +558,30 @@ function loadConfigFile(file_path){
         console.log('Found', campaigns.length, 'active campaigns.');
 
         // Add to pending
-        const pending = [];
+        const pending = new FastPriorityQueue((a, b) => {
+            const indexA = config['games'].indexOf(a['game']['id']);
+            const indexB = config['games'].indexOf(b['game']['id']);
+            if (indexA === -1 && indexB !== -1) {
+                return false;
+            } else if (indexA !== -1 && indexB === -1) {
+                return true;
+            }
+            return indexA < indexB;
+        });
         campaigns.forEach(campaign => {
             if ((config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) && !completedCampaigns.has(campaign['id'])) {
-                pending.push(campaign);
+                pending.add(campaign);
             }
         });
-        console.log('Found', pending.length, 'pending campaigns.');
+        console.log('Found', pending.size, 'pending campaigns.');
+        pending.forEach((value, index) => {
+           console.log(index + ')', value['game']['displayName'], value['name']);
+        });
 
-        while (pending.length > 0) {
+        while (!pending.isEmpty()) {
 
             // Get campaign from queue
-            const campaign = pending.pop();
+            const campaign = pending.poll();
             console.log('Processing campaign:', campaign['game']['displayName'], campaign['name']);
 
             // Make sure Twitch account is linked
