@@ -219,7 +219,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             // If the drop was null twice in a row, then something is wrong
             if (wasInventoryDropNull) {
                 progressBar.stop();
-                throw new Error('Drop was not found in your inventory! Either the campaign has ended or no progress is being made towards the drop.');
+                throw new NoProgressError('Drop was not found in your inventory! Either the campaign has ended or no progress is being made towards the drop.');
             }
 
             wasInventoryDropNull = true;
@@ -323,12 +323,25 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
             // Get a list of active streams that have drops enabled
             let streams = await twitch.getDropEnabledStreams(twitchCredentials, campaign['game']['displayName']);
-            console.log('Found', streams.length, 'streams');
+
+            // Filter out streams that are not in the allowed channels list, if any
+            const channels = details['allow']['channels'];
+            if (channels != null){
+                const channelIds = new Set();
+                for (const channel of channels){
+                    channelIds.add(channel['id']);
+                }
+                streams = streams.filter(stream => {
+                   return channelIds.has(stream['broadcaster_id']);
+                });
+            }
 
             // Filter out streams that failed too many times
             streams = streams.filter(stream => {
-                return failedStreams.has(stream);
+                return !failedStreams.has(stream);
             });
+
+            console.log('Found', streams.length, 'active streams');
 
             // If there are no steams, try the next campaign
             if (streams.length === 0) {
@@ -336,7 +349,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
             }
 
             // Watch first stream
-            const stream = streams[0];
+            const stream = streams[0]['url'];
             console.log('Watching stream:', stream);
             try {
                 await watchStreamUntilDropCompleted(page, stream, twitchCredentials, campaign, drop);

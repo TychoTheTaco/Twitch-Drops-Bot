@@ -122,11 +122,15 @@ async function getDropEnabledStreams(credentials, game) {
     if (streams === null){
         return [];
     }
-    const streamUrls = [];
+
+    const result = [];
     for (const stream of streams['edges']){
-        streamUrls.push('https://www.twitch.tv/' + stream['node']['broadcaster']['login'])
+        result.push({
+            'url': 'https://www.twitch.tv/' + stream['node']['broadcaster']['login'],
+            'broadcaster_id': stream['node']['broadcaster']['id']
+        });
     }
-    return streamUrls;
+    return result;
 }
 
 async function claimDropReward(credentials, dropId) {
