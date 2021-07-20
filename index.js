@@ -13,6 +13,7 @@ const twitch = require('./twitch');
 
 // Using puppeteer-extra to add plugins
 const puppeteer = require('puppeteer-extra');
+const {TimeoutError} = require("puppeteer");
 
 // Add stealth plugin
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -113,7 +114,11 @@ async function login(config) {
                 await page.keyboard.type(code);
                 break;
             } catch (error) {
-                console.log(error);
+                if (error instanceof TimeoutError) {
+                    console.log('Email verification not found.');
+                } else {
+                    console.error(error);
+                }
             }
 
             // Check for 2FA code
@@ -139,7 +144,11 @@ async function login(config) {
 
                 break;
             } catch (error) {
-                console.log(error);
+                if (error instanceof TimeoutError) {
+                    console.log('2FA verification not found.');
+                } else {
+                    console.error(error);
+                }
             }
 
             console.log('No extra verification found!');
@@ -326,13 +335,13 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
             // Filter out streams that are not in the allowed channels list, if any
             const channels = details['allow']['channels'];
-            if (channels != null){
+            if (channels != null) {
                 const channelIds = new Set();
-                for (const channel of channels){
+                for (const channel of channels) {
                     channelIds.add(channel['id']);
                 }
                 streams = streams.filter(stream => {
-                   return channelIds.has(stream['broadcaster_id']);
+                    return channelIds.has(stream['broadcaster_id']);
                 });
             }
 
@@ -588,7 +597,7 @@ function loadConfigFile(file_path) {
         });
         console.log('Found', pending.size, 'pending campaigns.');
         pending.forEach((value, index) => {
-           console.log(index + ')', value['game']['displayName'], value['name']);
+            console.log(index + ')', value['game']['displayName'], value['name']);
         });
 
         while (!pending.isEmpty()) {
