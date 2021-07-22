@@ -13,7 +13,7 @@ const twitch = require('./twitch');
 
 // Using puppeteer-extra to add plugins
 const puppeteer = require('puppeteer-extra');
-const {TimeoutError} = require("puppeteer");
+const TimeoutError = require("puppeteer").errors.TimeoutError;
 
 // Add stealth plugin
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
