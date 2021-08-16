@@ -444,6 +444,9 @@ function loadConfigFile(file_path) {
     // Save a copy of the config to compare changes later
     const config_before = JSON.parse(JSON.stringify(config));
 
+    // Should the process exit with an error after saving the updated config (in case some values are invalid)
+    let exitAfterSave = false;
+
     // Validate browser path
     let browser_path = config['browser'];
     if (browser_path === undefined) {
@@ -460,8 +463,9 @@ function loadConfigFile(file_path) {
     if (fs.existsSync(browser_path)) {
         config['browser'] = browser_path;
     } else {
-        console.error('Could not find a chrome installation! Please specify the path to Chrome in the config.')
-        process.exit(1);
+        console.error('Could not the Chrome installation! Please specify the path to Chrome in the config.')
+        exitAfterSave = true;
+        config['browser'] = '';
     }
 
     // If no games are specified, an empty list represents all games
@@ -473,6 +477,10 @@ function loadConfigFile(file_path) {
     if (!isEqual(config_before, config)){
         fs.writeFileSync(file_path, JSON.stringify(config));
         console.log('Config saved to', file_path);
+    }
+
+    if (exitAfterSave){
+        process.exit(1);
     }
 
     return config;
