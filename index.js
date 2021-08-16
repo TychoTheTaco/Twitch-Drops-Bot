@@ -447,7 +447,7 @@ function loadConfigFile(file_path) {
     // Should the process exit with an error after saving the updated config (in case some values are invalid)
     let exitAfterSave = false;
 
-    // Validate browser path
+    // Browser
     let browser_path = config['browser'];
     if (browser_path === undefined) {
         switch (process.platform) {
@@ -458,15 +458,13 @@ function loadConfigFile(file_path) {
             case "linux":
                 browser_path = path.join("google-chrome");
                 break;
+
+            default:
+                browser_path = '';
+                break;
         }
     }
-    if (fs.existsSync(browser_path)) {
-        config['browser'] = browser_path;
-    } else {
-        console.error('Could not the Chrome installation! Please specify the path to Chrome in the config.')
-        exitAfterSave = true;
-        config['browser'] = '';
-    }
+    config['browser'] = browser_path;
 
     // If no games are specified, an empty list represents all games
     if (config['games'] === undefined) {
