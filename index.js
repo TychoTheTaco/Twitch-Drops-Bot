@@ -34,6 +34,19 @@ class NoProgressError extends Error {
 
 }
 
+async function launchBrowser(config){
+    return await puppeteer.launch({
+        headless: !config['headful'],
+        executablePath: config['browser'],
+        args: [
+            '--mute-audio',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
+        ]
+    });
+}
+
 function onBrowserOrPageClosed() {
     console.log('Browser was disconnected or tab was closed! Exiting...');
     process.exit(1);
@@ -64,7 +77,7 @@ async function getActiveDropCampaigns(credentials) {
 async function login(config) {
 
     // Start browser and open a new tab.
-    const browser = await puppeteer.launch({headless: config['headless_login'], executablePath: config['browser']});
+    const browser = await launchBrowser(config);
     const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
@@ -422,6 +435,7 @@ function overrideConfigurationWithArguments(config, args) {
     override('username');
     override('password');
     override('headless_login');
+    override('headful');
 }
 
 function loadConfigFile(file_path) {
@@ -501,6 +515,10 @@ function loadConfigFile(file_path) {
     // Override config with command line arguments
     overrideConfigurationWithArguments(config, args);
 
+    if (args['headless_login'] && args['headful']){
+        parser.error('You cannot use headless-login and headful at the same time!');
+    }
+
     if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
         parser.error("You must provide a username and password to use headless login!");
         process.exit(1);
@@ -512,16 +530,7 @@ function loadConfigFile(file_path) {
     }
 
     // Start browser and open a new tab.
-    const browser = await puppeteer.launch({
-        headless: !config['headful'],
-        executablePath: config['browser'],
-        args: [
-            '--mute-audio',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding'
-        ]
-    });
+    const browser = await launchBrowser(config);
     const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
@@ -649,7 +658,7 @@ function loadConfigFile(file_path) {
     }
 
 })().catch(error => {
-    console.log(error);
+    console.error(error);
     process.exit(1);
 }).finally(() => {
     process.exit(0);
