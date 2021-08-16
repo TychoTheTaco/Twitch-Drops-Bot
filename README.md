@@ -9,13 +9,14 @@ Use this bot at your own risk! This bot uses parts of the Twitch API that are no
 ## Usage
 
 1) Install [Node.js](https://nodejs.org/)
-2) Install this package: `npm install .`
-3) Start the bot with `node index.js`
+2) Install [Google Chrome](https://www.google.com/chrome/)
+3) Install this package: `npm install .`
+4) Start the bot with `node index.js`
 
 This bot automatically creates a config file with various options including:
 |Option| Description |
 | --- | --- |
-|<code>browser</code>|Path to your browser executable. Only Chrome is currently supported.|
+|<code>browser</code>|Path to your browser executable. Only Chrome is currently supported. Although Puppeteer includes a version of Chromium, it does not support the video format required to watch Twitch streams, so a seperate Chrome installation is required.|
 |<code>games</code>| A list of IDs of the games that the bot should automatically watch. See games.csv for a list of game IDs. This item is optional. If empty or omitted, the bot will try to watch all games.|
 |<code>username</code>| Your Twitch username. This item is optional. It is only used to automatically fill out the login page.|
 |<code>password</code>| Your Twitch password. This item is optional. It is only used to automatically fill out the login page.|
