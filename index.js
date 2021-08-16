@@ -19,6 +19,8 @@ const TimeoutError = require("puppeteer").errors.TimeoutError;
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
+const isEqual = require('lodash/isEqual');
+
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -424,20 +426,27 @@ function overrideConfigurationWithArguments(config, args) {
 
 function loadConfigFile(file_path) {
     console.log('Loading config file:', file_path);
-    if (fs.existsSync(file_path)) {
+
+    // Load config from file if it exists
+    let config = {};
+    if (fs.existsSync(file_path)){
         try {
-            return JSON.parse(fs.readFileSync(file_path, {encoding: 'utf-8'}));
+            config = JSON.parse(fs.readFileSync(file_path, {encoding: 'utf-8'}));
         } catch (error) {
             console.error('Failed to read config file!');
             console.error(error);
             process.exit(1);
         }
     } else {
-
         console.warn('Config file does not exist! Creating a default...');
+    }
 
-        // Try to find Chrome
-        let browser_path = null;
+    // Save a copy of the config to compare changes later
+    const config_before = JSON.parse(JSON.stringify(config));
+
+    // Validate browser path
+    let browser_path = config['browser'];
+    if (browser_path === undefined) {
         switch (process.platform) {
             case "win32":
                 browser_path = path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
@@ -447,24 +456,26 @@ function loadConfigFile(file_path) {
                 browser_path = path.join("google-chrome");
                 break;
         }
+    }
+    if (fs.existsSync(browser_path)) {
+        config['browser'] = browser_path;
+    } else {
+        console.error('Could not find a chrome installation! Please specify the path to Chrome in the config.')
+        process.exit(1);
+    }
 
-        if (!fs.existsSync(browser_path)){
-            console.error('Could not find a chrome installation! Please specify the path to Chrome in the config.')
-            process.exit(1);
-        }
+    // If no games are specified, an empty list represents all games
+    if (config['games'] === undefined) {
+        config['games'] = [];
+    }
 
-        // Create default config
-        const config = {
-            'browser': browser_path,
-            'games': []
-        }
-
-        // Save default config
+    // Save config if different
+    if (!isEqual(config_before, config)){
         fs.writeFileSync(file_path, JSON.stringify(config));
         console.log('Config saved to', file_path);
-
-        return config;
     }
+
+    return config;
 }
 
 (async () => {
@@ -487,10 +498,6 @@ function loadConfigFile(file_path) {
     if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
         parser.error("You must provide a username and password to use headless login!");
         process.exit(1);
-    }
-
-    if (config['games'] === undefined) {
-        config['games'] = [];
     }
 
     // Make username lowercase
