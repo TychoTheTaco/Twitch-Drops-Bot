@@ -436,14 +436,21 @@ function loadConfigFile(file_path) {
 
         console.warn('Config file does not exist! Creating a default...');
 
-        // Path to the local chromium installation
-        let browser_path = path.join(path.dirname(require.resolve("puppeteer/package.json")), '.local-chromium');
-        browser_path = path.join(browser_path, fs.readdirSync(browser_path)[0]);
-        browser_path = path.join(browser_path, fs.readdirSync(browser_path)[0]);
-        if (browser_path.includes('chrome-linux')) {
-            browser_path = path.join(browser_path, 'chrome');
-        } else if (browser_path.includes('chrome-win')) {
-            browser_path = path.join(browser_path, 'chrome.exe');
+        // Try to find Chrome
+        let browser_path = null;
+        switch (process.platform) {
+            case "win32":
+                browser_path = path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
+                break;
+
+            case "linux":
+                browser_path = path.join("google-chrome");
+                break;
+        }
+
+        if (!fs.existsSync(browser_path)){
+            console.error('Could not find a chrome installation! Please specify the path to Chrome in the config.')
+            process.exit(1);
         }
 
         // Create default config

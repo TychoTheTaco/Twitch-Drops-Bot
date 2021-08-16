@@ -7,5 +7,6 @@ credentials
 # Browser cookies
 cookies.json
 
-# Config file
+# Config files
 config.json
+config-test.json
