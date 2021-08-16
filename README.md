@@ -35,3 +35,5 @@ Some options can also be specified as command line arguments. Items passed as co
 |<code>&#8209;&#8209;config&nbsp;\<path\></code>|Path to your configuration file.|
 |<code>&#8209;&#8209;username&nbsp;\<string\></code>| Twitch username.|
 |<code>&#8209;&#8209;password&nbsp;\<string\></code>| Twitch password.|
+|<code>&#8209;&#8209;headless-login&nbsp;</code>| Login to Twitch in headless mode. If this is enabled, you must also provide a username and password. This is useful for logging in remotely. This cannot be used at the same time as <code>headful</code>|
+|<code>&#8209;&#8209;headful&nbsp;</code>|Run everything in headful mode. This will display the browser at all times. Useful for debugging. This cannot be used at the same time as <code>headless-login</code>|
