@@ -34,19 +34,6 @@ class NoProgressError extends Error {
 
 }
 
-async function launchBrowser(config){
-    return await puppeteer.launch({
-        headless: !config['headful'],
-        executablePath: config['browser'],
-        args: [
-            '--mute-audio',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding'
-        ]
-    });
-}
-
 function onBrowserOrPageClosed() {
     console.log('Browser was disconnected or tab was closed! Exiting...');
     process.exit(1);
@@ -77,7 +64,16 @@ async function getActiveDropCampaigns(credentials) {
 async function login(config) {
 
     // Start browser and open a new tab.
-    const browser = await launchBrowser(config);
+    const browser = await puppeteer.launch({
+        headless: config['headless_login'],
+        executablePath: config['browser'],
+        args: [
+            '--mute-audio',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
+        ]
+    });
     const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
@@ -530,7 +526,16 @@ function loadConfigFile(file_path) {
     }
 
     // Start browser and open a new tab.
-    const browser = await launchBrowser(config);
+    const browser = await puppeteer.launch({
+        headless: !config['headful'],
+        executablePath: config['browser'],
+        args: [
+            '--mute-audio',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
+        ]
+    });
     const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
