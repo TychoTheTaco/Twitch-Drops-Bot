@@ -208,9 +208,10 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         // Ignore errors
     }
 
-    await page.waitForTimeout(5000);  // TODO: setLowestStreamQuality doesnt work right away for some reason, waiting a few seconds seems to work for now
-    console.log('Setting stream quality to lowest available...');
-    await setLowestStreamQuality(page);
+    setLowestStreamQuality(page).catch((error) => {
+        console.error('Failed to set stream to lowest quality!');
+        console.error(error);
+    });
 
     let wasInventoryDropNull = false;
 
@@ -270,7 +271,9 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 }
 
 async function setLowestStreamQuality(page) {
-    await page.click('[data-a-target="player-settings-button"]');
+    const settingsButtonSelector = '[data-a-target="player-settings-button"]';
+    await page.waitForSelector(settingsButtonSelector);
+    await page.click(settingsButtonSelector);
     await page.click('[data-a-target="player-settings-menu-item-quality"]');
     //await page.click('div[data-a-target="player-settings-menu"]>div:last-child input');
     await page.evaluate(() => {  // This is a workaround for the commented line above, which causes "Node is either not visible or not an HTMLElement" error.
