@@ -288,16 +288,28 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 }
 
 async function setLowestStreamQuality(page) {
+    await fs.writeFileSync('page_content_0.html', await page.content());
+
     const settingsButtonSelector = '[data-a-target="player-settings-button"]';
     await page.waitForSelector(settingsButtonSelector);
     await page.click(settingsButtonSelector);
+
+    await fs.writeFileSync('page_content_1.html', await page.content());
+    await fs.writeFileSync('settings_menu_0.html', await (await (await page.$x('//div[@data-a-target="player-settings-menu"]'))[0].getProperty('outerHTML')).jsonValue());
+
     const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
     await page.waitForSelector(qualityButtonSelector);
     await page.click(qualityButtonSelector);
+
+    await fs.writeFileSync('page_content_2.html', await page.content());
+    await fs.writeFileSync('settings_menu_1.html', await (await (await page.$x('//div[@data-a-target="player-settings-menu"]'))[0].getProperty('outerHTML')).jsonValue());
+
     //await page.click('div[data-a-target="player-settings-menu"]>div:last-child input');
     await page.evaluate(() => {  // This is a workaround for the commented line above, which causes "Node is either not visible or not an HTMLElement" error.
         document.querySelector('div[data-a-target="player-settings-menu"]>div:last-child input').click();
     });
+
+    await fs.writeFileSync('page_content_3.html', await page.content());
 }
 
 async function isDropClaimed(credentials, drop) {
