@@ -274,7 +274,9 @@ async function setLowestStreamQuality(page) {
     const settingsButtonSelector = '[data-a-target="player-settings-button"]';
     await page.waitForSelector(settingsButtonSelector);
     await page.click(settingsButtonSelector);
-    await page.click('[data-a-target="player-settings-menu-item-quality"]');
+    const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
+    await page.waitForSelector(qualityButtonSelector);
+    await page.click(qualityButtonSelector);
     //await page.click('div[data-a-target="player-settings-menu"]>div:last-child input');
     await page.evaluate(() => {  // This is a workaround for the commented line above, which causes "Node is either not visible or not an HTMLElement" error.
         document.querySelector('div[data-a-target="player-settings-menu"]>div:last-child input').click();
