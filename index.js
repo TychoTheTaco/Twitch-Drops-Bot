@@ -61,23 +61,10 @@ async function getActiveDropCampaigns(credentials) {
     });
 }
 
-async function login(config) {
-
-    // Start browser and open a new tab.
-    const browser = await puppeteer.launch({
-        headless: config['headless_login'],
-        executablePath: config['browser'],
-        args: [
-            '--mute-audio',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding'
-        ]
-    });
+async function login(config, browser) {
     const page = await browser.newPage();
 
-    // Automatically stop this program if the browser or page is closed
-    browser.on('disconnected', onBrowserOrPageClosed);
+    // Automatically stop this program if the page is closed
     page.on('close', onBrowserOrPageClosed);
 
     // Go to login page
@@ -173,11 +160,8 @@ async function login(config) {
 
     const cookies = await page.cookies();
 
-    browser.off('disconnected', onBrowserOrPageClosed);
     page.off('close', onBrowserOrPageClosed);
-
-    // Close browser
-    await browser.close();
+    await page.close();
 
     return cookies;
 }
@@ -579,7 +563,20 @@ function loadConfigFile(file_path) {
 
     if (requireLogin) {
         console.log('Logging in...');
-        const cookies = await login(config);
+
+        // Check if we need to create a new headful browser for the login
+        let loginBrowser = browser;
+        if (!config['headful'] && !config['headless_login']){
+            loginBrowser = await puppeteer.launch({
+                headless: false,
+                executablePath: config['browser'],
+                args: [
+                    '--mute-audio'
+                ]
+            });
+        }
+
+        const cookies = await login(config, loginBrowser);
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
         await page.setCookie(...cookies);
     }
