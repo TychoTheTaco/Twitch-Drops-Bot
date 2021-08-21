@@ -11,7 +11,7 @@ Use this bot at your own risk! This bot uses parts of the Twitch API that are no
 1) Install [Node.js](https://nodejs.org/)
 2) Install [Google Chrome](https://www.google.com/chrome/)
 3) Install this package: `npm install .`
-4) Start the bot with `node index.js`
+4) Start the bot with `node src/index.js`
 
 This bot automatically creates a config file with various options including:
 |Option| Description |
