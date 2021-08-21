@@ -421,6 +421,7 @@ function overrideConfigurationWithArguments(config, args) {
     override('password');
     override('headless_login');
     override('headful');
+    override('interval');
 }
 
 function loadConfigFile(file_path) {
@@ -465,10 +466,17 @@ function loadConfigFile(file_path) {
     }
     config['browser'] = browser_path;
 
-    // If no games are specified, an empty list represents all games
-    if (config['games'] === undefined) {
-        config['games'] = [];
+    const setIfUndefined = (key, value) => {
+        if (config[key] === undefined) {
+            config[key] = value;
+        }
     }
+
+    // If no games are specified, an empty list represents all games
+    setIfUndefined('games', []);
+
+    // Interval
+    setIfUndefined('interval', 15);
 
     // Save config if different
     if (!isEqual(config_before, config)){
@@ -491,7 +499,8 @@ function loadConfigFile(file_path) {
     parser.add_argument('--username', '-u');
     parser.add_argument('--password', '-p');
     parser.add_argument('--headless-login', {default: false, action: 'store_true'});
-    parser.add_argument('--headful', {default: false, action: 'store_true'})
+    parser.add_argument('--headful', {default: false, action: 'store_true'});
+    parser.add_argument('--interval', {type: 'int'});
     const args = parser.parse_args();
 
     // Load config file
@@ -660,8 +669,8 @@ function loadConfigFile(file_path) {
             }
         }
 
-        console.log('Sleeping for a bit...');
-        await sleep(1000 * 60 * 15);
+        console.log('Sleeping for', config['interval'], 'minutes...');
+        await sleep(1000 * 60 * config['interval']);
     }
 
 })().catch(error => {
