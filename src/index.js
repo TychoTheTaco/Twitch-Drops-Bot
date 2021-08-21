@@ -412,9 +412,9 @@ function areCookiesValid(cookies, username) {
 }
 
 function overrideConfigurationWithArguments(config, args) {
-    const override = (key) => {
+    const override = (key, modifier = (x) => x) => {
         if (args[key] !== undefined) {
-            config[key] = args[key];
+            config[key] = modifier(args[key]);
         }
     }
     override('username');
@@ -422,6 +422,7 @@ function overrideConfigurationWithArguments(config, args) {
     override('headless_login');
     override('headful');
     override('interval');
+    override('browser_args', (x) => x.split(',').filter(x => x.length > 0));
 }
 
 function loadConfigFile(file_path) {
@@ -501,6 +502,7 @@ function loadConfigFile(file_path) {
     parser.add_argument('--headless-login', {default: false, action: 'store_true'});
     parser.add_argument('--headful', {default: false, action: 'store_true'});
     parser.add_argument('--interval', {type: 'int'});
+    parser.add_argument('--browser-args');
     const args = parser.parse_args();
 
     // Load config file
@@ -523,16 +525,28 @@ function loadConfigFile(file_path) {
         config['username'] = config['username'].toLowerCase();
     }
 
+    if (config['browser_args'] === undefined){
+        config['browser_args'] = [];
+    }
+
+    // Add required browser args
+    const requiredBrowserArgs = [
+        '--mute-audio',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
+    ]
+    for (const arg of requiredBrowserArgs){
+        if (!config['browser_args'].includes(arg)){
+            config['browser_args'].push(arg);
+        }
+    }
+
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
         headless: !config['headful'],
         executablePath: config['browser'],
-        args: [
-            '--mute-audio',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding'
-        ]
+        args: config['browser_args']
     });
     const page = await browser.newPage();
 
