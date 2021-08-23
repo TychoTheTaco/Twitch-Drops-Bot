@@ -182,12 +182,45 @@ async function claimDrop(credentials, page, drop) {
     await twitch.claimDropReward(credentials, drop['self']['dropInstanceID']);
 }
 
+async function waitUntilElementRendered(page, element, timeout = 1000 * 30) {
+    const checkDurationMsecs = 1000;
+    const maxChecks = timeout / checkDurationMsecs;
+    let lastHTMLSize = 0;
+    let checkCounts = 1;
+    let countStableSizeIterations = 0;
+    const minStableSizeIterations = 3;
+
+    while (checkCounts++ <= maxChecks) {
+        let html = await (await element.getProperty('outerHTML')).jsonValue();
+        let currentHTMLSize = html.length;
+
+        if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
+            countStableSizeIterations++;
+        } else {
+            countStableSizeIterations = 0;
+        }
+
+        if (countStableSizeIterations >= minStableSizeIterations) {
+            break;
+        }
+
+        lastHTMLSize = currentHTMLSize;
+        await page.waitForTimeout(checkDurationMsecs);
+    }
+}
+
 async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop) {
     await page.goto(streamUrl);
 
+    // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
+    const element = (await page.$x('//div[@data-a-player-state]'))[0]
+    await waitUntilElementRendered(page, element);
+
     try {
         // Click "Accept mature content" button
-        await page.click('[data-a-target="player-overlay-mature-accept"]');
+        const acceptMatureContentButtonSelector = '[data-a-target="player-overlay-mature-accept"]';
+        await page.waitForSelector(acceptMatureContentButtonSelector);
+        await page.click(acceptMatureContentButtonSelector);
     } catch (error) {
         // Ignore errors
     }
@@ -205,7 +238,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const progressBar = new cliProgress.SingleBar(
         {
             stopOnComplete: true,
-            format: 'Watching stream |{bar}| {percentage}% | {value} / {total} minutes | Remaining: {remaining} minutes'
+            format: 'Watching stream |{bar}| {value} / {total} minutes'
         },
         cliProgress.Presets.shades_classic
     );
@@ -430,7 +463,7 @@ function loadConfigFile(file_path) {
 
     // Load config from file if it exists
     let config = {};
-    if (fs.existsSync(file_path)){
+    if (fs.existsSync(file_path)) {
         try {
             config = JSON.parse(fs.readFileSync(file_path, {encoding: 'utf-8'}));
         } catch (error) {
@@ -480,12 +513,12 @@ function loadConfigFile(file_path) {
     setIfUndefined('interval', 15);
 
     // Save config if different
-    if (!isEqual(config_before, config)){
+    if (!isEqual(config_before, config)) {
         fs.writeFileSync(file_path, JSON.stringify(config));
         console.log('Config saved to', file_path);
     }
 
-    if (exitAfterSave){
+    if (exitAfterSave) {
         process.exit(1);
     }
 
@@ -511,7 +544,7 @@ function loadConfigFile(file_path) {
     // Override config with command line arguments
     overrideConfigurationWithArguments(config, args);
 
-    if (args['headless_login'] && args['headful']){
+    if (args['headless_login'] && args['headful']) {
         parser.error('You cannot use headless-login and headful at the same time!');
     }
 
@@ -525,7 +558,7 @@ function loadConfigFile(file_path) {
         config['username'] = config['username'].toLowerCase();
     }
 
-    if (config['browser_args'] === undefined){
+    if (config['browser_args'] === undefined) {
         config['browser_args'] = [];
     }
 
@@ -536,8 +569,8 @@ function loadConfigFile(file_path) {
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding'
     ]
-    for (const arg of requiredBrowserArgs){
-        if (!config['browser_args'].includes(arg)){
+    for (const arg of requiredBrowserArgs) {
+        if (!config['browser_args'].includes(arg)) {
             config['browser_args'].push(arg);
         }
     }
@@ -589,7 +622,7 @@ function loadConfigFile(file_path) {
 
         // Check if we need to create a new headful browser for the login
         let loginBrowser = browser;
-        if (!config['headful'] && !config['headless_login']){
+        if (!config['headful'] && !config['headless_login']) {
             loginBrowser = await puppeteer.launch({
                 headless: false,
                 executablePath: config['browser'],
