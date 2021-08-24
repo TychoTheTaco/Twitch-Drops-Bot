@@ -228,6 +228,12 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     setLowestStreamQuality(page).catch((error) => {
         console.error('Failed to set stream to lowest quality!');
         console.error(error);
+        page.screenshot({
+            path: 'screenshot.png',
+            fullPage: true
+        }).then(() => {
+            console.log('saved screenshot');
+        })
     });
 
     let wasInventoryDropNull = false;
