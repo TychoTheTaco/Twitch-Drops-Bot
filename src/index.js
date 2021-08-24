@@ -621,8 +621,9 @@ function loadConfigFile(file_path) {
         console.log('Logging in...');
 
         // Check if we need to create a new headful browser for the login
+        const needNewBrowser = !config['headful'] && !config['headless_login'];
         let loginBrowser = browser;
-        if (!config['headful'] && !config['headless_login']) {
+        if (needNewBrowser) {
             loginBrowser = await puppeteer.launch({
                 headless: false,
                 executablePath: config['browser'],
@@ -635,6 +636,10 @@ function loadConfigFile(file_path) {
         const cookies = await login(config, loginBrowser);
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
         await page.setCookie(...cookies);
+
+        if (needNewBrowser){
+            await loginBrowser.close();
+        }
     }
 
     // Twitch credentials for API interactions
