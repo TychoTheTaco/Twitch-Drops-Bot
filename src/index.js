@@ -215,6 +215,15 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
     const element = (await page.$x('//div[@data-a-player-state]'))[0]
     await waitUntilElementRendered(page, element);
+	
+	try {
+        // Dismiss subscription promo message
+        const promoMessageButtonSelector = '[aria-label="Dismiss promo message"]';
+        await page.waitForSelector(promoMessageButtonSelector);
+        await page.click(promoMessageButtonSelector);
+    } catch (error) {
+        // Ignore errors
+    }
 
     try {
         // Click "Accept mature content" button
