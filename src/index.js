@@ -303,23 +303,15 @@ async function click(page, selector){
 }
 
 async function setLowestStreamQuality(page) {
-    await fs.writeFileSync('page_content_0.html', await page.content());
-
     const settingsButtonSelector = '[data-a-target="player-settings-button"]';
     await page.waitForSelector(settingsButtonSelector);
     await click(page, settingsButtonSelector);
-
-    await fs.writeFileSync('page_content_1.html', await page.content());
 
     const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
     await page.waitForSelector(qualityButtonSelector);
     await click(page, qualityButtonSelector);
 
-    await fs.writeFileSync('page_content_2.html', await page.content());
-
     await click(page, 'div[data-a-target="player-settings-menu"]>div:last-child input');
-
-    await fs.writeFileSync('page_content_3.html', await page.content());
 }
 
 async function isDropClaimed(credentials, drop) {
