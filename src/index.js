@@ -242,9 +242,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
     try {
         // Click "Accept mature content" button
-        const acceptMatureContentButtonSelector = '[data-a-target="player-overlay-mature-accept"]';
-        await page.waitForSelector(acceptMatureContentButtonSelector);
-        await page.click(acceptMatureContentButtonSelector);
+        await page.click('[data-a-target="player-overlay-mature-accept"]');
     } catch (error) {
         // Ignore errors
     }
