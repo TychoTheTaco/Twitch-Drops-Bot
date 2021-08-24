@@ -525,55 +525,55 @@ function loadConfigFile(file_path) {
     return config;
 }
 
+// Parse arguments
+const parser = new ArgumentParser();
+parser.add_argument('--config', '-c', {default: 'config.json'});
+parser.add_argument('--username', '-u');
+parser.add_argument('--password', '-p');
+parser.add_argument('--headless-login', {default: false, action: 'store_true'});
+parser.add_argument('--headful', {default: false, action: 'store_true'});
+parser.add_argument('--interval', {type: 'int'});
+parser.add_argument('--browser-args');
+const args = parser.parse_args();
+
+// Load config file
+const config = loadConfigFile(args['config']);
+
+// Override config with command line arguments
+overrideConfigurationWithArguments(config, args);
+
+if (args['headless_login'] && args['headful']) {
+    parser.error('You cannot use headless-login and headful at the same time!');
+}
+
+if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
+    parser.error("You must provide a username and password to use headless login!");
+    process.exit(1);
+}
+
+// Make username lowercase
+if (config.hasOwnProperty('username')) {
+    config['username'] = config['username'].toLowerCase();
+}
+
+if (config['browser_args'] === undefined) {
+    config['browser_args'] = [];
+}
+
+// Add required browser args
+const requiredBrowserArgs = [
+    '--mute-audio',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding'
+]
+for (const arg of requiredBrowserArgs) {
+    if (!config['browser_args'].includes(arg)) {
+        config['browser_args'].push(arg);
+    }
+}
+
 (async () => {
-
-    // Parse arguments
-    const parser = new ArgumentParser();
-    parser.add_argument('--config', '-c', {default: 'config.json'});
-    parser.add_argument('--username', '-u');
-    parser.add_argument('--password', '-p');
-    parser.add_argument('--headless-login', {default: false, action: 'store_true'});
-    parser.add_argument('--headful', {default: false, action: 'store_true'});
-    parser.add_argument('--interval', {type: 'int'});
-    parser.add_argument('--browser-args');
-    const args = parser.parse_args();
-
-    // Load config file
-    const config = loadConfigFile(args['config']);
-
-    // Override config with command line arguments
-    overrideConfigurationWithArguments(config, args);
-
-    if (args['headless_login'] && args['headful']) {
-        parser.error('You cannot use headless-login and headful at the same time!');
-    }
-
-    if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-        parser.error("You must provide a username and password to use headless login!");
-        process.exit(1);
-    }
-
-    // Make username lowercase
-    if (config.hasOwnProperty('username')) {
-        config['username'] = config['username'].toLowerCase();
-    }
-
-    if (config['browser_args'] === undefined) {
-        config['browser_args'] = [];
-    }
-
-    // Add required browser args
-    const requiredBrowserArgs = [
-        '--mute-audio',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-    ]
-    for (const arg of requiredBrowserArgs) {
-        if (!config['browser_args'].includes(arg)) {
-            config['browser_args'].push(arg);
-        }
-    }
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
