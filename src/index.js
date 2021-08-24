@@ -213,6 +213,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     await page.goto(streamUrl);
 
     // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
+    console.log('Waiting for page to load...');
     const element = (await page.$x('//div[@data-a-player-state]'))[0]
     await waitUntilElementRendered(page, element);
 
@@ -242,15 +243,21 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
     try {
         // Click "Accept mature content" button
-        await page.click('[data-a-target="player-overlay-mature-accept"]');
+        const acceptMatureContentButtonSelector = '[data-a-target="player-overlay-mature-accept"]';
+        //await page.waitForSelector(acceptMatureContentButtonSelector);  // Probably don't need to wait since page should be fully loaded at this point
+        await click(page, acceptMatureContentButtonSelector);
+        console.log('Accepted mature content');
     } catch (error) {
-        // Ignore errors
+        // Ignore errors, the button is probably not there
     }
 
-    setLowestStreamQuality(page).catch((error) => {
+    try{
+        await setLowestStreamQuality(page);
+        console.log('Set stream to lowest quality');
+    } catch (error) {
         console.error('Failed to set stream to lowest quality!');
-        console.error(error);
-    });
+        throw error;
+    }
 
     let wasInventoryDropNull = false;
 
@@ -309,17 +316,22 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     }
 }
 
+async function click(page, selector){
+    return page.evaluate((selector) => {
+        document.querySelector(selector).click();
+    }, selector);
+}
+
 async function setLowestStreamQuality(page) {
     const settingsButtonSelector = '[data-a-target="player-settings-button"]';
     await page.waitForSelector(settingsButtonSelector);
-    await page.click(settingsButtonSelector);
+    await click(page, settingsButtonSelector);
+
     const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
     await page.waitForSelector(qualityButtonSelector);
-    await page.click(qualityButtonSelector);
-    //await page.click('div[data-a-target="player-settings-menu"]>div:last-child input');
-    await page.evaluate(() => {  // This is a workaround for the commented line above, which causes "Node is either not visible or not an HTMLElement" error.
-        document.querySelector('div[data-a-target="player-settings-menu"]>div:last-child input').click();
-    });
+    await click(page, qualityButtonSelector);
+
+    await click(page, 'div[data-a-target="player-settings-menu"]>div:last-child input');
 }
 
 async function isDropClaimed(credentials, drop) {
@@ -547,61 +559,62 @@ function loadConfigFile(file_path) {
     return config;
 }
 
+// Parse arguments
+const parser = new ArgumentParser();
+parser.add_argument('--config', '-c', {default: 'config.json'});
+parser.add_argument('--username', '-u');
+parser.add_argument('--password', '-p');
+parser.add_argument('--headless-login', {default: false, action: 'store_true'});
+parser.add_argument('--headful', {default: false, action: 'store_true'});
+parser.add_argument('--interval', {type: 'int'});
+parser.add_argument('--browser-args');
+const args = parser.parse_args();
+
+// Load config file
+const config = loadConfigFile(args['config']);
+
+// Override config with command line arguments
+overrideConfigurationWithArguments(config, args);
+
+if (args['headless_login'] && args['headful']) {
+    parser.error('You cannot use headless-login and headful at the same time!');
+}
+
+if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
+    parser.error("You must provide a username and password to use headless login!");
+    process.exit(1);
+}
+
+// Make username lowercase
+if (config.hasOwnProperty('username')) {
+    config['username'] = config['username'].toLowerCase();
+}
+
+if (config['browser_args'] === undefined) {
+    config['browser_args'] = [];
+}
+
+// Add required browser args
+const requiredBrowserArgs = [
+    '--mute-audio',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding'
+]
+for (const arg of requiredBrowserArgs) {
+    if (!config['browser_args'].includes(arg)) {
+        config['browser_args'].push(arg);
+    }
+}
+
 (async () => {
-
-    // Parse arguments
-    const parser = new ArgumentParser();
-    parser.add_argument('--config', '-c', {default: 'config.json'});
-    parser.add_argument('--username', '-u');
-    parser.add_argument('--password', '-p');
-    parser.add_argument('--headless-login', {default: false, action: 'store_true'});
-    parser.add_argument('--headful', {default: false, action: 'store_true'});
-    parser.add_argument('--interval', {type: 'int'});
-    parser.add_argument('--browser-args');
-    const args = parser.parse_args();
-
-    // Load config file
-    const config = loadConfigFile(args['config']);
-
-    // Override config with command line arguments
-    overrideConfigurationWithArguments(config, args);
-
-    if (args['headless_login'] && args['headful']) {
-        parser.error('You cannot use headless-login and headful at the same time!');
-    }
-
-    if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-        parser.error("You must provide a username and password to use headless login!");
-        process.exit(1);
-    }
-
-    // Make username lowercase
-    if (config.hasOwnProperty('username')) {
-        config['username'] = config['username'].toLowerCase();
-    }
-
-    if (config['browser_args'] === undefined) {
-        config['browser_args'] = [];
-    }
-
-    // Add required browser args
-    const requiredBrowserArgs = [
-        '--mute-audio',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-    ]
-    for (const arg of requiredBrowserArgs) {
-        if (!config['browser_args'].includes(arg)) {
-            config['browser_args'].push(arg);
-        }
-    }
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
         headless: !config['headful'],
         executablePath: config['browser'],
-        args: config['browser_args']
+        args: config['browser_args'],
+        slowMo: 100
     });
     const page = await browser.newPage();
 
