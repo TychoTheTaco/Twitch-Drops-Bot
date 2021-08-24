@@ -215,14 +215,29 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
     const element = (await page.$x('//div[@data-a-player-state]'))[0]
     await waitUntilElementRendered(page, element);
-	
-	try {
-        // Dismiss subscription promo message
-        const promoMessageButtonSelector = '[aria-label="Dismiss promo message"]';
-        await page.waitForSelector(promoMessageButtonSelector);
-        await page.click(promoMessageButtonSelector);
-    } catch (error) {
-        // Ignore errors
+
+    // Dismiss subscription promo message
+    const promoMessagesAria = [
+        'Dismiss promo message',
+        'Aktionsnachricht ausblenden',
+        'Descartar mensaje promocional',
+        'Descartar mensaje de promoción',
+        'Faire disparaître le message promotionnel',
+        'Chiudi messaggio promozionale',
+        'Ignorar mensagem da promoção',
+        'Descartar mensagem promocional',
+        'Promosyon mesajı kapat',
+        'Afvis kampagnemeddelelse',
+        'Promóciós üzenet bezárása',
+        'Promotiebericht sluiten',
+        'Odrzuć komunikat promocyjny',
+    ]
+    for (const message of promoMessagesAria){
+        try {
+            await page.click(`[aria-label="${message}"]`);
+        } catch (error) {
+            // Ignore errors
+        }
     }
 
     try {
