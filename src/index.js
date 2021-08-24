@@ -232,10 +232,6 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         console.log('Set stream to lowest quality');
     } catch (error) {
         console.error('Failed to set stream to lowest quality!');
-        await page.screenshot({
-            path: 'screenshot.png',
-            fullPage: true
-        });
         throw error;
     }
 
