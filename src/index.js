@@ -390,7 +390,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
             // Filter out streams that failed too many times
             streams = streams.filter(stream => {
-                return !failedStreams.has(stream);
+                return !failedStreams.has(stream['url']);
             });
 
             console.log('Found', streams.length, 'active streams');
@@ -401,10 +401,10 @@ async function processCampaign(page, campaign, twitchCredentials) {
             }
 
             // Watch first stream
-            const stream = streams[0]['url'];
-            console.log('Watching stream:', stream);
+            const streamUrl = streams[0]['url'];
+            console.log('Watching stream:', streamUrl);
             try {
-                await watchStreamUntilDropCompleted(page, stream, twitchCredentials, campaign, drop);
+                await watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop);
             } catch (error) {
                 if (error instanceof NoProgressError) {
                     console.log('No progress was made since last update!');
@@ -412,14 +412,14 @@ async function processCampaign(page, campaign, twitchCredentials) {
                     console.log('ERROR:', error);
                 }
 
-                if (!(stream in failures)) {
-                    failures[stream] = 0;
+                if (!(streamUrl in failures)) {
+                    failures[streamUrl] = 0;
                 }
-                failures[stream]++;
+                failures[streamUrl]++;
 
-                if (failures[stream] >= 3) {
+                if (failures[streamUrl] >= 3) {
                     console.log('Stream failed too many times. Giving up...')
-                    failedStreams.add(stream);
+                    failedStreams.add(streamUrl);
                 }
                 continue;
             }
