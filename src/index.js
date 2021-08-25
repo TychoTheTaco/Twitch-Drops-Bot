@@ -589,8 +589,7 @@ for (const arg of requiredBrowserArgs) {
     const browser = await puppeteer.launch({
         headless: !config['headful'],
         executablePath: config['browser'],
-        args: config['browser_args'],
-        slowMo: 100
+        args: config['browser_args']
     });
     const page = await browser.newPage();
 
