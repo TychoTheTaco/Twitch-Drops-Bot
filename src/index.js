@@ -3,11 +3,37 @@
 const fs = require('fs');
 const {ArgumentParser} = require('argparse');
 const path = require('path');
+
 const prompt = require('prompt');
-
 const cliProgress = require('cli-progress');
-
 const FastPriorityQueue = require('fastpriorityqueue');
+
+// Set up logger
+const {transports, createLogger, format} = require('winston');
+const logger = createLogger({
+    format: format.combine(
+        format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
+        {
+            transform(info, opts){
+                const message = info.message;
+                if (message instanceof Error){
+                    info.message = message.stack.replace(/^Error/g, message.constructor.name);
+                }
+                return info;
+            }
+        },
+        format.printf(info => {
+            let result = `[${info.timestamp}] [${info.level}] ${info.message}`;
+            if (info.stack){
+                result += ` ${info.stack}`;
+            }
+            return result;
+        })
+    ),
+    transports: [
+        new transports.Console()
+    ]
+});
 
 const twitch = require('./twitch');
 
@@ -20,7 +46,6 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 const isEqual = require('lodash/isEqual');
-
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -35,7 +60,7 @@ class NoProgressError extends Error {
 }
 
 function onBrowserOrPageClosed() {
-    console.log('Browser was disconnected or tab was closed! Exiting...');
+    logger.info('Browser was disconnected or tab was closed! Exiting...');
     process.exit(1);
 }
 
@@ -96,9 +121,9 @@ async function login(config, browser) {
 
             // Check for email verification code
             try {
-                console.log('Checking for email verification...');
+                logger.info('Checking for email verification...');
                 await page.waitForXPath('//*[contains(text(), "please enter the 6-digit code we sent")]');
-                console.log('Email verification found.');
+                logger.info('Email verification found.');
 
                 // Prompt user for code
                 prompt.start();
@@ -113,17 +138,17 @@ async function login(config, browser) {
                 break;
             } catch (error) {
                 if (error instanceof TimeoutError) {
-                    console.log('Email verification not found.');
+                    logger.info('Email verification not found.');
                 } else {
-                    console.error(error);
+                    logger.error(error);
                 }
             }
 
             // Check for 2FA code
             try {
-                console.log('Checking for 2FA verification...');
+                logger.info('Checking for 2FA verification...');
                 await page.waitForXPath('//*[contains(text(), "Enter the code found in your authenticator app")]');
-                console.log('2FA verification found.');
+                logger.info('2FA verification found.');
 
                 // Prompt user for code
                 prompt.start();
@@ -143,13 +168,13 @@ async function login(config, browser) {
                 break;
             } catch (error) {
                 if (error instanceof TimeoutError) {
-                    console.log('2FA verification not found.');
+                    logger.info('2FA verification not found.');
                 } else {
-                    console.error(error);
+                    logger.error(error);
                 }
             }
 
-            console.log('No extra verification found!');
+            logger.info('No extra verification found!');
             break;
         }
     }
@@ -178,7 +203,7 @@ async function asyncPrompt(schema) {
 }
 
 async function claimDrop(credentials, page, drop) {
-    console.log('Claiming drop!');
+    logger.info('Claiming drop!');
     await twitch.claimDropReward(credentials, drop['self']['dropInstanceID']);
 }
 
@@ -213,7 +238,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     await page.goto(streamUrl);
 
     // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
-    console.log('Waiting for page to load...');
+    logger.info('Waiting for page to load...');
     const element = (await page.$x('//div[@data-a-player-state]'))[0]
     await waitUntilElementRendered(page, element);
 
@@ -222,16 +247,16 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         const acceptMatureContentButtonSelector = '[data-a-target="player-overlay-mature-accept"]';
         //await page.waitForSelector(acceptMatureContentButtonSelector);  // Probably don't need to wait since page should be fully loaded at this point
         await click(page, acceptMatureContentButtonSelector);
-        console.log('Accepted mature content');
+        logger.info('Accepted mature content');
     } catch (error) {
         // Ignore errors, the button is probably not there
     }
 
     try{
         await setLowestStreamQuality(page);
-        console.log('Set stream to lowest quality');
+        logger.info('Set stream to lowest quality');
     } catch (error) {
-        console.error('Failed to set stream to lowest quality!');
+        logger.error('Failed to set stream to lowest quality!');
         throw error;
     }
 
@@ -350,11 +375,11 @@ async function processCampaign(page, campaign, twitchCredentials) {
     const drops = details['timeBasedDrops'];
 
     for (const drop of drops) {
-        console.log('Drop:', drop['benefitEdges'][0]['benefit']['name']);
+        logger.info('Drop: ' + drop['benefitEdges'][0]['benefit']['name']);
 
         // Check if we already claimed this drop
         if (await isDropClaimed(twitchCredentials, drop)) {
-            console.log('Drop already claimed');
+            logger.info('Drop already claimed');
             continue;
         }
 
@@ -393,7 +418,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
                 return !failedStreams.has(stream['url']);
             });
 
-            console.log('Found', streams.length, 'active streams');
+            logger.info('Found ' + streams.length + ' active streams');
 
             // If there are no steams, try the next campaign
             if (streams.length === 0) {
@@ -402,14 +427,14 @@ async function processCampaign(page, campaign, twitchCredentials) {
 
             // Watch first stream
             const streamUrl = streams[0]['url'];
-            console.log('Watching stream:', streamUrl);
+            logger.info('Watching stream: ' + streamUrl);
             try {
                 await watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop);
             } catch (error) {
                 if (error instanceof NoProgressError) {
-                    console.log('No progress was made since last update!');
+                    logger.info('No progress was made since last update!');
                 } else {
-                    console.log('ERROR:', error);
+                    logger.error(error);
                 }
 
                 if (!(streamUrl in failures)) {
@@ -418,7 +443,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
                 failures[streamUrl]++;
 
                 if (failures[streamUrl] >= 3) {
-                    console.log('Stream failed too many times. Giving up...')
+                    logger.error('Stream failed too many times. Giving up...');
                     failedStreams.add(streamUrl);
                 }
                 continue;
@@ -469,7 +494,7 @@ function overrideConfigurationWithArguments(config, args) {
 }
 
 function loadConfigFile(file_path) {
-    console.log('Loading config file:', file_path);
+    logger.info('Loading config file: ' + file_path);
 
     // Load config from file if it exists
     let config = {};
@@ -477,12 +502,12 @@ function loadConfigFile(file_path) {
         try {
             config = JSON.parse(fs.readFileSync(file_path, {encoding: 'utf-8'}));
         } catch (error) {
-            console.error('Failed to read config file!');
-            console.error(error);
+            logger.error('Failed to read config file!');
+            logger.error(error);
             process.exit(1);
         }
     } else {
-        console.warn('Config file does not exist! Creating a default...');
+        logger.warn('Config file does not exist! Creating a default...');
     }
 
     // Save a copy of the config to compare changes later
@@ -525,7 +550,7 @@ function loadConfigFile(file_path) {
     // Save config if different
     if (!isEqual(config_before, config)) {
         fs.writeFileSync(file_path, JSON.stringify(config));
-        console.log('Config saved to', file_path);
+        logger.info('Config saved to ' + file_path);
     }
 
     if (exitAfterSave) {
@@ -609,13 +634,13 @@ for (const arg of requiredBrowserArgs) {
         if (areCookiesValid(cookies, config['username'])) {
 
             // Restore cookies from previous session
-            console.log('Restoring cookies from last session.');
+            logger.info('Restoring cookies from last session.');
             await page.setCookie(...cookies);
 
         } else {
 
             // Saved cookies are invalid, let's delete them
-            console.log('Saved cookies are invalid.')
+            logger.info('Saved cookies are invalid.')
             fs.unlinkSync(cookiesPath);
 
             // We need to login again
@@ -628,7 +653,7 @@ for (const arg of requiredBrowserArgs) {
     }
 
     if (requireLogin) {
-        console.log('Logging in...');
+        logger.info('Logging in...');
 
         // Check if we need to create a new headful browser for the login
         const needNewBrowser = !config['headful'] && !config['headless_login'];
@@ -673,7 +698,7 @@ for (const arg of requiredBrowserArgs) {
                 break;
 
             case 'login':
-                console.log('Logged in as', cookie['value']);
+                logger.info('Logged in as ' + cookie['value']);
                 break;
         }
     }
@@ -682,9 +707,9 @@ for (const arg of requiredBrowserArgs) {
     while (true) {
 
         // Update drop campaigns
-        console.log('Updating drop campaigns...');
+        logger.info('Updating drop campaigns...');
         const campaigns = await getActiveDropCampaigns(twitchCredentials);
-        console.log('Found', campaigns.length, 'active campaigns.');
+        logger.info('Found ' + campaigns.length + ' active campaigns.');
 
         // Add to pending
         const pending = new FastPriorityQueue((a, b) => {
@@ -702,20 +727,20 @@ for (const arg of requiredBrowserArgs) {
                 pending.add(campaign);
             }
         });
-        console.log('Found', pending.size, 'pending campaigns.');
+        logger.info('Found ' + pending.size + ' pending campaigns.');
         pending.forEach((value, index) => {
-            console.log(index + ')', value['game']['displayName'], value['name']);
+            logger.info(index + ') ' + value['game']['displayName'] + ' ' + value['name']);
         });
 
         while (!pending.isEmpty()) {
 
             // Get campaign from queue
             const campaign = pending.poll();
-            console.log('Processing campaign:', campaign['game']['displayName'], campaign['name']);
+            logger.info('Processing campaign: ' + campaign['game']['displayName'] + ' ' + campaign['name']);
 
             // Make sure Twitch account is linked
             if (!campaign['self']['isAccountConnected']) {
-                console.warn('Twitch account not linked! Skipping this campaign.');
+                logger.warn('Twitch account not linked! Skipping this campaign.');
                 continue;
             }
 
@@ -724,19 +749,19 @@ for (const arg of requiredBrowserArgs) {
                 completedCampaigns.add(campaign['id']);
             } catch (error) {
                 if (error instanceof NoStreamsError) {
-                    console.log('No streams!');
+                    logger.info('No streams!');
                 } else {
-                    console.log('Error:', error);
+                    logger.error(error);
                 }
             }
         }
 
-        console.log('Sleeping for', config['interval'], 'minutes...');
+        logger.info('Sleeping for ' + config['interval'] + ' minutes...');
         await sleep(1000 * 60 * config['interval']);
     }
 
 })().catch(error => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 }).finally(() => {
     process.exit(0);
