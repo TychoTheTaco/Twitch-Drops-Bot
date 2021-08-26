@@ -14,9 +14,9 @@ const logger = createLogger({
     format: format.combine(
         format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
         {
-            transform(info, opts){
+            transform(info, opts) {
                 const message = info.message;
-                if (message instanceof Error){
+                if (message instanceof Error) {
                     info.message = message.stack.replace(/^Error/g, message.constructor.name);
                 }
                 return info;
@@ -24,7 +24,7 @@ const logger = createLogger({
         },
         format.printf(info => {
             let result = `[${info.timestamp}] [${info.level}] ${info.message}`;
-            if (info.stack){
+            if (info.stack) {
                 result += ` ${info.stack}`;
             }
             return result;
@@ -45,8 +45,6 @@ const TimeoutError = require("puppeteer").errors.TimeoutError;
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
-const isEqual = require('lodash/isEqual');
-
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -62,28 +60,6 @@ class NoProgressError extends Error {
 function onBrowserOrPageClosed() {
     logger.info('Browser was disconnected or tab was closed! Exiting...');
     process.exit(1);
-}
-
-async function getInventoryDrop(credentials, campaignId, dropId) {
-    const campaigns = await twitch.getDropCampaignsInProgress(credentials);
-    for (const campaign of campaigns) {
-        if (campaign['id'] === campaignId) {
-            const drops = campaign['timeBasedDrops'];
-            for (const drop of drops) {
-                if (drop['id'] === dropId) {
-                    return drop;
-                }
-            }
-        }
-    }
-    return null;
-}
-
-async function getActiveDropCampaigns(credentials) {
-    const campaigns = await twitch.getDropCampaigns(credentials);
-    return campaigns.filter(campaign => {
-        return campaign['status'] === 'ACTIVE';
-    });
 }
 
 async function login(config, browser) {
@@ -252,7 +228,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         // Ignore errors, the button is probably not there
     }
 
-    try{
+    try {
         await setLowestStreamQuality(page);
         logger.info('Set stream to lowest quality');
     } catch (error) {
@@ -279,7 +255,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     while (true) {
 
         // Check drop progress
-        const inventoryDrop = await getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
+        const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
 
         // Check if the drop is not in our inventory yet. This can happen if we just started the campaign
         if (inventoryDrop == null) {
@@ -312,12 +288,12 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
         }
 
-        // Sleep for a few minutes
-        await sleep(1000 * 60 * 2);
+        // Sleep 2 minutes. This should guarantee that at least 1 minute has passed since we last checked the stream progress.
+        await page.waitForTimeout(1000 * 60 * 2);
     }
 }
 
-async function click(page, selector){
+async function click(page, selector) {
     return page.evaluate((selector) => {
         document.querySelector(selector).click();
     }, selector);
@@ -384,7 +360,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
         }
 
         // Check if this drop is ready to be claimed
-        const inventoryDrop = await getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
+        const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
         if (inventoryDrop != null) {
             if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
                 await claimDrop(twitchCredentials, page, inventoryDrop);
@@ -432,7 +408,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
                 await watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop);
             } catch (error) {
                 if (error instanceof NoProgressError) {
-                    logger.info('No progress was made since last update!');
+                    logger.warn('No progress was made since last update!');
                 } else {
                     logger.error(error);
                 }
@@ -450,7 +426,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
             }
 
             // Claim the drop
-            await claimDrop(twitchCredentials, page, await getInventoryDrop(twitchCredentials, campaign['id'], drop['id']));
+            await claimDrop(twitchCredentials, page, await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']));
 
             break;
         }
@@ -479,120 +455,134 @@ function areCookiesValid(cookies, username) {
     return isOauthTokenFound;
 }
 
-function overrideConfigurationWithArguments(config, args) {
-    const override = (key, modifier = (x) => x) => {
-        if (args[key] !== undefined) {
-            config[key] = modifier(args[key]);
+// Options defined here can be configured in either the config file or as command-line arguments
+const options = [
+    {
+        name: '--username',
+        alias: '-u'
+    },
+    {
+        name: '--password',
+        alias: '-p'
+    },
+    {
+        name: '--browser',
+        default: () => {
+            switch (process.platform) {
+                case "win32":
+                    return path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
+
+                case "linux":
+                    return path.join("google-chrome");
+
+                default:
+                    return '';
+            }
+        }
+    },
+    {
+        name: '--games',
+        default: [],
+        parse: (x) => {
+            return x.split(',').filter(x => x.length > 0);
+        }
+    },
+    {
+        name: '--headless',
+        default: true,
+        parse: (x) => {
+            return x === 'true';
+        }
+    },
+    {
+        name: '--headless-login',
+        default: false,
+        argparse: {
+            action: 'store_true',
+        },
+        parse: (x) => {
+            return x === 'true';
+        }
+    },
+    {
+        name: '--interval',
+        default: 15,
+        argparse: {
+            type: 'int'
+        },
+        parse: (x) => {
+            return parseInt(x);
+        }
+    },
+    {
+        name: '--browser-args',
+        default: [],
+        parse: (x) => {
+            return x.split(',').filter(x => x.length > 0);
         }
     }
-    override('username');
-    override('password');
-    override('headless_login');
-    override('headful');
-    override('interval');
-    override('browser_args', (x) => x.split(',').filter(x => x.length > 0));
-}
-
-function loadConfigFile(file_path) {
-    logger.info('Loading config file: ' + file_path);
-
-    // Load config from file if it exists
-    let config = {};
-    if (fs.existsSync(file_path)) {
-        try {
-            config = JSON.parse(fs.readFileSync(file_path, {encoding: 'utf-8'}));
-        } catch (error) {
-            logger.error('Failed to read config file!');
-            logger.error(error);
-            process.exit(1);
-        }
-    } else {
-        logger.warn('Config file does not exist! Creating a default...');
-    }
-
-    // Save a copy of the config to compare changes later
-    const config_before = JSON.parse(JSON.stringify(config));
-
-    // Should the process exit with an error after saving the updated config (in case some values are invalid)
-    let exitAfterSave = false;
-
-    // Browser
-    let browser_path = config['browser'];
-    if (browser_path === undefined) {
-        switch (process.platform) {
-            case "win32":
-                browser_path = path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
-                break;
-
-            case "linux":
-                browser_path = path.join("google-chrome");
-                break;
-
-            default:
-                browser_path = '';
-                break;
-        }
-    }
-    config['browser'] = browser_path;
-
-    const setIfUndefined = (key, value) => {
-        if (config[key] === undefined) {
-            config[key] = value;
-        }
-    }
-
-    // If no games are specified, an empty list represents all games
-    setIfUndefined('games', []);
-
-    // Interval
-    setIfUndefined('interval', 15);
-
-    // Save config if different
-    if (!isEqual(config_before, config)) {
-        fs.writeFileSync(file_path, JSON.stringify(config));
-        logger.info('Config saved to ' + file_path);
-    }
-
-    if (exitAfterSave) {
-        process.exit(1);
-    }
-
-    return config;
-}
+]
 
 // Parse arguments
 const parser = new ArgumentParser();
 parser.add_argument('--config', '-c', {default: 'config.json'});
-parser.add_argument('--username', '-u');
-parser.add_argument('--password', '-p');
-parser.add_argument('--headless-login', {default: false, action: 'store_true'});
-parser.add_argument('--headful', {default: false, action: 'store_true'});
-parser.add_argument('--interval', {type: 'int'});
-parser.add_argument('--browser-args');
+for (const option of options) {
+    if (option['alias']) {
+        parser.add_argument(option['name'], option['alias'], option['argparse'] || {});
+    } else {
+        parser.add_argument(option['name'], option['argparse'] || {});
+    }
+}
 const args = parser.parse_args();
 
-// Load config file
-const config = loadConfigFile(args['config']);
-
-// Override config with command line arguments
-overrideConfigurationWithArguments(config, args);
-
-if (args['headless_login'] && args['headful']) {
-    parser.error('You cannot use headless-login and headful at the same time!');
+// Load config from file if it exists
+let config = {};
+logger.info('Loading config file: ' + args['config']);
+const configFileExists = fs.existsSync(args['config']);
+if (configFileExists) {
+    try {
+        config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+    } catch (error) {
+        logger.error('Failed to read config file!');
+        logger.error(error);
+        process.exit(1);
+    }
+} else {
+    logger.warn('Config file not found! Creating a default one...');
 }
 
-if (args['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
+// Override options from config with options from arguments and set defaults
+for (const option of options) {
+    const key = option['name'].replace(/^-+/g, '').replace(/-/g, '_');
+    if (args[key] === undefined) {
+        if (config[key] === undefined) {
+            const defaultValue = option['default'];
+            if (typeof defaultValue === 'function') {
+                config[key] = defaultValue();
+            } else {
+                config[key] = defaultValue;
+            }
+        }
+    } else {
+        const parse = option['parse'];
+        if (parse === undefined) {
+            config[key] = args[key];
+        } else {
+            config[key] = parse(args[key]);
+        }
+    }
+}
+
+// Save config file if it didn't exist
+if (!configFileExists) {
+    fs.writeFileSync(args['config'], JSON.stringify(config));
+    logger.info('Config saved to ' + args['config']);
+}
+
+// Validate options
+if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
     parser.error("You must provide a username and password to use headless login!");
     process.exit(1);
-}
-
-// Make username lowercase
-if (config.hasOwnProperty('username')) {
-    config['username'] = config['username'].toLowerCase();
-}
-
-if (config['browser_args'] === undefined) {
-    config['browser_args'] = [];
 }
 
 // Add required browser args
@@ -608,11 +598,16 @@ for (const arg of requiredBrowserArgs) {
     }
 }
 
+// Make username lowercase
+if (config['username']) {
+    config['username'] = config['username'].toLowerCase();
+}
+
 (async () => {
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
-        headless: !config['headful'],
+        headless: config['headless'],
         executablePath: config['browser'],
         args: config['browser_args']
     });
@@ -656,7 +651,7 @@ for (const arg of requiredBrowserArgs) {
         logger.info('Logging in...');
 
         // Check if we need to create a new headful browser for the login
-        const needNewBrowser = !config['headful'] && !config['headless_login'];
+        const needNewBrowser = config['headless'] && !config['headless_login'];
         let loginBrowser = browser;
         if (needNewBrowser) {
             loginBrowser = await puppeteer.launch({
@@ -672,7 +667,7 @@ for (const arg of requiredBrowserArgs) {
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
         await page.setCookie(...cookies);
 
-        if (needNewBrowser){
+        if (needNewBrowser) {
             await loginBrowser.close();
         }
     }
@@ -708,7 +703,9 @@ for (const arg of requiredBrowserArgs) {
 
         // Update drop campaigns
         logger.info('Updating drop campaigns...');
-        const campaigns = await getActiveDropCampaigns(twitchCredentials);
+        const campaigns = (await twitch.getDropCampaigns(twitchCredentials)).filter(campaign => {
+            return campaign['status'] === 'ACTIVE';
+        });
         logger.info('Found ' + campaigns.length + ' active campaigns.');
 
         // Add to pending

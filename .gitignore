@@ -1,12 +1,8 @@
 # Node modules
 node_modules
 
-# Crededntials
-credentials
-
 # Browser cookies
 cookies.json
 
 # Config files
-config.json
-config-test.json
+config*.json

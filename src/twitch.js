@@ -53,7 +53,7 @@ async function getDropCampaignDetails(credentials, dropId) {
 async function getDropCampaignsInProgress(credentials) {
     const inventory = await getInventory(credentials);
     const campaigns = inventory['dropCampaignsInProgress'];
-    if (campaigns === null){
+    if (campaigns === null) {
         return [];
     }
     return campaigns;
@@ -119,12 +119,12 @@ async function getDropEnabledStreams(credentials, game) {
         }
     );
     const streams = response['data']['data']['game']['streams'];
-    if (streams === null){
+    if (streams === null) {
         return [];
     }
 
     const result = [];
-    for (const stream of streams['edges']){
+    for (const stream of streams['edges']) {
         result.push({
             'url': 'https://www.twitch.tv/' + stream['node']['broadcaster']['login'],
             'broadcaster_id': stream['node']['broadcaster']['id']
@@ -157,11 +157,32 @@ async function claimDropReward(credentials, dropId) {
             }
         }
     );
-    if ('errors' in response.data){
+    if ('errors' in response.data) {
         throw new Error(JSON.stringify(response.data['errors']));
     }
 }
 
+async function getInventoryDrop(credentials, campaignId, dropId) {
+    const campaigns = await getDropCampaignsInProgress(credentials);
+    for (const campaign of campaigns) {
+        if (campaign['id'] === campaignId) {
+            const drops = campaign['timeBasedDrops'];
+            for (const drop of drops) {
+                if (drop['id'] === dropId) {
+                    return drop;
+                }
+            }
+        }
+    }
+    return null;
+}
+
 module.exports = {
-    getDropCampaigns, getDropCampaignDetails, getDropCampaignsInProgress, getDropEnabledStreams, getInventory, claimDropReward
+    getDropCampaigns,
+    getDropCampaignDetails,
+    getDropCampaignsInProgress,
+    getDropEnabledStreams,
+    getInventory,
+    claimDropReward,
+    getInventoryDrop
 }
