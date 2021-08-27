@@ -210,6 +210,19 @@ async function waitUntilElementRendered(page, element, timeout = 1000 * 30) {
     }
 }
 
+async function getViewerCount(page){
+    const element = await page.$('p[data-a-target="animated-channel-viewers-count"]');
+    const property = await element.getProperty('innerText');
+    const value = await property.jsonValue();
+    return parseInt(value);
+}
+
+async function getUptime(page){
+    const element = await page.$('span.live-time');
+    const property = await element.getProperty('innerText');
+    return await property.jsonValue();
+}
+
 async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop) {
     await page.goto(streamUrl);
 
@@ -244,11 +257,11 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const progressBar = new cliProgress.SingleBar(
         {
             stopOnComplete: true,
-            format: 'Watching stream |{bar}| {value} / {total} minutes'
+            format: 'Watching ' + streamUrl + ' | Viewers: {viewers} | Uptime: {uptime} |{bar}| {value} / {total} minutes'
         },
         cliProgress.Presets.shades_classic
     );
-    progressBar.start(requiredMinutesWatched, 0, {'remaining': requiredMinutesWatched});
+    progressBar.start(requiredMinutesWatched, 0, {'viewers': await getViewerCount(page), 'uptime': await getUptime(page)});
 
     // Check for drop progress
     let lastMinutesWatched = -1;
@@ -270,7 +283,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         } else {
 
             const currentMinutesWatched = inventoryDrop['self']['currentMinutesWatched'];
-            progressBar.update(currentMinutesWatched, {'remaining': requiredMinutesWatched - currentMinutesWatched});
+            progressBar.update(currentMinutesWatched, {'viewers': await getViewerCount(page), 'uptime': await getUptime(page)});
 
             // Check if we have completed the drop
             if (currentMinutesWatched >= requiredMinutesWatched) {
