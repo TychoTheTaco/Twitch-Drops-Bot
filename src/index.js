@@ -359,6 +359,12 @@ async function processCampaign(page, campaign, twitchCredentials) {
             continue;
         }
 
+        // Check if this drop has expired
+        if (new Date() > new Date(Date.parse(drop['endAt']))){
+            logger.info('Drop expired!');
+            continue;
+        }
+
         // Check if this drop is ready to be claimed
         const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
         if (inventoryDrop != null) {
@@ -698,7 +704,7 @@ if (config['username']) {
         }
     }
 
-    const completedCampaigns = new Set();
+    const completedCampaignIds = new Set();
     while (true) {
 
         // Update drop campaigns
@@ -720,7 +726,7 @@ if (config['username']) {
             return indexA < indexB;
         });
         campaigns.forEach(campaign => {
-            if ((config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) && !completedCampaigns.has(campaign['id'])) {
+            if ((config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) && !completedCampaignIds.has(campaign['id'])) {
                 pending.add(campaign);
             }
         });
@@ -743,7 +749,7 @@ if (config['username']) {
 
             try {
                 await processCampaign(page, campaign, twitchCredentials);
-                completedCampaigns.add(campaign['id']);
+                completedCampaignIds.add(campaign['id']);
             } catch (error) {
                 if (error instanceof NoStreamsError) {
                     logger.info('No streams!');
