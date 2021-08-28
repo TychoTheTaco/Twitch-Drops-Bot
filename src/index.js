@@ -243,7 +243,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const progressBar = new cliProgress.SingleBar(
         {
             stopOnComplete: true,
-            format: 'Watching ' + streamUrl + ' | Viewers: {viewers} | Uptime: {uptime} |{bar}| {value} / {total} minutes'
+            format: '\x1B[2AWatching ' + streamUrl + ' | Viewers: {viewers} |\x1B[0K\nUptime: {uptime} |{bar}| {value} / {total} minutes\x1B[0K\n'
         },
         cliProgress.Presets.shades_classic
     );
