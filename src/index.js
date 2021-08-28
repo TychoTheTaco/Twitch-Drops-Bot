@@ -36,6 +36,7 @@ const logger = createLogger({
 });
 
 const twitch = require('./twitch');
+const {StreamPage} = require('./pages/stream');
 
 // Using puppeteer-extra to add plugins
 const puppeteer = require('puppeteer-extra');
@@ -210,19 +211,6 @@ async function waitUntilElementRendered(page, element, timeout = 1000 * 30) {
     }
 }
 
-async function getViewerCount(page){
-    const element = await page.$('p[data-a-target="animated-channel-viewers-count"]');
-    const property = await element.getProperty('innerText');
-    const value = await property.jsonValue();
-    return parseInt(value);
-}
-
-async function getUptime(page){
-    const element = await page.$('span.live-time');
-    const property = await element.getProperty('innerText');
-    return await property.jsonValue();
-}
-
 async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop) {
     await page.goto(streamUrl);
 
@@ -231,25 +219,23 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const element = (await page.$x('//div[@data-a-player-state]'))[0]
     await waitUntilElementRendered(page, element);
 
+    const streamPage = new StreamPage(page);
+
     try {
         // Click "Accept mature content" button
-        const acceptMatureContentButtonSelector = '[data-a-target="player-overlay-mature-accept"]';
-        //await page.waitForSelector(acceptMatureContentButtonSelector);  // Probably don't need to wait since page should be fully loaded at this point
-        await click(page, acceptMatureContentButtonSelector);
+        await streamPage.acceptMatureContent();
         logger.info('Accepted mature content');
     } catch (error) {
         // Ignore errors, the button is probably not there
     }
 
     try {
-        await setLowestStreamQuality(page);
+        await streamPage.setLowestStreamQuality(page);
         logger.info('Set stream to lowest quality');
     } catch (error) {
         logger.error('Failed to set stream to lowest quality!');
         throw error;
     }
-
-    let wasInventoryDropNull = false;
 
     const requiredMinutesWatched = drop['requiredMinutesWatched'];
 
@@ -261,67 +247,66 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         },
         cliProgress.Presets.shades_classic
     );
-    progressBar.start(requiredMinutesWatched, 0, {'viewers': await getViewerCount(page), 'uptime': await getUptime(page)});
+    progressBar.start(requiredMinutesWatched, 0, {'viewers': await streamPage.getViewerCount(), 'uptime': await streamPage.getUptime()});
 
-    // Check for drop progress
+    let wasInventoryDropNull = false;
     let lastMinutesWatched = -1;
+    let lastProgressCheckTime = 0;
+    let currentMinutesWatched = 0;
+
+    // The last time any progress was made on the current drop
+    let lastProgressTime = 0;
+
+    // The maximum number of time to allow no progress
+    const maxNoProgressTime = 1000 * 60 * 2;
+
     while (true) {
 
-        // Check drop progress
-        const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
+        // Check drop progress every minute
+        if (new Date().getTime() - lastProgressCheckTime >= 1000 * 60){
 
-        // Check if the drop is not in our inventory yet. This can happen if we just started the campaign
-        if (inventoryDrop == null) {
+            const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
 
-            // If the drop was null twice in a row, then something is wrong
-            if (wasInventoryDropNull) {
-                progressBar.stop();
-                throw new NoProgressError('Drop was not found in your inventory! Either the campaign has ended or no progress is being made towards the drop.');
+            // Check if the drop is not in our inventory yet. This can happen if we just started the campaign
+            if (inventoryDrop == null) {
+
+                // If the drop was null twice in a row, then something is wrong
+                if (wasInventoryDropNull) {
+                    progressBar.stop();
+                    throw new NoProgressError('Drop was not found in your inventory! Either the campaign has ended or no progress is being made towards the drop.');
+                }
+
+                wasInventoryDropNull = true;
+            } else {
+                currentMinutesWatched = inventoryDrop['self']['currentMinutesWatched'];
             }
 
-            wasInventoryDropNull = true;
-        } else {
-
-            const currentMinutesWatched = inventoryDrop['self']['currentMinutesWatched'];
-            progressBar.update(currentMinutesWatched, {'viewers': await getViewerCount(page), 'uptime': await getUptime(page)});
-
-            // Check if we have completed the drop
-            if (currentMinutesWatched >= requiredMinutesWatched) {
-                progressBar.stop();
-                return;
-            }
-
-            // Make sure drop progress has increased. If it hasn't, then something is wrong.
-            if (currentMinutesWatched <= lastMinutesWatched) {
-                progressBar.stop();
-                throw new NoProgressError();
-            }
-
-            lastMinutesWatched = currentMinutesWatched;
-
+            lastProgressCheckTime = new Date().getTime();
         }
 
-        // Sleep 2 minutes. This should guarantee that at least 1 minute has passed since we last checked the stream progress.
-        await page.waitForTimeout(1000 * 60 * 2);
+        progressBar.update(currentMinutesWatched, {'viewers': await streamPage.getViewerCount(), 'uptime': await streamPage.getUptime()});
+
+        // Check if we have completed the drop
+        if (currentMinutesWatched >= requiredMinutesWatched) {
+            progressBar.stop();
+            return;
+        }
+
+        // Check if any progress was made towards the drop
+        if (currentMinutesWatched > lastMinutesWatched){
+            lastProgressTime = new Date().getTime();
+        }
+
+        lastMinutesWatched = currentMinutesWatched;
+
+        // If we haven't made any progress for a while, something is wrong
+        if (new Date().getTime() - lastProgressTime >= maxNoProgressTime) {
+            progressBar.stop();
+            throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+        }
+
+        await page.waitForTimeout(1000);
     }
-}
-
-async function click(page, selector) {
-    return page.evaluate((selector) => {
-        document.querySelector(selector).click();
-    }, selector);
-}
-
-async function setLowestStreamQuality(page) {
-    const settingsButtonSelector = '[data-a-target="player-settings-button"]';
-    await page.waitForSelector(settingsButtonSelector);
-    await click(page, settingsButtonSelector);
-
-    const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
-    await page.waitForSelector(qualityButtonSelector);
-    await click(page, qualityButtonSelector);
-
-    await click(page, 'div[data-a-target="player-settings-menu"]>div:last-child input');
 }
 
 async function isDropClaimed(credentials, drop) {
@@ -427,7 +412,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
                 await watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop);
             } catch (error) {
                 if (error instanceof NoProgressError) {
-                    logger.warn('No progress was made since last update!');
+                    logger.warn(error.message);
                 } else {
                     logger.error(error);
                 }
@@ -782,3 +767,15 @@ if (config['username']) {
 }).finally(() => {
     process.exit(0);
 });
+
+// Detect console input
+/*const stdin = process.stdin;
+stdin.setRawMode(true);
+stdin.resume();
+stdin.setEncoding('utf-8');
+stdin.on('data', (data) => {
+    switch (data){
+        case 'c':
+            break
+    }
+});*/
