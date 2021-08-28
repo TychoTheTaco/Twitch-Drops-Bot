@@ -6,6 +6,7 @@ const path = require('path');
 
 const prompt = require('prompt');
 const cliProgress = require('cli-progress');
+const {BarFormat} = require('cli-progress').Format;
 const FastPriorityQueue = require('fastpriorityqueue');
 
 // Set up logger
@@ -211,6 +212,10 @@ async function waitUntilElementRendered(page, element, timeout = 1000 * 30) {
     }
 }
 
+function ansiEscape(code) {
+    return '\x1B[' + code;
+}
+
 async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop) {
     await page.goto(streamUrl);
 
@@ -240,13 +245,24 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const requiredMinutesWatched = drop['requiredMinutesWatched'];
 
     // Create progress bar
+    let isFirstOutput = true;
     const progressBar = new cliProgress.SingleBar(
         {
             stopOnComplete: true,
-            format: 'Watching ' + streamUrl + ' | Viewers: {viewers} | Uptime: {uptime} |{bar}| {value} / {total} minutes'
+            format: (options, params, payload) => {
+                let result = 'Watching ' + streamUrl + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n'
+                    + `${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
+                if (isFirstOutput) {
+                    return result;
+                }
+                return ansiEscape('2A') + result;
+            }
         },
         cliProgress.Presets.shades_classic
     );
+    progressBar.on('redraw-post', () => {
+        isFirstOutput = false;
+    });
     progressBar.start(requiredMinutesWatched, 0, {'viewers': await streamPage.getViewerCount(), 'uptime': await streamPage.getUptime()});
 
     let wasInventoryDropNull = false;
