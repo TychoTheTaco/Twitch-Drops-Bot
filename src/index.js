@@ -251,11 +251,11 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             stopOnComplete: true,
             format: (options, params, payload) => {
                 let result = 'Watching ' + streamUrl + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n'
-                    + `${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
+                    + `${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K');
                 if (isFirstOutput) {
                     return result;
                 }
-                return ansiEscape('2A') + result;
+                return ansiEscape('1A') + result;
             }
         },
         cliProgress.Presets.shades_classic
@@ -376,6 +376,12 @@ async function processCampaign(page, campaign, twitchCredentials) {
         // Check if this drop has expired
         if (new Date() > new Date(Date.parse(drop['endAt']))){
             logger.info('Drop expired!');
+            continue;
+        }
+
+        // Check if this has started
+        if (new Date() < new Date(Date.parse(drop['startAt']))){
+            logger.info('Drop has not started yet!');
             continue;
         }
 
