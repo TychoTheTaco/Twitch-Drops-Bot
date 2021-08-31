@@ -235,7 +235,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     }
 
     try {
-        await streamPage.setLowestStreamQuality(page);
+        await streamPage.setLowestStreamQuality();
         logger.info('Set stream to lowest quality');
     } catch (error) {
         logger.error('Failed to set stream to lowest quality!');
@@ -249,13 +249,14 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const progressBar = new cliProgress.SingleBar(
         {
             stopOnComplete: true,
+            clearOnComplete: true,
             format: (options, params, payload) => {
                 let result = 'Watching ' + streamUrl + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n'
-                    + `${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K');
+                    + `${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
                 if (isFirstOutput) {
                     return result;
                 }
-                return ansiEscape('1A') + result;
+                return ansiEscape('2A') + result;
             }
         },
         cliProgress.Presets.shades_classic
@@ -301,6 +302,18 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         }
 
         progressBar.update(currentMinutesWatched, {'viewers': await streamPage.getViewerCount(), 'uptime': await streamPage.getUptime()});
+
+        // Claim community points
+        try{
+            await page.evaluate(() => {
+                const element = document.evaluate('//button[@aria-label="Claim Bonus"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue;
+                if (element.nodeType === Node.ELEMENT_NODE){
+                    element.click();
+                }
+            });
+        } catch (error) {
+            // Ignore errors
+        }
 
         // Check if we have completed the drop
         if (currentMinutesWatched >= requiredMinutesWatched) {
