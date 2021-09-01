@@ -264,7 +264,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     progressBar.on('redraw-post', () => {
         isFirstOutput = false;
     });
-    progressBar.start(requiredMinutesWatched, 0, {'viewers': await streamPage.getViewerCount(), 'uptime': await streamPage.getUptime()});
+    progressBar.start(requiredMinutesWatched, 0, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
 
     let wasInventoryDropNull = false;
     let lastMinutesWatched = -1;
@@ -301,7 +301,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             lastProgressCheckTime = new Date().getTime();
         }
 
-        progressBar.update(currentMinutesWatched, {'viewers': await streamPage.getViewerCount(), 'uptime': await streamPage.getUptime()});
+        progressBar.update(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
 
         // Claim community points
         try{
