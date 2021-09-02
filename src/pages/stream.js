@@ -32,11 +32,12 @@ class StreamPage {
         }
     }
 
-    async getViewerCount(){
+    async getViewersCount(){
         const element = await this._page.$('p[data-a-target="animated-channel-viewers-count"]');
         const property = await element.getProperty('innerText');
         const value = await property.jsonValue();
-        return parseInt(value);
+        const cleanValue = value.replace(/[.,]/g, '');
+        return parseInt(cleanValue);
     }
 
     async getUptime(){
