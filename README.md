@@ -42,4 +42,4 @@ Below is a list of all available options.
 | <code>&#8209;&#8209;headless&nbsp;\<boolean\></code> | `headless` | Toggle headless mode. If false, this will display the browser at all times. Useful for debugging. | `true` |
 | <code>&#8209;&#8209;interval&nbsp;\<minutes\></code> | `interval` | The number of minutes to wait between checking for new drop campaigns.| `15` |
 | <code>&#8209;&#8209;browser&#8209;args&nbsp;\<args\></code> | `browser_args` | Extra arguments to pass to the browser instance. | `[]` |
-| <code>&#8209;&#8209;update&#8209;games</code> | | Updates `games.csv` with current campaigns games and exits after it's done | |
+| <code>&#8209;&#8209;update&#8209;games</code> | `update_games` | Updates `games.csv` with current campaigns games and exits after it's done. | `false` |
