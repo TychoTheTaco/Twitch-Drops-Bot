@@ -494,6 +494,33 @@ function areCookiesValid(cookies, username) {
     return isOauthTokenFound;
 }
 
+function updateGames(campaigns){
+    logger.info('Parsing games...');
+    const gamesPath = './games.csv'
+    const oldGames = fs
+        .readFileSync(gamesPath, {encoding: 'utf-8'})
+        .split('\r\n')
+        .slice(1)  // Ignore header row
+        .filter(game => !!game)
+        .map(game => game.split(','));
+    const newGames = [
+        ...oldGames,
+        ...campaigns.map(campaign => [campaign['game']['displayName'],campaign['game']['id']])
+    ];
+    const games = newGames
+        .filter((game, index) => newGames.findIndex(g => g[1] === game[1]) >= index)
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    // TODO: ask interactively if users wants to add some to the config file?
+    const toWrite = games
+        .map(game => game.join(','))
+        .join('\r\n');
+    fs.writeFileSync(
+        gamesPath,
+        'Name,ID\r\n' + toWrite + '\r\n',
+        {encoding: 'utf-8'});
+    logger.info('Games list updated');
+}
+
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
     {
@@ -558,6 +585,13 @@ const options = [
         default: [],
         parse: (x) => {
             return x.split(',').filter(x => x.length > 0);
+        }
+    },
+    {
+        name: '--update-games',
+        default: false,
+        argparse: {
+            action: 'store_true',
         }
     }
 ]
@@ -746,6 +780,11 @@ if (config['username']) {
             return campaign['status'] === 'ACTIVE';
         });
         logger.info('Found ' + campaigns.length + ' active campaigns.');
+
+        if (config['update_games'] === true) {
+            updateGames(campaigns)
+            process.exit(0)
+        }
 
         // Add to pending
         const pending = new FastPriorityQueue((a, b) => {
