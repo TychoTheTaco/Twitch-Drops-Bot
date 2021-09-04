@@ -495,29 +495,30 @@ function areCookiesValid(cookies, username) {
 }
 
 function updateGames(campaigns){
-    logger.info('Parsing games...')
+    logger.info('Parsing games...');
     const gamesPath = './games.csv'
     const oldGames = fs
         .readFileSync(gamesPath, {encoding: 'utf-8'})
         .split('\r\n')
+        .slice(1)  // Ignore header row
         .filter(game => !!game)
-        .map(game => game.split(','))
+        .map(game => game.split(','));
     const newGames = [
         ...oldGames,
         ...campaigns.map(campaign => [campaign['game']['displayName'],campaign['game']['id']])
-    ]
+    ];
     const games = newGames
         .filter((game, index) => newGames.findIndex(g => g[1] === game[1]) >= index)
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .sort((a, b) => a[0].localeCompare(b[0]));
     // TODO: ask interactively if users wants to add some to the config file?
     const toWrite = games
         .map(game => game.join(','))
-        .join('\r\n')
+        .join('\r\n');
     fs.writeFileSync(
-        'games.csv',
-        'Name,ID\r\n'.concat(toWrite).concat('\r\n'),
+        gamesPath,
+        'Name,ID\r\n' + toWrite + '\r\n',
         {encoding: 'utf-8'});
-    logger.info('Games list updated')
+    logger.info('Games list updated');
 }
 
 // Options defined here can be configured in either the config file or as command-line arguments
@@ -591,8 +592,8 @@ const options = [
         default: false,
         argparse: {
             action: 'store_true',
-        },
-    },
+        }
+    }
 ]
 
 // Parse arguments
