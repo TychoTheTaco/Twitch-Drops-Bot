@@ -600,6 +600,24 @@ const options = [
 const parser = new ArgumentParser();
 parser.add_argument('--config', '-c', {default: 'config.json'});
 for (const option of options) {
+
+    // Both 'store_true' and 'store_false' actions automatically create a default of false/true when no argument is
+    // passed. This interferes with our custom default argument handling because we expect to get 'undefined' when no
+    // argument is passed. Changing the actions to 'store_const' avoids this problem.
+    const argparseOptions = option['argparse'];
+    if (argparseOptions !== undefined){
+        switch (argparseOptions['action']){
+            case 'store_true':
+                argparseOptions['action'] = 'store_const';
+                argparseOptions['const'] = true;
+                break
+            case 'store_false':
+                argparseOptions['action'] = 'store_const';
+                argparseOptions['const'] = false;
+                break
+        }
+    }
+
     if (option['alias']) {
         parser.add_argument(option['name'], option['alias'], option['argparse'] || {});
     } else {
