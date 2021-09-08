@@ -59,6 +59,10 @@ class NoProgressError extends Error {
 
 }
 
+class HighPriorityError extends Error {
+
+}
+
 function onBrowserOrPageClosed() {
     logger.info('Browser was disconnected or tab was closed! Exiting...');
     process.exit(1);
@@ -216,7 +220,36 @@ function ansiEscape(code) {
     return '\x1B[' + code;
 }
 
-async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop) {
+let progressBar = null;
+let payload = null;
+let total = null;
+let currentProgress = null;
+let isFirstOutput = true;
+
+function startProgressBar(t = total, p = payload){
+    isFirstOutput = true;
+    total = t;
+    payload = p;
+    if (progressBar !== null){
+        progressBar.start(t, 0, p);
+    }
+}
+
+function updateProgressBar(c = currentProgress, p = payload){
+    currentProgress = c;
+    payload = p;
+    if (progressBar !== null){
+        progressBar.update(c, p);
+    }
+}
+
+function stopProgressBar(){
+    if (progressBar !== null){
+        progressBar.stop();
+    }
+}
+
+async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaignId, drop) {
     await page.goto(streamUrl);
 
     // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
@@ -225,6 +258,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     await waitUntilElementRendered(page, element);
 
     const streamPage = new StreamPage(page);
+    await streamPage.waitForLoad();
 
     try {
         // Click "Accept mature content" button
@@ -245,10 +279,8 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     const requiredMinutesWatched = drop['requiredMinutesWatched'];
 
     // Create progress bar
-    let isFirstOutput = true;
-    const progressBar = new cliProgress.SingleBar(
+    progressBar = new cliProgress.SingleBar(
         {
-            stopOnComplete: true,
             clearOnComplete: true,
             format: (options, params, payload) => {
                 let result = 'Watching ' + streamUrl + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n'
@@ -264,7 +296,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     progressBar.on('redraw-post', () => {
         isFirstOutput = false;
     });
-    progressBar.start(requiredMinutesWatched, 0, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
+    startProgressBar(requiredMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
 
     let wasInventoryDropNull = false;
     let lastMinutesWatched = -1;
@@ -282,14 +314,14 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
         // Check drop progress every minute
         if (new Date().getTime() - lastProgressCheckTime >= 1000 * 60){
 
-            const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
+            const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaignId, drop['id']);
 
             // Check if the drop is not in our inventory yet. This can happen if we just started the campaign
             if (inventoryDrop == null) {
 
                 // If the drop was null twice in a row, then something is wrong
                 if (wasInventoryDropNull) {
-                    progressBar.stop();
+                    stopProgressBar();
                     throw new NoProgressError('Drop was not found in your inventory! Either the campaign has ended or no progress is being made towards the drop.');
                 }
 
@@ -301,7 +333,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             lastProgressCheckTime = new Date().getTime();
         }
 
-        progressBar.update(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
+        updateProgressBar(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
 
         // Claim community points
         try{
@@ -317,7 +349,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
         // Check if we have completed the drop
         if (currentMinutesWatched >= requiredMinutesWatched) {
-            progressBar.stop();
+            stopProgressBar();
             return;
         }
 
@@ -330,8 +362,15 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
 
         // If we haven't made any progress for a while, something is wrong
         if (new Date().getTime() - lastProgressTime >= maxNoProgressTime) {
-            progressBar.stop();
+            stopProgressBar();
             throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+        }
+
+        // Check if there is a higher priority stream we should be watching
+        if (activeDropCampaignIds.peek() !== currentDropCampaignId){
+            stopProgressBar();
+            logger.info('Higher priority campaign found: ' + getDropCampaignFullName(activeDropCampaignIds.peek()));
+            throw new HighPriorityError();
         }
 
         await page.waitForTimeout(1000);
@@ -372,9 +411,9 @@ async function isDropClaimed(credentials, drop) {
     return false;
 }
 
-async function processCampaign(page, campaign, twitchCredentials) {
+async function processCampaign(page, campaignId, twitchCredentials) {
     // Get all drops for this campaign
-    const details = await twitch.getDropCampaignDetails(twitchCredentials, campaign['id']);
+    const details = await twitch.getDropCampaignDetails(twitchCredentials, campaignId);
     const drops = details['timeBasedDrops'];
 
     for (const drop of drops) {
@@ -399,7 +438,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
         }
 
         // Check if this drop is ready to be claimed
-        const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']);
+        const inventoryDrop = await twitch.getInventoryDrop(twitchCredentials, campaignId, drop['id']);
         if (inventoryDrop != null) {
             if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
                 await claimDrop(twitchCredentials, page, inventoryDrop);
@@ -414,7 +453,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
         while (true) {
 
             // Get a list of active streams that have drops enabled
-            let streams = await twitch.getDropEnabledStreams(twitchCredentials, campaign['game']['displayName']);
+            let streams = await twitch.getDropEnabledStreams(twitchCredentials, getDropCampaignById(campaignId)['game']['displayName']);
 
             // Filter out streams that are not in the allowed channels list, if any
             const channels = details['allow']['channels'];
@@ -444,10 +483,12 @@ async function processCampaign(page, campaign, twitchCredentials) {
             const streamUrl = streams[0]['url'];
             logger.info('Watching stream: ' + streamUrl);
             try {
-                await watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaign, drop);
+                await watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials, campaignId, drop);
             } catch (error) {
                 if (error instanceof NoProgressError) {
                     logger.warn(error.message);
+                } else if (error instanceof HighPriorityError) {
+                    throw error;
                 } else {
                     logger.error(error);
                 }
@@ -465,7 +506,7 @@ async function processCampaign(page, campaign, twitchCredentials) {
             }
 
             // Claim the drop
-            await claimDrop(twitchCredentials, page, await twitch.getInventoryDrop(twitchCredentials, campaign['id'], drop['id']));
+            await claimDrop(twitchCredentials, page, await twitch.getInventoryDrop(twitchCredentials, campaignId, drop['id']));
 
             break;
         }
@@ -694,6 +735,84 @@ if (config['username']) {
     config['username'] = config['username'].toLowerCase();
 }
 
+const completedCampaignIds = new Set();
+
+let currentDropCampaignId = null;
+
+const dropCampaignMap = {};
+
+const activeDropCampaignIds = new FastPriorityQueue((a, b) => {
+
+    a = getDropCampaignById(a);
+    b = getDropCampaignById(b);
+
+    // Sort campaigns based on order of game IDs specified in config
+    const indexA = config['games'].indexOf(a['game']['id']);
+    const indexB = config['games'].indexOf(b['game']['id']);
+    if (indexA === -1 && indexB !== -1) {
+        return false;
+    } else if (indexA !== -1 && indexB === -1) {
+        return true;
+    } else if (indexA === indexB) {  // Both games have the same priority. Give priority to the one that ends first.
+        const endTimeA = Date.parse(a['endAt']);
+        const endTimeB = Date.parse(b['endAt']);
+        return endTimeA < endTimeB;
+    }
+    return indexA < indexB;
+});
+
+function getDropCampaignFullName(campaignId){
+    const campaign = getDropCampaignById(campaignId);
+    return campaign['game']['displayName'] + ' ' + campaign['name'];
+}
+
+function getDropCampaignById(campaignId){
+    return dropCampaignMap[campaignId];
+}
+
+async function updateDropCampaigns(twitchCredentials){
+    stopProgressBar();
+
+    logger.info('Updating drop campaigns...');
+    const campaigns = (await twitch.getDropCampaigns(twitchCredentials)).filter(campaign => {
+        return campaign['status'] === 'ACTIVE';
+    });
+    logger.info('Found ' + campaigns.length + ' active campaigns.');
+
+    activeDropCampaignIds.removeMany(() => true);
+
+    // Add to pending
+    campaigns.forEach(campaign => {
+
+        const dropCampaignId = campaign['id'];
+        dropCampaignMap[dropCampaignId] = campaign;
+
+        if (config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) {
+
+            // Check if this campaign is finished already
+            if (completedCampaignIds.has(dropCampaignId)){
+                return;
+            }
+
+            // Make sure Twitch account is linked
+            if (!campaign['self']['isAccountConnected']) {
+                logger.warn('Twitch account not linked for drop campaign: ' + getDropCampaignFullName(dropCampaignId));
+                return;
+            }
+
+            activeDropCampaignIds.add(dropCampaignId);
+        }
+    });
+    logger.info('Found ' + activeDropCampaignIds.size + ' pending campaigns.');
+    activeDropCampaignIds.forEach((value, index) => {
+        logger.info(index + ') ' + getDropCampaignFullName(value));
+    });
+
+    startProgressBar();
+
+    setTimeout(updateDropCampaigns, 1000 * 60 * config['interval'], twitchCredentials);
+}
+
 (async () => {
 
     // Start browser and open a new tab.
@@ -789,68 +908,47 @@ if (config['username']) {
         }
     }
 
-    const completedCampaignIds = new Set();
+    await updateDropCampaigns(twitchCredentials);
+
+    if (config['update_games'] === true) {
+        updateGames(Object.values(dropCampaignMap));
+        process.exit(0);
+    }
+
     while (true) {
 
-        // Update drop campaigns
-        logger.info('Updating drop campaigns...');
-        const campaigns = (await twitch.getDropCampaigns(twitchCredentials)).filter(campaign => {
-            return campaign['status'] === 'ACTIVE';
-        });
-        logger.info('Found ' + campaigns.length + ' active campaigns.');
+        let highPriority = false;
 
-        if (config['update_games'] === true) {
-            updateGames(campaigns)
-            process.exit(0)
-        }
-
-        // Add to pending
-        const pending = new FastPriorityQueue((a, b) => {
-            const indexA = config['games'].indexOf(a['game']['id']);
-            const indexB = config['games'].indexOf(b['game']['id']);
-            if (indexA === -1 && indexB !== -1) {
-                return false;
-            } else if (indexA !== -1 && indexB === -1) {
-                return true;
-            }
-            return indexA < indexB;
-        });
-        campaigns.forEach(campaign => {
-            if ((config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) && !completedCampaignIds.has(campaign['id'])) {
-                pending.add(campaign);
-            }
-        });
-        logger.info('Found ' + pending.size + ' pending campaigns.');
-        pending.forEach((value, index) => {
-            logger.info(index + ') ' + value['game']['displayName'] + ' ' + value['name']);
-        });
-
-        while (!pending.isEmpty()) {
+        while (!activeDropCampaignIds.isEmpty()) {
 
             // Get campaign from queue
-            const campaign = pending.poll();
-            logger.info('Processing campaign: ' + campaign['game']['displayName'] + ' ' + campaign['name']);
-
-            // Make sure Twitch account is linked
-            if (!campaign['self']['isAccountConnected']) {
-                logger.warn('Twitch account not linked! Skipping this campaign.');
-                continue;
-            }
+            currentDropCampaignId = activeDropCampaignIds.peek();
+            logger.info('Processing campaign: ' + getDropCampaignFullName(currentDropCampaignId));
 
             try {
-                await processCampaign(page, campaign, twitchCredentials);
-                completedCampaignIds.add(campaign['id']);
+                await processCampaign(page, currentDropCampaignId, twitchCredentials);
+                completedCampaignIds.add(currentDropCampaignId);
             } catch (error) {
                 if (error instanceof NoStreamsError) {
                     logger.info('No streams!');
+                } else if (error instanceof HighPriorityError) {
+                    highPriority = true;
+                    break;
                 } else {
                     logger.error(error);
+                }
+            } finally {
+                if (!highPriority){
+                    activeDropCampaignIds.poll();
                 }
             }
         }
 
-        logger.info('Sleeping for ' + config['interval'] + ' minutes...');
-        await sleep(1000 * 60 * config['interval']);
+        if (!highPriority){
+            logger.info('Sleeping for ' + config['interval'] + ' minutes...');
+            await sleep(1000 * 60 * config['interval']);
+        }
+
     }
 
 })().catch(error => {

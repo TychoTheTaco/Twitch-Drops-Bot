@@ -12,6 +12,12 @@ class StreamPage {
         this._page = page;
     }
 
+    async waitForLoad(){
+        // Wait for the viewer count and uptime to be visible
+        await this._page.waitForSelector('p[data-a-target="animated-channel-viewers-count"]');
+        await this._page.waitForSelector('span.live-time');
+    }
+
     async acceptMatureContent(){
         await click(this._page, '[data-a-target="player-overlay-mature-accept"]');
     }
