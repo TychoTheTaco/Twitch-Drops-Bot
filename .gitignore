@@ -2,7 +2,7 @@
 node_modules
 
 # Browser cookies
-cookies.json
+cookies-*.json
 
 # Config files
 config*.json

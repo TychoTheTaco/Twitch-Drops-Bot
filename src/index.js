@@ -828,7 +828,7 @@ async function updateDropCampaigns(twitchCredentials){
     page.on('close', onBrowserOrPageClosed);
 
     // Check if we have saved cookies
-    const cookiesPath = './cookies.json';
+    const cookiesPath = `./cookies-${config['username']}.json`;
     let requireLogin = false;
     if (fs.existsSync(cookiesPath)) {
 
