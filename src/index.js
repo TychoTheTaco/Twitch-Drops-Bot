@@ -957,15 +957,3 @@ async function updateDropCampaigns(twitchCredentials){
 }).finally(() => {
     process.exit(0);
 });
-
-// Detect console input
-/*const stdin = process.stdin;
-stdin.setRawMode(true);
-stdin.resume();
-stdin.setEncoding('utf-8');
-stdin.on('data', (data) => {
-    switch (data){
-        case 'c':
-            break
-    }
-});*/
