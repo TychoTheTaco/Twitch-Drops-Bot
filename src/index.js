@@ -681,6 +681,16 @@ const options = [
         argparse: {
             action: 'store_true',
         }
+    },
+    {
+        name: '--watch_unlisted_games',
+        default: false,
+        argparse: {
+            action: 'store_true',
+        },
+        parse: (x) => {
+            return x === 'true';
+        }
     }
 ];
 
@@ -940,7 +950,7 @@ function getDropCampaignById(campaignId) {
             const dropCampaignId = campaign['id'];
             dropCampaignMap[dropCampaignId] = campaign;
 
-            if (config['games'].length === 0 || config['games'].includes(campaign['game']['id'])) {
+            if (config['games'].length === 0 || config['games'].includes(campaign['game']['id']) || config['watch_unlisted_games']) {
 
                 // Check if this campaign is finished already
                 if (completedCampaignIds.has(dropCampaignId)) {
