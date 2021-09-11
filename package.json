@@ -15,13 +15,12 @@
     "argparse": "^2.0.1",
     "axios": "^0.21.1",
     "cli-progress": "^3.9.0",
-    "fastpriorityqueue": "^0.7.1",
-    "lodash": "^4.17.21",
     "prompt": "^1.1.0",
     "puppeteer": "^10.0.0",
     "puppeteer-extra": "^3.1.18",
-    "puppeteer-extra-plugin-adblocker": "^2.11.11",
     "puppeteer-extra-plugin-stealth": "^2.7.8",
+    "sorted-array-type": "^1.2.1",
+    "wait-notify": "^1.0.3",
     "winston": "^3.3.3"
   }
 }
