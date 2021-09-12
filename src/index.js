@@ -10,36 +10,11 @@ const {BarFormat} = require('cli-progress').Format;
 const WaitNotify = require('wait-notify');
 const SortedArray = require('sorted-array-type');
 
-// Set up logger
-const {transports, createLogger, format} = require('winston');
-const logger = createLogger({
-    format: format.combine(
-        format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
-        {
-            transform(info, opts) {
-                const message = info.message;
-                if (message instanceof Error) {
-                    info.message = message.stack.replace(/^Error/g, message.constructor.name);
-                }
-                return info;
-            }
-        },
-        format.printf(info => {
-            let result = `[${info.timestamp}] [${info.level}] ${info.message}`;
-            if (info.stack) {
-                result += ` ${info.stack}`;
-            }
-            return result;
-        })
-    ),
-    transports: [
-        new transports.Console()
-    ]
-});
-
+const logger = require('./logger');
 const twitch = require('./twitch');
 const {StreamPage} = require('./pages/stream');
 const {TwitchDropsWatchdog} = require('./watchdog');
+const {StringOption, BooleanOption, IntegerOption, ListOption} = require('./options');
 
 // Using puppeteer-extra to add plugins
 const puppeteer = require('puppeteer-extra');
@@ -68,122 +43,6 @@ class HighPriorityError extends Error {
 function onBrowserOrPageClosed() {
     logger.info('Browser was disconnected or tab was closed! Exiting...');
     process.exit(1);
-}
-
-async function login(config, browser) {
-    const page = await browser.newPage();
-
-    // Automatically stop this program if the page is closed
-    page.on('close', onBrowserOrPageClosed);
-
-    // Go to login page
-    await page.goto('https://www.twitch.tv/login');
-
-    // Enter username
-    const username = config['username'];
-    if (username !== undefined) {
-        await page.focus('#login-username');
-        await page.keyboard.type(username);
-    }
-
-    // Enter password
-    const password = config['password'];
-    if (password !== undefined) {
-        await page.focus('#password-input');
-        await page.keyboard.type(password);
-    }
-
-    // Click login button
-    if (username !== undefined && password !== undefined) {
-        await page.click('[data-a-target="passport-login-button"]');
-    }
-
-    if (config['headless_login']) {
-        while (true) {
-
-            // TODO: This loop and try/catch statements could be replaced with Promise.any(), but it seems that Node.js 14 does not support it.
-
-            // Check for email verification code
-            try {
-                logger.info('Checking for email verification...');
-                await page.waitForXPath('//*[contains(text(), "please enter the 6-digit code we sent")]');
-                logger.info('Email verification found.');
-
-                // Prompt user for code
-                prompt.start();
-                const result = await asyncPrompt(['code']);
-                const code = result['code'];
-                prompt.stop();
-
-                // Enter code
-                const first_input = await page.waitForXPath('(//input)[1]');
-                await first_input.click();
-                await page.keyboard.type(code);
-                break;
-            } catch (error) {
-                if (error instanceof TimeoutError) {
-                    logger.info('Email verification not found.');
-                } else {
-                    logger.error(error);
-                }
-            }
-
-            // Check for 2FA code
-            try {
-                logger.info('Checking for 2FA verification...');
-                await page.waitForXPath('//*[contains(text(), "Enter the code found in your authenticator app")]');
-                logger.info('2FA verification found.');
-
-                // Prompt user for code
-                prompt.start();
-                const result = await asyncPrompt(['code']);
-                const code = result['code'];
-                prompt.stop();
-
-                // Enter code
-                const first_input = await page.waitForXPath('(//input[@type="text"])');
-                await first_input.click();
-                await page.keyboard.type(code);
-
-                // Click submit
-                const button = await page.waitForXPath('//button[@target="submit_button"]');
-                await button.click();
-
-                break;
-            } catch (error) {
-                if (error instanceof TimeoutError) {
-                    logger.info('2FA verification not found.');
-                } else {
-                    logger.error(error);
-                }
-            }
-
-            logger.info('No extra verification found!');
-            break;
-        }
-    }
-
-    // Wait for redirect to main Twitch page. The timeout is unlimited here because we may be prompted for
-    // additional authentication.
-    await page.waitForNavigation({timeout: 0});
-
-    const cookies = await page.cookies();
-
-    page.off('close', onBrowserOrPageClosed);
-    await page.close();
-
-    return cookies;
-}
-
-async function asyncPrompt(schema) {
-    return new Promise((resolve, reject) => {
-        prompt.get(schema, (error, result) => {
-            if (error) {
-                reject(error);
-            }
-            resolve(result);
-        });
-    });
 }
 
 async function claimDrop(credentials, drop) {
@@ -292,9 +151,10 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     progressBar = new cliProgress.SingleBar(
         {
             clearOnComplete: true,
+            barsize: 20,
             format: (options, params, payload) => {
                 let result = 'Watching ' + streamUrl + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n'
-                    + `${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
+                    + `${payload['drop_name']} ${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
                 if (isFirstOutput) {
                     return result;
                 }
@@ -306,7 +166,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     progressBar.on('redraw-post', () => {
         isFirstOutput = false;
     });
-    startProgressBar(requiredMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
+    startProgressBar(requiredMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: drop['name']});
 
     let wasInventoryDropNull = false;
     let lastMinutesWatched = -1;
@@ -345,7 +205,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             lastProgressCheckTime = new Date().getTime();
         }
 
-        updateProgressBar(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime()});
+        updateProgressBar(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: drop['name']});
 
         // Claim community points
         try {
@@ -611,115 +471,37 @@ function updateGames(campaigns) {
 
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
-    {
-        name: '--username',
-        alias: '-u'
-    },
-    {
-        name: '--password',
-        alias: '-p'
-    },
-    {
-        name: '--browser',
-        default: () => {
-            switch (process.platform) {
-                case "win32":
-                    return path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
+    new StringOption('--username', '-u'),
+    new StringOption('--password', '-p'),
+    new StringOption('--browser', '-b', () => {
+        switch (process.platform) {
+            case "win32":
+                return path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
 
-                case "linux":
-                    return path.join("google-chrome");
+            case "linux":
+                return path.join("google-chrome");
 
-                default:
-                    return '';
-            }
+            default:
+                return '';
         }
-    },
-    {
-        name: '--games',
-        default: [],
-        parse: (x) => {
-            return x.split(',').filter(x => x.length > 0);
-        }
-    },
-    {
-        name: '--headless',
-        default: true,
-        parse: (x) => {
-            return x === 'true';
-        }
-    },
-    {
-        name: '--headless-login',
-        default: false,
-        argparse: {
-            action: 'store_true',
-        },
-        parse: (x) => {
-            return x === 'true';
-        }
-    },
-    {
-        name: '--interval',
-        default: 15,
-        argparse: {
-            type: 'int'
-        },
-        parse: (x) => {
-            return parseInt(x);
-        }
-    },
-    {
-        name: '--browser-args',
-        default: [],
-        parse: (x) => {
-            return x.split(',').filter(x => x.length > 0);
-        }
-    },
-    {
-        name: '--update-games',
-        default: false,
-        argparse: {
-            action: 'store_true',
-        }
-    },
-    {
-        name: '--watch_unlisted_games',
-        default: false,
-        argparse: {
-            action: 'store_true',
-        },
-        parse: (x) => {
-            return x === 'true';
-        }
-    }
+    }),
+    new ListOption('--games', '-g', []),
+    new BooleanOption('--headless', null, true, false),
+    new BooleanOption('--headless-login', null, false),
+    new IntegerOption('--interval', '-i', 15),
+    new ListOption('--browser-args', null, []),
+    new BooleanOption('--update-games', null, false),
+    new BooleanOption('--watch-unlisted-games', null, false)
 ];
 
 // Parse arguments
 const parser = new ArgumentParser();
 parser.add_argument('--config', '-c', {default: 'config.json'});
 for (const option of options) {
-
-    // Both 'store_true' and 'store_false' actions automatically create a default of false/true when no argument is
-    // passed. This interferes with our custom default argument handling because we expect to get 'undefined' when no
-    // argument is passed. Changing the actions to 'store_const' avoids this problem.
-    const argparseOptions = option['argparse'];
-    if (argparseOptions !== undefined) {
-        switch (argparseOptions['action']) {
-            case 'store_true':
-                argparseOptions['action'] = 'store_const';
-                argparseOptions['const'] = true;
-                break
-            case 'store_false':
-                argparseOptions['action'] = 'store_const';
-                argparseOptions['const'] = false;
-                break
-        }
-    }
-
-    if (option['alias']) {
-        parser.add_argument(option['name'], option['alias'], option['argparse'] || {});
+    if (option.alias) {
+        parser.add_argument(option.name, option.alias, option.argparseOptions);
     } else {
-        parser.add_argument(option['name'], option['argparse'] || {});
+        parser.add_argument(option.name, option.argparseOptions);
     }
 }
 const args = parser.parse_args();
@@ -745,7 +527,7 @@ for (const option of options) {
     const key = option['name'].replace(/^-+/g, '').replace(/-/g, '_');
     if (args[key] === undefined) {
         if (config[key] === undefined) {
-            const defaultValue = option['default'];
+            const defaultValue = option.defaultValue;
             if (typeof defaultValue === 'function') {
                 config[key] = defaultValue();
             } else {
@@ -753,11 +535,10 @@ for (const option of options) {
             }
         }
     } else {
-        const parse = option['parse'];
-        if (parse === undefined) {
-            config[key] = args[key];
+        if (typeof args[key] === 'string') {
+            config[key] = option.parse(args[key]);
         } else {
-            config[key] = parse(args[key]);
+            config[key] = args[key];
         }
     }
 }
@@ -894,7 +675,7 @@ function getDropCampaignById(campaignId) {
             });
         }
 
-        const cookies = await login(config, loginBrowser);
+        const cookies = await twitch.login(loginBrowser, config['username'], config['password'], config['headless_login']);
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
         await page.setCookie(...cookies);
 
