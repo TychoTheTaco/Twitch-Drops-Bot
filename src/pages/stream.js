@@ -23,7 +23,7 @@ class StreamPage {
     }
 
     async setLowestStreamQuality(){
-        await this._clickSettingsButton();
+        await this.#clickSettingsButton();
 
         const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
         await this._page.waitForSelector(qualityButtonSelector);
@@ -34,7 +34,7 @@ class StreamPage {
         if (!await (await lowestQualityButton.getProperty('checked')).jsonValue()){
             await click(this._page, lowestQualityButtonSelector);
         } else {
-            await this._clickSettingsButton();
+            await this.#clickSettingsButton();
         }
     }
 
@@ -53,7 +53,7 @@ class StreamPage {
     }
 
     async openVideoStats(){
-        await this._clickSettingsButton();
+        await this.#clickSettingsButton();
 
         const advancedButtonSelector = '[data-a-target="player-settings-menu-item-advanced"]';
         await this._page.waitForSelector(advancedButtonSelector);
@@ -65,7 +65,7 @@ class StreamPage {
             await click(this._page, videoStatsButtonSelector);
         }
 
-        await this._clickSettingsButton();
+        await this.#clickSettingsButton();
     }
 
     async getPlaybackBitrate(){
@@ -73,7 +73,25 @@ class StreamPage {
         return await (await (await this._page.waitForXPath(playbackBitrateXpath)).getProperty('innerText')).jsonValue();
     }
 
-    async _clickSettingsButton(){
+    async getDropProgress(){
+        const dropProgressBarXpath = '//a[@data-a-target="inventory-dropdown-link"]//div[@data-a-target="tw-progress-bar-animation"]';
+
+        // Check if the progress bar exists. If it doesn't, we probably need to open the user menu.
+        if ((await this._page.$x(dropProgressBarXpath)).length === 0){
+
+            // Open the user menu. We can leave it open to avoid having to reopen it every time.
+            const menuToggleButtonSelector = 'button[data-a-target="user-menu-toggle"]';
+            await click(this._page, menuToggleButtonSelector);
+
+        }
+
+        // Return drop progress as a percentage between 0 and 1
+        return await (await this._page.waitForXPath(dropProgressBarXpath)).evaluate((element) => {
+            return parseInt(element.getAttribute('value')) / 100;
+        });
+    }
+
+    async #clickSettingsButton(){
         const settingsButtonSelector = '[data-a-target="player-settings-button"]';
         await this._page.waitForSelector(settingsButtonSelector);
         await click(this._page, settingsButtonSelector);

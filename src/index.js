@@ -4,7 +4,6 @@ const fs = require('fs');
 const {ArgumentParser} = require('argparse');
 const path = require('path');
 
-const prompt = require('prompt');
 const cliProgress = require('cli-progress');
 const {BarFormat} = require('cli-progress').Format;
 const WaitNotify = require('wait-notify');
@@ -18,7 +17,6 @@ const {StringOption, BooleanOption, IntegerOption, ListOption} = require('./opti
 
 // Using puppeteer-extra to add plugins
 const puppeteer = require('puppeteer-extra');
-const TimeoutError = require("puppeteer").errors.TimeoutError;
 
 // Add stealth plugin
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
