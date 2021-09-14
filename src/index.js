@@ -164,7 +164,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
     progressBar.on('redraw-post', () => {
         isFirstOutput = false;
     });
-    startProgressBar(requiredMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: drop['name']});
+    startProgressBar(requiredMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: getDropName(drop)});
 
     let wasInventoryDropNull = false;
     let lastMinutesWatched = -1;
@@ -203,7 +203,7 @@ async function watchStreamUntilDropCompleted(page, streamUrl, twitchCredentials,
             lastProgressCheckTime = new Date().getTime();
         }
 
-        updateProgressBar(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: drop['name']});
+        updateProgressBar(currentMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: getDropName(drop)});
 
         // Claim community points
         try {
@@ -328,13 +328,17 @@ async function getActiveStreams(campaignId, twitchCredentials, details) {
     return streams;
 }
 
+function getDropName(drop){
+    return drop['benefitEdges'][0]['benefit']['name'];
+}
+
 async function processCampaign(page, campaignId, twitchCredentials) {
     // Get all drops for this campaign
     const details = await twitch.getDropCampaignDetails(twitchCredentials, campaignId);
     const drops = details['timeBasedDrops'];
 
     for (const drop of drops) {
-        logger.info('Drop: ' + drop['benefitEdges'][0]['benefit']['name']);
+        logger.info('Drop: ' + getDropName(drop));
 
         // Check if we already claimed this drop
         if (await isDropClaimed(twitchCredentials, drop)) {
