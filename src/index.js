@@ -333,29 +333,13 @@ function getDropName(drop){
 }
 
 async function processCampaign(page, campaignId, twitchCredentials) {
-    // Get all drops for this campaign
     const details = await twitch.getDropCampaignDetails(twitchCredentials, campaignId);
-    const drops = details['timeBasedDrops'];
 
-    for (const drop of drops) {
-        logger.info('Drop: ' + getDropName(drop));
+    while (true) {
 
-        // Check if we already claimed this drop
-        if (await isDropClaimed(twitchCredentials, drop)) {
-            logger.info('Drop already claimed');
-            continue;
-        }
-
-        // Check if this drop has expired
-        if (new Date() > new Date(Date.parse(drop['endAt']))) {
-            logger.info('Drop expired!');
-            continue;
-        }
-
-        // Check if this has started
-        if (new Date() < new Date(Date.parse(drop['startAt']))) {
-            logger.info('Drop has not started yet!');
-            continue;
+        const drop = await getFirstUnclaimedDrop(campaignId, twitchCredentials);
+        if (drop === null){
+            break;
         }
 
         // Check if this drop is ready to be claimed
@@ -419,7 +403,6 @@ async function processCampaign(page, campaignId, twitchCredentials) {
 
             break;
         }
-
     }
 }
 
