@@ -44,3 +44,4 @@ Below is a list of all available options.
 | <code>&#8209;&#8209;browser&#8209;args&nbsp;\<args\></code> | `browser_args` | Extra arguments to pass to the browser instance. | `[]` |
 | <code>&#8209;&#8209;update&#8209;games</code> | `update_games` | Updates `games.csv` with current campaigns games and exits after it's done. | `false` |
 | <code>&#8209;&#8209;watch&#8209;unlisted&#8209;games</code> | `watch_unlisted_games` | If this is set to `true`, the app will watch streams of games that are not listed in the config after listed games have completed. | `false` |
+| <code>&#8209;&#8209;cookies&#8209;path</code> | `cookies_path` | The path to a file containing Twitch login cookies. If the file does not exist, one will be created after logging in. | <code>cookies&#8209;\<username>.json</code> |

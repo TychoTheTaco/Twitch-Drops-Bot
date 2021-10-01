@@ -328,7 +328,7 @@ async function getActiveStreams(campaignId, twitchCredentials, details) {
     return streams;
 }
 
-function getDropName(drop){
+function getDropName(drop) {
     return drop['benefitEdges'][0]['benefit']['name'];
 }
 
@@ -338,7 +338,7 @@ async function processCampaign(page, campaignId, twitchCredentials) {
     while (true) {
 
         const drop = await getFirstUnclaimedDrop(campaignId, twitchCredentials);
-        if (drop === null){
+        if (drop === null) {
             break;
         }
 
@@ -476,7 +476,8 @@ const options = [
     new IntegerOption('--interval', '-i', 15),
     new ListOption('--browser-args', null, []),
     new BooleanOption('--update-games', null, false),
-    new BooleanOption('--watch-unlisted-games', null, false)
+    new BooleanOption('--watch-unlisted-games', null, false),
+    new StringOption('--cookies-path')
 ];
 
 // Parse arguments
@@ -615,7 +616,7 @@ function getDropCampaignById(campaignId) {
     page.on('close', onBrowserOrPageClosed);
 
     // Check if we have saved cookies
-    const cookiesPath = `./cookies-${config['username']}.json`;
+    let cookiesPath = config['cookies_path'] || (config['username'] ? `./cookies-${config['username']}.json` : null);
     let requireLogin = false;
     if (fs.existsSync(cookiesPath)) {
 
@@ -644,6 +645,7 @@ function getDropCampaignById(campaignId) {
         requireLogin = true;
     }
 
+    let cookies = null;
     if (requireLogin) {
         logger.info('Logging in...');
 
@@ -654,14 +656,11 @@ function getDropCampaignById(campaignId) {
             loginBrowser = await puppeteer.launch({
                 headless: false,
                 executablePath: config['browser'],
-                args: [
-                    '--mute-audio'
-                ]
+                args: config['browser_args']
             });
         }
 
-        const cookies = await twitch.login(loginBrowser, config['username'], config['password'], config['headless_login']);
-        fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
+        cookies = await twitch.login(loginBrowser, config['username'], config['password'], config['headless_login']);
         await page.setCookie(...cookies);
 
         if (needNewBrowser) {
@@ -690,9 +689,17 @@ function getDropCampaignById(campaignId) {
                 break;
 
             case 'login':
+                config['username'] = cookie['value'];
                 logger.info('Logged in as ' + cookie['value']);
                 break;
         }
+    }
+
+    // Save cookies
+    if (requireLogin){
+        cookiesPath = `./cookies-${config['username']}.json`;
+        fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
+        logger.info('Saved cookies to ' + cookiesPath);
     }
 
     const waitNotify = new WaitNotify();
