@@ -10,6 +10,6 @@ RUN npm install
 
 COPY ./src ./src
 
-CMD [ "node", "/app/src/index.js", \
+CMD [ "node", "--unhandled-rejections=strict", "/app/src/index.js", \
     "--browser", "/usr/bin/chromium-browser", \
     "--browser-args=--no-sandbox" ]
