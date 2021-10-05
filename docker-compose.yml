@@ -3,9 +3,7 @@ services:
   twitch-drops-bot:
     container_name: twitch-drops-bot
     build: .
-    restart: unless-stopped
     volumes:
-      - ./app/config.json:/config.json
-      - ./app/cookie-<your-username>.json:/cookie-<your-username>.json
-    environment:
-      - TZ=Europe/Berlin
+      - .:/app/data
+    tty: true
+    stdin_open: true

@@ -406,19 +406,17 @@ async function processCampaign(page, campaignId, twitchCredentials) {
     }
 }
 
-function areCookiesValid(cookies, username) {
+function getUsernameFromCookies(cookies) {
+    for (const cookie of cookies) {
+        if (cookie['name'] === 'name' || cookie['name'] === 'login') {
+            return cookie['value'];
+        }
+    }
+}
+
+function areCookiesValid(cookies) {
     let isOauthTokenFound = false;
     for (const cookie of cookies) {
-
-        // Check if these cookies match the specified username (if any)
-        if (username !== undefined) {
-            if (cookie['name'] === 'name' || cookie['name'] === 'login') {
-                if (cookie['value'] !== username) {
-                    return false;
-                }
-            }
-        }
-
         // Check if we have an OAuth token
         if (cookie['name'] === 'auth-token') {
             isOauthTokenFound = true;
@@ -535,12 +533,6 @@ if (!configFileExists) {
     logger.info('Config saved to ' + args['config']);
 }
 
-// Validate options
-if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-    parser.error("You must provide a username and password to use headless login!");
-    process.exit(1);
-}
-
 // Add required browser args
 const requiredBrowserArgs = [
     '--mute-audio',
@@ -624,7 +616,13 @@ function getDropCampaignById(campaignId) {
         const cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
 
         // Make sure these cookies are valid
-        if (areCookiesValid(cookies, config['username'])) {
+        if (areCookiesValid(cookies)) {
+
+            // If both cookies and a username are provided and the provided username does not match the username stored in the cookies, warn the user and prefer to use the one from the cookies.
+            const username = config['username'];
+            if (username && (username !== getUsernameFromCookies(cookies))){
+                logger.warn('Provided username does not match the one found in the cookies! Using the cookies to login...');
+            }
 
             // Restore cookies from previous session
             logger.info('Restoring cookies from last session.');
@@ -648,6 +646,12 @@ function getDropCampaignById(campaignId) {
     let cookies = null;
     if (requireLogin) {
         logger.info('Logging in...');
+
+        // Validate options
+        if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
+            parser.error("You must provide a username and password to use headless login!");
+            process.exit(1);
+        }
 
         // Check if we need to create a new headful browser for the login
         const needNewBrowser = config['headless'] && !config['headless_login'];
@@ -696,7 +700,7 @@ function getDropCampaignById(campaignId) {
     }
 
     // Save cookies
-    if (requireLogin){
+    if (requireLogin) {
         cookiesPath = `./cookies-${config['username']}.json`;
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
         logger.info('Saved cookies to ' + cookiesPath);

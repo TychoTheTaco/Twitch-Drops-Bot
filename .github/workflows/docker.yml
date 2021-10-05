@@ -2,7 +2,8 @@ name: docker
 on:
   workflow_dispatch:
   push:
-    branch: [main]
+    branches:
+      - master
 jobs:
   build-docker:
     name: Build and release Docker image

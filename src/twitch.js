@@ -1,7 +1,9 @@
 'use strict';
+const fs = require('fs');
 
 const axios = require('axios');
 const TimeoutError = require("puppeteer").errors.TimeoutError;
+const prompt = require('prompt');
 
 const logger = require("./logger");
 const utils = require('./utils');
@@ -271,13 +273,33 @@ async function login(browser, username, password, headless = false) {
             }
 
             logger.info('No extra verification found!');
+
+            // Wait for redirect to main Twitch page. If this times out then there is probably a different type of verification that we haven't checked for.
+            try {
+                await page.waitForNavigation();
+            } catch (error) {
+                if (error instanceof TimeoutError){
+                    const time = new Date().getTime();
+                    const screenshotPath = 'failed-login-screenshot-' + time + '.png';
+                    const htmlPath = 'failed-login-html-' + time + '.html';
+                    logger.error('Failed to login. There was probably an extra verification step that this app didn\'t check for. ' +
+                        'A screenshot of the page will be saved to ' + screenshotPath + ' and the page content will be saved to ' + htmlPath +
+                        '. Please create an issue on GitHub with both of these files.');
+                    await page.screenshot({
+                        fullPage: true,
+                        path: screenshotPath
+                    });
+                    fs.writeFileSync(htmlPath, await page.content());
+                }
+                throw error;
+            }
+
             break;
         }
+    } else {
+        // Wait for redirect to main Twitch page. The timeout is unlimited here because we may be prompted for additional authentication.
+        await page.waitForNavigation({timeout: 0});
     }
-
-    // Wait for redirect to main Twitch page. The timeout is unlimited here because we may be prompted for
-    // additional authentication.
-    await page.waitForNavigation({timeout: 0});
 
     const cookies = await page.cookies();
 
