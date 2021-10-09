@@ -6,12 +6,12 @@ RUN apt-get update \
     && apt-get install ./google-chrome*.deb --yes \
     && rm ./google-chrome*.deb
 
+# Copy required files
 WORKDIR /app
+COPY ./src ./src
 COPY package*.json ./
 
 RUN npm install
-
-COPY ./src ./src
 
 WORKDIR /app/data
 
