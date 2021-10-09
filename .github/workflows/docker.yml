@@ -27,7 +27,7 @@ jobs:
 
       - name: Set lowercase repository owner
         run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+          echo "OWNER_LC=${OWNER,,}" >> $GITHUB_ENV
         env:
           OWNER: ${{ github.repository_owner }}
 
@@ -39,4 +39,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ OWNER_LC }}/twitch-drops-bot:latest
+            ghcr.io/${{ env.OWNER_LC }}/twitch-drops-bot:latest
