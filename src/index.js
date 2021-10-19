@@ -815,7 +815,7 @@ function getDropCampaignById(campaignId) {
 
             try {
                 await processCampaign(page, currentDropCampaignId, twitchCredentials);
-                completedCampaignIds.add(currentDropCampaignId);
+                //completedCampaignIds.add(currentDropCampaignId);
             } catch (error) {
                 if (error instanceof NoStreamsError) {
                     logger.info('No streams!');
