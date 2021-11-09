@@ -2,16 +2,12 @@
 
 This is a Node.js bot that uses [Puppeteer](https://github.com/puppeteer/puppeteer) to automatically watch Twitch streams and claim drop rewards.
 
-## Disclaimer
-
-Use this bot at your own risk! This bot uses parts of the Twitch API that are not intended for public use. I am not responsible for anything that happens to your Twitch account.
-
 ## Usage
 
 1) Install [Node.js](https://nodejs.org/)
 2) Install [Google Chrome](https://www.google.com/chrome/)
 3) Install this package: `npm install .`
-4) Start the bot with `node src/index.js`
+4) Start the bot with `node src/index.js` or `npm run start`
 
 ### Options
 

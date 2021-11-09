@@ -6,13 +6,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
-    "updateGames": "node src/index.js --update-games"
+    "updateGames": "node src/update_games.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "argparse": "^2.0.1",
+    "async-mutex": "^0.3.2",
     "axios": "^0.21.1",
     "cli-progress": "^3.9.0",
     "prompt": "^1.1.0",

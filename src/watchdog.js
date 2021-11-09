@@ -2,13 +2,13 @@
 
 const { EventEmitter } = require('events');
 
-const twitch = require('./twitch');
-
 class TwitchDropsWatchdog extends EventEmitter {
 
-    constructor(credentials, interval = 15) {
+    #client;
+
+    constructor(client, interval = 15) {
         super();
-        this._credentials = credentials;
+        this.#client = client;
         this._interval = interval;
         this._timeoutId = null;
         this._isRunning = false;
@@ -36,7 +36,7 @@ class TwitchDropsWatchdog extends EventEmitter {
     }
 
     async _getActiveDropCampaigns() {
-        return (await twitch.getDropCampaigns(this._credentials)).filter(campaign => {
+        return (await this.#client.getDropCampaigns()).filter(campaign => {
             return campaign['status'] === 'ACTIVE';
         });
     }

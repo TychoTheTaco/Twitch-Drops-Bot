@@ -5,8 +5,7 @@ const path = require('path');
 
 const logger = require('./logger');
 const twitch = require('./twitch');
-const {StringOption, BooleanOption, IntegerOption, ListOption} = require('./options');
-const {TwitchDropsBot} = require('./twitch_drops_bot');
+const {StringOption, BooleanOption, ListOption} = require('./options');
 const {ConfigurationParser} = require('./configuration_parser');
 
 // Using puppeteer-extra to add plugins
@@ -40,6 +39,33 @@ function areCookiesValid(cookies) {
     return isOauthTokenFound;
 }
 
+function updateGames(campaigns) {
+    logger.info('Parsing games...');
+    const gamesPath = './games.csv'
+    const oldGames = fs
+        .readFileSync(gamesPath, {encoding: 'utf-8'})
+        .split('\r\n')
+        .slice(1)  // Ignore header row
+        .filter(game => !!game)
+        .map(game => game.split(','));
+    const newGames = [
+        ...oldGames,
+        ...campaigns.map(campaign => [campaign['game']['displayName'], campaign['game']['id']])
+    ];
+    const games = newGames
+        .filter((game, index) => newGames.findIndex(g => g[1] === game[1]) >= index)
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    // TODO: ask interactively if users wants to add some to the config file?
+    const toWrite = games
+        .map(game => game.join(','))
+        .join('\r\n');
+    fs.writeFileSync(
+        gamesPath,
+        'Name,ID\r\n' + toWrite + '\r\n',
+        {encoding: 'utf-8'});
+    logger.info('Games list updated');
+}
+
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
     new StringOption('--username', '-u'),
@@ -56,13 +82,9 @@ const options = [
                 return '';
         }
     }),
-    new ListOption('--games', '-g', []),
     new BooleanOption('--headless', null, true, false),
     new BooleanOption('--headless-login', null, false),
-    new IntegerOption('--interval', '-i', 15),
     new ListOption('--browser-args', null, []),
-    new BooleanOption('--update-games', null, false),
-    new BooleanOption('--watch-unlisted-games', null, false),
     new StringOption('--cookies-path'),
     new StringOption('--log-level')
 ];
@@ -82,8 +104,7 @@ const requiredBrowserArgs = [
     '--mute-audio',
     '--disable-background-timer-throttling',
     '--disable-backgrounding-occluded-windows',
-    '--disable-renderer-backgrounding',
-    '--window-size=1920,1080'
+    '--disable-renderer-backgrounding'
 ]
 for (const arg of requiredBrowserArgs) {
     if (!config['browser_args'].includes(arg)) {
@@ -211,8 +232,7 @@ if (config['username']) {
 
     const twitchClient = new twitch.Client(twitchCredentials['client_id'], twitchCredentials['oauth_token'], twitchCredentials['channel_login']);
 
-    const bot = new TwitchDropsBot(config, page, twitchClient);
-    await bot.start();
+    updateGames(twitchClient.getDropCampaigns());
 
 })().catch(error => {
     logger.error(error);

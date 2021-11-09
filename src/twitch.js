@@ -8,179 +8,191 @@ const prompt = require('prompt');
 const logger = require("./logger");
 const utils = require('./utils');
 
-async function getDropCampaigns(credentials) {
-    const response = await axios.post('https://gql.twitch.tv/gql',
-        {
-            'operationName': 'ViewerDropsDashboard',
-            'extensions': {
-                'persistedQuery': {
-                    "version": 1,
-                    "sha256Hash": "e8b98b52bbd7ccd37d0b671ad0d47be5238caa5bea637d2a65776175b4a23a64"
-                }
-            }
-        },
-        {
-            headers: {
-                'Content-Type': 'text/plain;charset=UTF-8',
-                'Client-Id': credentials['client_id'],
-                'Authorization': `OAuth ${credentials['oauth_token']}`
-            }
-        }
-    );
-    return response['data']['data']['currentUser']['dropCampaigns']
-}
+class Client {
 
-async function getDropCampaignDetails(credentials, dropId) {
-    const response = await axios.post('https://gql.twitch.tv/gql',
-        {
-            'operationName': 'DropCampaignDetails',
-            'extensions': {
-                'persistedQuery': {
-                    "version": 1,
-                    "sha256Hash": "14b5e8a50777165cfc3971e1d93b4758613fe1c817d5542c398dce70b7a45c05"
+    #clientId;
+    #oauthToken;
+    #channelLogin;
+    #defaultHeaders;
+
+    constructor(clientId, oauthToken, channelLogin) {
+        this.#clientId = clientId;
+        this.#oauthToken = oauthToken;
+        this.#channelLogin = channelLogin;
+        this.#defaultHeaders = {
+            'Content-Type': 'text/plain;charset=UTF-8',
+            'Client-Id': this.#clientId,
+            'Authorization': `OAuth ${this.#oauthToken}`
+        }
+    }
+
+    /**
+     * Get a list of drop campaigns. This can include expired, active, and future campaigns.
+     * @returns {Promise<*>}
+     */
+    async getDropCampaigns(){
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                'operationName': 'ViewerDropsDashboard',
+                'extensions': {
+                    'persistedQuery': {
+                        "version": 1,
+                        "sha256Hash": "e8b98b52bbd7ccd37d0b671ad0d47be5238caa5bea637d2a65776175b4a23a64"
+                    }
                 }
             },
-            'variables': {
-                'dropID': dropId,
-                'channelLogin': credentials['channel_login']
+            {
+                headers: this.#defaultHeaders
             }
-        },
-        {
-            headers: {
-                'Content-Type': 'text/plain;charset=UTF-8',
-                'Client-Id': credentials['client_id'],
-                'Authorization': `OAuth ${credentials['oauth_token']}`
-            }
-        }
-    );
-    return response['data']['data']['user']['dropCampaign']
-}
+        );
 
-async function getDropCampaignsInProgress(credentials) {
-    const inventory = await getInventory(credentials);
-    const campaigns = inventory['dropCampaignsInProgress'];
-    if (campaigns === null) {
-        return [];
+        // todo: dont leave this here
+        try {
+            return response['data']['data']['currentUser']['dropCampaigns']
+        } catch (error) {
+            console.log('ERROR!');
+            console.log('getDropCampaigns: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4));
+            logger.debug('getDropCampaigns: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4))
+        }
     }
-    return campaigns;
-}
 
-async function getInventory(credentials) {
-    const response = await axios.post('https://gql.twitch.tv/gql',
-        {
-            'operationName': 'Inventory',
-            'extensions': {
-                "persistedQuery": {
-                    "version": 1,
-                    "sha256Hash": "9cdfc5ebf8ee497e49c5b922829d67e5bce039f3c713f0706d234944195d56ad"
-                }
-            }
-        },
-        {
-            headers: {
-                'Content-Type': 'text/plain;charset=UTF-8',
-                'Client-Id': credentials['client_id'],
-                'Authorization': `OAuth ${credentials['oauth_token']}`
-            }
-        }
-    );
-    return response['data']['data']['currentUser']['inventory'];
-}
-
-async function getDropEnabledStreams(credentials, game) {
-    const response = await axios.post('https://gql.twitch.tv/gql',
-        {
-            "operationName": "DirectoryPage_Game",
-            "variables": {
-                "name": game.toLowerCase(),
-                "options": {
-                    "includeRestricted": [
-                        "SUB_ONLY_LIVE"
-                    ],
-                    "sort": "VIEWER_COUNT",
-                    "recommendationsContext": {
-                        "platform": "web"
-                    },
-                    "requestID": "JIRA-VXP-2397", // TODO: what is this for???
-                    "tags": [
-                        "c2542d6d-cd10-4532-919b-3d19f30a768b"  // "Drops enabled"
-                    ]
+    async getDropCampaignDetails(dropId){
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                'operationName': 'DropCampaignDetails',
+                'extensions': {
+                    'persistedQuery': {
+                        "version": 1,
+                        "sha256Hash": "14b5e8a50777165cfc3971e1d93b4758613fe1c817d5542c398dce70b7a45c05"
+                    }
                 },
-                "sortTypeIsRecency": false,
-                "limit": 30
-            },
-            "extensions": {
-                "persistedQuery": {
-                    "version": 1,
-                    "sha256Hash": "d5c5df7ab9ae65c3ea0f225738c08a36a4a76e4c6c31db7f8c4b8dc064227f9e"
-                }
-            }
-        },
-        {
-            headers: {
-                'Content-Type': 'text/plain;charset=UTF-8',
-                'Client-Id': credentials['client_id'],
-                'Authorization': `OAuth ${credentials['oauth_token']}`
-            }
-        }
-    );
-    const streams = response['data']['data']['game']['streams'];
-    if (streams === null) {
-        return [];
-    }
-
-    const result = [];
-    for (const stream of streams['edges']) {
-        result.push({
-            'url': 'https://www.twitch.tv/' + stream['node']['broadcaster']['login'],
-            'broadcaster_id': stream['node']['broadcaster']['id']
-        });
-    }
-    return result;
-}
-
-async function claimDropReward(credentials, dropId) {
-    const response = await axios.post('https://gql.twitch.tv/gql',
-        {
-            "operationName": "DropsPage_ClaimDropRewards",
-            "variables": {
-                "input": {
-                    "dropInstanceID": dropId
+                'variables': {
+                    'dropID': dropId,
+                    'channelLogin': this.#channelLogin
                 }
             },
-            "extensions": {
-                "persistedQuery": {
-                    "version": 1,
-                    "sha256Hash": "2f884fa187b8fadb2a49db0adc033e636f7b6aaee6e76de1e2bba9a7baf0daf6"
-                }
+            {
+                headers: this.#defaultHeaders
             }
-        },
-        {
-            headers: {
-                'Content-Type': 'text/plain;charset=UTF-8',
-                'Client-Id': credentials['client_id'],
-                'Authorization': `OAuth ${credentials['oauth_token']}`
-            }
-        }
-    );
-    if ('errors' in response.data) {
-        throw new Error(JSON.stringify(response.data['errors']));
+        );
+        return response['data']['data']['user']['dropCampaign']
     }
-}
 
-async function getInventoryDrop(credentials, campaignId, dropId) {
-    const campaigns = await getDropCampaignsInProgress(credentials);
-    for (const campaign of campaigns) {
-        if (campaign['id'] === campaignId) {
-            const drops = campaign['timeBasedDrops'];
-            for (const drop of drops) {
-                if (drop['id'] === dropId) {
-                    return drop;
+    async getInventory() {
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                'operationName': 'Inventory',
+                'extensions': {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "9cdfc5ebf8ee497e49c5b922829d67e5bce039f3c713f0706d234944195d56ad"
+                    }
+                }
+            },
+            {
+                headers: this.#defaultHeaders
+            }
+        );
+        return response['data']['data']['currentUser']['inventory'];
+    }
+
+    async getDropEnabledStreams(gameName) {
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                "operationName": "DirectoryPage_Game",
+                "variables": {
+                    "name": gameName.toLowerCase(),
+                    "options": {
+                        "includeRestricted": [
+                            "SUB_ONLY_LIVE"
+                        ],
+                        "sort": "VIEWER_COUNT",
+                        "recommendationsContext": {
+                            "platform": "web"
+                        },
+                        "requestID": "JIRA-VXP-2397", // TODO: what is this for???
+                        "tags": [
+                            "c2542d6d-cd10-4532-919b-3d19f30a768b"  // "Drops enabled"
+                        ]
+                    },
+                    "sortTypeIsRecency": false,
+                    "limit": 30
+                },
+                "extensions": {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "d5c5df7ab9ae65c3ea0f225738c08a36a4a76e4c6c31db7f8c4b8dc064227f9e"
+                    }
+                }
+            },
+            {
+                headers: this.#defaultHeaders
+            }
+        );
+        const streams = response['data']['data']['game']['streams'];
+        if (streams === null) {
+            return [];
+        }
+
+        const result = [];
+        for (const stream of streams['edges']) {
+            result.push({
+                'url': 'https://www.twitch.tv/' + stream['node']['broadcaster']['login'],
+                'broadcaster_id': stream['node']['broadcaster']['id']
+            });
+        }
+        return result;
+    }
+
+    async claimDropReward(dropId) {
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                "operationName": "DropsPage_ClaimDropRewards",
+                "variables": {
+                    "input": {
+                        "dropInstanceID": dropId
+                    }
+                },
+                "extensions": {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "2f884fa187b8fadb2a49db0adc033e636f7b6aaee6e76de1e2bba9a7baf0daf6"
+                    }
+                }
+            },
+            {
+                headers: this.#defaultHeaders
+            }
+        );
+        if ('errors' in response.data) {
+            throw new Error(JSON.stringify(response.data['errors']));
+        }
+    }
+
+    async getDropCampaignsInProgress() {
+        const inventory = await this.getInventory();
+        const campaigns = inventory['dropCampaignsInProgress'];
+        if (campaigns === null) {
+            return [];
+        }
+        return campaigns;
+    }
+
+    async getInventoryDrop(dropId, campaignId) {
+        const campaigns = await this.getDropCampaignsInProgress();
+        for (const campaign of campaigns) {
+            if (!campaignId || campaign['id'] === campaignId) {
+                const drops = campaign['timeBasedDrops'];
+                for (const drop of drops) {
+                    if (drop['id'] === dropId) {
+                        return drop;
+                    }
                 }
             }
         }
+        return null;
     }
-    return null;
+
 }
 
 async function login(browser, username, password, headless = false) {
@@ -311,12 +323,6 @@ async function login(browser, username, password, headless = false) {
 }
 
 module.exports = {
-    getDropCampaigns,
-    getDropCampaignDetails,
-    getDropCampaignsInProgress,
-    getDropEnabledStreams,
-    getInventory,
-    claimDropReward,
-    getInventoryDrop,
+    Client,
     login
 }
