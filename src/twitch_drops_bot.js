@@ -1,5 +1,4 @@
 const SortedArray = require("sorted-array-type");
-const {Mutex} = require("async-mutex");
 const WaitNotify = require("wait-notify");
 const logger = require("./logger");
 const cliProgress = require("cli-progress");
@@ -267,9 +266,9 @@ class TwitchDropsBot {
         })
     }
 
-    async login(username, password, headless = false) {
+    /*async login(username, password, headless = false) {
 
-    }
+    }*/
 
     async start() {
 

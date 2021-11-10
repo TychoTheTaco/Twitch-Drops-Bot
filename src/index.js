@@ -61,7 +61,7 @@ const options = [
     new BooleanOption('--headless-login', null, false),
     new IntegerOption('--interval', '-i', 15),
     new ListOption('--browser-args', null, []),
-    new BooleanOption('--update-games', null, false),
+/*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new BooleanOption('--watch-unlisted-games', null, false),
     new StringOption('--cookies-path'),
     new StringOption('--log-level')
@@ -152,7 +152,7 @@ if (config['username']) {
 
         // Validate options
         if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-            parser.error("You must provide a username and password to use headless login!");
+            console.error("You must provide a username and password to use headless login!");
             process.exit(1);
         }
 

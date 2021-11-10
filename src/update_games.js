@@ -55,7 +55,6 @@ function updateGames(campaigns) {
     const games = newGames
         .filter((game, index) => newGames.findIndex(g => g[1] === game[1]) >= index)
         .sort((a, b) => a[0].localeCompare(b[0]));
-    // TODO: ask interactively if users wants to add some to the config file?
     const toWrite = games
         .map(game => game.join(','))
         .join('\r\n');
@@ -97,19 +96,6 @@ let config = configurationParser.parse();
 if (config['log_level']) {
     // TODO: validate input
     logger.level = config['log_level'];
-}
-
-// Add required browser args
-const requiredBrowserArgs = [
-    '--mute-audio',
-    '--disable-background-timer-throttling',
-    '--disable-backgrounding-occluded-windows',
-    '--disable-renderer-backgrounding'
-]
-for (const arg of requiredBrowserArgs) {
-    if (!config['browser_args'].includes(arg)) {
-        config['browser_args'].push(arg);
-    }
 }
 
 // Make username lowercase
@@ -173,7 +159,7 @@ if (config['username']) {
 
         // Validate options
         if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-            parser.error("You must provide a username and password to use headless login!");
+            console.error("You must provide a username and password to use headless login!");
             process.exit(1);
         }
 
@@ -232,7 +218,11 @@ if (config['username']) {
 
     const twitchClient = new twitch.Client(twitchCredentials['client_id'], twitchCredentials['oauth_token'], twitchCredentials['channel_login']);
 
-    updateGames(twitchClient.getDropCampaigns());
+    updateGames(await twitchClient.getDropCampaigns());
+
+    browser.off('disconnected', onBrowserOrPageClosed);
+    page.off('close', onBrowserOrPageClosed);
+    await browser.close();
 
 })().catch(error => {
     logger.error(error);
