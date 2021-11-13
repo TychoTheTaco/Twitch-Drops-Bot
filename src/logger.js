@@ -23,7 +23,11 @@ const logger = createLogger({
         })
     ),
     transports: [
-        new transports.Console()
+        new transports.Console(),
+        new transports.File({
+            filename: `log-${new Date().getTime()}.txt`,
+            level: 'debug'
+        })
     ]
 });
 

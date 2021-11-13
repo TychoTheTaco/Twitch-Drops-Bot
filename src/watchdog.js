@@ -19,7 +19,7 @@ class TwitchDropsWatchdog extends EventEmitter {
             this._isRunning = true;
             const run = () => {
                 this.emit('before_update');
-                this._getActiveDropCampaigns().then((campaigns) => {
+                this.#client.getDropCampaigns().then((campaigns) => {
                     this.emit('update', campaigns);
                     this._timeoutId = setTimeout(run, 1000 * 60 * this._interval);
                 });
@@ -33,12 +33,6 @@ class TwitchDropsWatchdog extends EventEmitter {
             clearTimeout(this._timeoutId);
             this._isRunning = false;
         }
-    }
-
-    async _getActiveDropCampaigns() {
-        return (await this.#client.getDropCampaigns()).filter(campaign => {
-            return campaign['status'] === 'ACTIVE';
-        });
     }
 
 }

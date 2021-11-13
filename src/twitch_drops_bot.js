@@ -113,7 +113,7 @@ class TwitchDropsBot {
         });
         this.#twitchDropsWatchdog.on('update', async (campaigns) => {
 
-            logger.info('Found ' + campaigns.length + ' active campaigns.');
+            logger.info('Found ' + campaigns.length + ' campaigns.');
 
             while (this.#pendingDropCampaignIds.length > 0) {
                 this.#pendingDropCampaignIds.pop();
@@ -121,6 +121,12 @@ class TwitchDropsBot {
 
             // Add to pending
             campaigns.forEach(campaign => {
+
+                // Ignore drop campaigns that are not either active or upcoming
+                const campaignStatus = campaign['status'];
+                if (campaignStatus !== 'ACTIVE' && campaignStatus !== 'UPCOMING') {
+                    return;
+                }
 
                 const dropCampaignId = campaign['id'];
                 this.#dropCampaignMap[dropCampaignId] = campaign;
@@ -142,9 +148,6 @@ class TwitchDropsBot {
                 }
             });
             logger.info('Found ' + this.#pendingDropCampaignIds.length + ' pending campaigns.');
-            this.#pendingDropCampaignIds.forEach((value, index) => {
-                //logger.debug(index + ') ' + getDropCampaignFullName(value));
-            });
 
             // Check if we are currently working on a drop campaign
             if (this.#currentDropCampaignId !== null) {
@@ -219,6 +222,9 @@ class TwitchDropsBot {
                 this.#lastMinutesWatched[dropId] = this.#currentMinutesWatched[dropId];
 
                 if (dropId !== this.#currentDrop['id']) {
+                    this.#stopProgressBar(true);
+                    logger.info('Drop progress does not match expected drop: ' + this.#currentDrop['id'] + ' vs ' + dropId);
+
                     // If we made progress for a different drop, switch to it
                     this.#currentDrop = await this.#twitchClient.getInventoryDrop(dropId);
 
@@ -229,8 +235,6 @@ class TwitchDropsBot {
                     }
 
                     // Restart the progress bar
-                    this.#stopProgressBar(true);
-                    logger.info('Drop progress does not match expected drop: ' + this.#currentDrop['id'] + ' vs ' + dropId);
                     this.#createProgressBar();
                     this.#startProgressBar(data['required_progress_min'], {'viewers': this.#viewerCount, 'uptime': 0, drop_name: this.#getDropName(this.#currentDrop)});
                 }
@@ -292,11 +296,9 @@ class TwitchDropsBot {
                     let minLastDropCampaignCheckTime = null;
                     for (const pendingDropCampaignId of this.#pendingDropCampaignIds) {
                         const lastCheckTime = lastDropCampaignAttemptTimes[pendingDropCampaignId];
-                        logger.debug('id: ' + pendingDropCampaignId + ' last check time: ' + lastCheckTime);
                         if (lastCheckTime) {
                             minLastDropCampaignCheckTime = Math.min(minLastDropCampaignCheckTime ?? lastCheckTime, lastCheckTime);
                             if (new Date().getTime() - lastCheckTime < SLEEP_TIME_MS) {
-                                logger.debug('skip');
                                 continue;
                             }
                         }
@@ -326,6 +328,14 @@ class TwitchDropsBot {
             // Attempt to make progress towards the current drop campaign
             logger.info('Processing campaign: ' + this.#getDropCampaignFullName(this.#currentDropCampaignId));
             lastDropCampaignAttemptTimes[this.#currentDropCampaignId] = new Date().getTime();
+
+            // Check if this drop campaign is active
+            if (this.#dropCampaignMap[this.#currentDropCampaignId]['status'] !== 'ACTIVE'){
+                logger.info('campaign not active');
+                this.#currentDropCampaignId = null;
+                continue;
+            }
+
             try {
                 await this.#processDropCampaign(this.#currentDropCampaignId);
                 //completedCampaignIds.add(currentDropCampaignId);
@@ -413,6 +423,7 @@ class TwitchDropsBot {
                     } else if (error instanceof StreamLoadFailedError) {
                         logger.warn('Stream failed to load!');
                     } else if (error instanceof StreamDownError) {
+                        logger.info('stream went down');
                         /*
                         If the stream goes down, add it to the failed stream urls immediately so we don't try it again.
                         This is needed because getActiveStreams() can return streams that are down if they went down
@@ -538,6 +549,7 @@ class TwitchDropsBot {
         this.#currentDrop = targetDrop;
         logger.debug('target: ' + targetDrop['id']);
 
+        // Reset variables
         this.#viewerCount = 0;
         this.#currentMinutesWatched = {};
         this.#currentMinutesWatched[targetDrop['id']] = 0;
@@ -547,6 +559,13 @@ class TwitchDropsBot {
         this.#lastProgressTime[targetDrop['id']] = new Date();
         this.#isDropReadyToClaim = false;
         this.#isStreamDown = false;
+
+        // Get initial drop progress
+        const inventoryDrop = await this.#twitchClient.getInventoryDrop(targetDrop['id']);
+        if (inventoryDrop){
+            this.#currentMinutesWatched[targetDrop['id']] = inventoryDrop['self']['currentMinutesWatched'];
+            this.#lastMinutesWatched[targetDrop['id']] = this.#currentMinutesWatched[targetDrop['id']];
+        }
 
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         await this.#webSocketListener.attach(this.#page)
@@ -586,7 +605,8 @@ class TwitchDropsBot {
         const requiredMinutesWatched = targetDrop['requiredMinutesWatched'];
 
         this.#createProgressBar();
-        this.#startProgressBar(requiredMinutesWatched, {'viewers': await streamPage.getViewersCount(), 'uptime': await streamPage.getUptime(), drop_name: this.#getDropName(targetDrop), stream_url: streamUrl});
+        this.#viewerCount = await streamPage.getViewersCount();
+        this.#startProgressBar(requiredMinutesWatched, {'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), drop_name: this.#getDropName(targetDrop), stream_url: streamUrl});
 
         // The maximum amount of time to allow no progress
         const maxNoProgressTime = 1000 * 60 * 5;
@@ -607,11 +627,16 @@ class TwitchDropsBot {
                 // Maybe we haven't got any updates from the web socket, lets check our inventory
                 const currentDropId = this.#currentDrop['id'];
                 const inventoryDrop = await this.#twitchClient.getInventoryDrop(currentDropId);
-                this.#currentMinutesWatched[currentDropId] = inventoryDrop['self']['currentMinutesWatched'];
-                if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
-                    this.#lastProgressTime[currentDropId] = new Date().getTime();
-                    this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
-                    logger.debug('no progress from web socket! using inventory progress');
+                if (inventoryDrop){
+                    this.#currentMinutesWatched[currentDropId] = inventoryDrop['self']['currentMinutesWatched'];
+                    if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
+                        this.#lastProgressTime[currentDropId] = new Date().getTime();
+                        this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
+                        logger.debug('no progress from web socket! using inventory progress');
+                    } else {
+                        this.#stopProgressBar(true);
+                        throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+                    }
                 } else {
                     this.#stopProgressBar(true);
                     throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");

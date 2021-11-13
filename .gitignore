@@ -6,3 +6,7 @@ cookies-*.json
 
 # Config files
 config*.json
+
+# Log files
+log.txt
+log-*.txt
