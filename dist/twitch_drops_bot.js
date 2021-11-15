@@ -145,7 +145,7 @@ class TwitchDropsBot {
                     }*/
                     // Make sure Twitch account is linked
                     if (!campaign['self']['isAccountConnected']) {
-                        //logger.warn('Twitch account not linked for drop campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
+                        logger_1.default.warn('Twitch account not linked for drop campaign: ' + __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropCampaignFullName).call(this, dropCampaignId));
                         return;
                     }
                     __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").insert(dropCampaignId);
@@ -474,11 +474,13 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
 }, _TwitchDropsBot_stopProgressBar = function _TwitchDropsBot_stopProgressBar(clear = false) {
     if (__classPrivateFieldGet(this, _TwitchDropsBot_progressBar, "f") !== null) {
         __classPrivateFieldGet(this, _TwitchDropsBot_progressBar, "f").stop();
-        logger_1.default.debug('stop: ' + __classPrivateFieldGet(this, _TwitchDropsBot_hasWrittenNewLine, "f"));
+        // The progress bar is a bit buggy since im using it for 2 lines but its only
+        // intended to be used for 1 line. Also the logger does not play nice with it.
+        // This is a workaround to try and avoid overwriting some lines in the terminal.
+        // For more reliable logs, just look at the log file instead of the console.
         if (!__classPrivateFieldGet(this, _TwitchDropsBot_hasWrittenNewLine, "f")) {
             process.stdout.write('\n');
             __classPrivateFieldSet(this, _TwitchDropsBot_hasWrittenNewLine, true, "f");
-            //logger.debug('new line!');
         }
     }
     if (clear) {

@@ -7,7 +7,7 @@ This is a Node.js bot that uses [Puppeteer](https://github.com/puppeteer/puppete
 1) Install [Node.js](https://nodejs.org/)
 2) Install [Google Chrome](https://www.google.com/chrome/)
 3) Install this package: `npm install .`
-4) Start the bot with `node src/index.js` or `npm run start`
+4) Start the bot with `node dist/index.js` or `npm run start`
 
 ### Options
 
@@ -38,6 +38,14 @@ Below is a list of all available options.
 | <code>&#8209;&#8209;headless&nbsp;\<boolean\></code> | `headless` | Toggle headless mode. If false, this will display the browser at all times. Useful for debugging. | `true` |
 | <code>&#8209;&#8209;interval&nbsp;\<minutes\></code> | `interval` | The number of minutes to wait between checking for new drop campaigns.| `15` |
 | <code>&#8209;&#8209;browser&#8209;args&nbsp;\<args\></code> | `browser_args` | Extra arguments to pass to the browser instance. | `[]` |
-| <code>&#8209;&#8209;update&#8209;games</code> | `update_games` | Updates `games.csv` with current campaigns games and exits after it's done. | `false` |
 | <code>&#8209;&#8209;watch&#8209;unlisted&#8209;games</code> | `watch_unlisted_games` | If this is set to `true`, the app will watch streams of games that are not listed in the config after listed games have completed. | `false` |
 | <code>&#8209;&#8209;cookies&#8209;path</code> | `cookies_path` | The path to a file containing Twitch login cookies. If the file does not exist, one will be created after logging in. | <code>cookies&#8209;\<username>.json</code> |
+| <code>&#8209;&#8209;log&#8209;level</code> | `log_level` | The log level to display in the console. All log levels are still logged to the log file. | <code>info</code> |
+
+### Update Games List
+
+If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
+
+### Docker
+
+You can also run this bot in a docker container. You can download the latest image [here](https://github.com/TychoTheTaco/Twitch-Drops-Bot/pkgs/container/twitch-drops-bot).

@@ -10,12 +10,23 @@ RUN apt-get update \
 WORKDIR /app
 COPY ./src ./src
 COPY package*.json ./
+COPY tsconfig.json ./
 
+# Don't download the bundled Chromium with Puppeteer
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+# Install dependencies
 RUN npm install
+
+# Install Typescript. Doesn't work without -g flag for some reason
+RUN npm install typescript -g
+
+# Compile the app
+RUN tsc
 
 WORKDIR /app/data
 
-CMD ["node", "--unhandled-rejections=strict", "/app/src/index.js", \
+CMD ["node", "--unhandled-rejections=strict", "/app/dist/index.js", \
      "--config", \
      "config.json", \
      "--browser", "google-chrome-stable", \

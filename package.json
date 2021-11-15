@@ -2,11 +2,11 @@
   "name": "twitch_drops_bot",
   "version": "1.0.0",
   "description": "A Node.js bot for automatically collecting Twitch drops.",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js",
-    "updateGames": "node src/update_games.js"
+    "start": "node dist/index.js",
+    "updateGames": "node dist/update_games.js"
   },
   "keywords": [],
   "author": "",
