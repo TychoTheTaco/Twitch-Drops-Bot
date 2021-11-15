@@ -164,9 +164,9 @@ export class TwitchDropsBot {
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#interval);
         this.#twitchDropsWatchdog.on('before_update', () => {
             this.#stopProgressBar();
-            //logger.info('Updating drop campaigns...');
+            logger.info('Updating drop campaigns...');
         });
-        this.#twitchDropsWatchdog.once('update', async (campaigns: Campaign[]) => {
+        this.#twitchDropsWatchdog.on('update', async (campaigns: Campaign[]) => {
 
             logger.info('Found ' + campaigns.length + ' campaigns.');
 
@@ -578,11 +578,13 @@ export class TwitchDropsBot {
     #stopProgressBar(clear: boolean = false) {
         if (this.#progressBar !== null) {
             this.#progressBar.stop();
-            logger.debug('stop: ' + this.#hasWrittenNewLine);
+            // The progress bar is a bit buggy since im using it for 2 lines but its only
+            // intended to be used for 1 line. Also the logger does not play nice with it.
+            // This is a workaround to try and avoid overwriting some lines in the terminal.
+            // For more reliable logs, just look at the log file instead of the console.
             if (!this.#hasWrittenNewLine){
-                //process.stdout.write('\n');
+                process.stdout.write('\n');
                 this.#hasWrittenNewLine = true;
-                //logger.debug('new line!');
             }
 
         }

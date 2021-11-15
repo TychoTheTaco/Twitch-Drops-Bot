@@ -20,7 +20,7 @@ const logger = (0, winston_1.createLogger)({
         return result;
     })),
     transports: [
-        //new transports.Console(),
+        new winston_1.transports.Console(),
         new winston_1.transports.File({
             filename: `log-${new Date().getTime()}.txt`,
             level: 'debug'

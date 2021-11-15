@@ -122,9 +122,9 @@ class TwitchDropsBot {
         __classPrivateFieldSet(this, _TwitchDropsBot_twitchDropsWatchdog, new watchdog_1.TwitchDropsWatchdog(__classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f"), __classPrivateFieldGet(this, _TwitchDropsBot_interval, "f")), "f");
         __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").on('before_update', () => {
             __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this);
-            //logger.info('Updating drop campaigns...');
+            logger_1.default.info('Updating drop campaigns...');
         });
-        __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").once('update', (campaigns) => __awaiter(this, void 0, void 0, function* () {
+        __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").on('update', (campaigns) => __awaiter(this, void 0, void 0, function* () {
             logger_1.default.info('Found ' + campaigns.length + ' campaigns.');
             while (__classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").length > 0) {
                 __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").pop();
@@ -145,7 +145,7 @@ class TwitchDropsBot {
                     }*/
                     // Make sure Twitch account is linked
                     if (!campaign['self']['isAccountConnected']) {
-                        logger_1.default.warn('Twitch account not linked for drop campaign: ' + __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropCampaignFullName).call(this, dropCampaignId));
+                        //logger.warn('Twitch account not linked for drop campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
                         return;
                     }
                     __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").insert(dropCampaignId);
@@ -476,7 +476,7 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
         __classPrivateFieldGet(this, _TwitchDropsBot_progressBar, "f").stop();
         logger_1.default.debug('stop: ' + __classPrivateFieldGet(this, _TwitchDropsBot_hasWrittenNewLine, "f"));
         if (!__classPrivateFieldGet(this, _TwitchDropsBot_hasWrittenNewLine, "f")) {
-            //process.stdout.write('\n');
+            process.stdout.write('\n');
             __classPrivateFieldSet(this, _TwitchDropsBot_hasWrittenNewLine, true, "f");
             //logger.debug('new line!');
         }
