@@ -1,19 +1,20 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const logger = require('./logger');
-const twitch = require('./twitch');
-const {StringOption, BooleanOption, IntegerOption, ListOption} = require('./options');
-const {TwitchDropsBot} = require('./twitch_drops_bot');
-const {ConfigurationParser} = require('./configuration_parser');
+import logger from './logger';
+import twitch from './twitch';
+import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options';
+import {TwitchDropsBot} from './twitch_drops_bot';
+import {ConfigurationParser} from './configuration_parser';
 
 // Using puppeteer-extra to add plugins
-const puppeteer = require('puppeteer-extra');
+import puppeteer from 'puppeteer-extra';
 
 // Add stealth plugin
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+
 puppeteer.use(StealthPlugin());
 
 function onBrowserOrPageClosed() {
@@ -21,7 +22,7 @@ function onBrowserOrPageClosed() {
     process.exit(1);
 }
 
-function getUsernameFromCookies(cookies) {
+function getUsernameFromCookies(cookies: any) {
     for (const cookie of cookies) {
         if (cookie['name'] === 'name' || cookie['name'] === 'login') {
             return cookie['value'];
@@ -29,7 +30,7 @@ function getUsernameFromCookies(cookies) {
     }
 }
 
-function areCookiesValid(cookies) {
+function areCookiesValid(cookies: any) {
     let isOauthTokenFound = false;
     for (const cookie of cookies) {
         // Check if we have an OAuth token
@@ -42,34 +43,37 @@ function areCookiesValid(cookies) {
 
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
-    new StringOption('--username', '-u'),
-    new StringOption('--password', '-p'),
-    new StringOption('--browser', '-b', () => {
-        switch (process.platform) {
-            case "win32":
-                return path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
+    new StringOption('--username', {alias: '-u'}),
+    new StringOption('--password', {alias: '-p'}),
+    new StringOption('--browser', {
+        alias: '-b',
+        defaultValue: () => {
+            switch (process.platform) {
+                case "win32":
+                    return path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
 
-            case "linux":
-                return path.join("google-chrome");
+                case "linux":
+                    return path.join("google-chrome");
 
-            default:
-                return '';
+                default:
+                    return '';
+            }
         }
     }),
-    new ListOption('--games', '-g', []),
-    new BooleanOption('--headless', null, true, false),
-    new BooleanOption('--headless-login', null, false),
-    new IntegerOption('--interval', '-i', 15),
-    new ListOption('--browser-args', null, []),
-/*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
-    new BooleanOption('--watch-unlisted-games', null, false),
+    new StringListOption('--games', {alias: '-g'}),
+    new BooleanOption('--headless', false, {defaultValue: true}),
+    new BooleanOption('--headless-login'),
+    new IntegerOption('--interval', {alias: '-i', defaultValue: 15}),
+    new StringListOption('--browser-args', {defaultValue: []}),
+    /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
+    new BooleanOption('--watch-unlisted-games'),
     new StringOption('--cookies-path'),
     new StringOption('--log-level')
 ];
 
 // Parse arguments
 const configurationParser = new ConfigurationParser(options);
-let config = configurationParser.parse();
+let config: any = configurationParser.parse();
 
 // Set logging level
 if (config['log_level']) {
@@ -175,24 +179,17 @@ if (config['username']) {
         }
     }
 
-    // Twitch credentials for API interactions
-    const twitchCredentials = {
-
-        // Seems to be the default hard-coded client ID
-        // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-        'client_id': 'kimne78kx3ncx6brgo4mv6wki5h1ko'
-
-    }
-
     // Get some data from the cookies
+    let oauthToken: string | undefined = undefined;
+    let channelLogin: string | undefined = undefined;
     for (const cookie of await page.cookies('https://www.twitch.tv')) {
         switch (cookie['name']) {
             case 'auth-token':  // OAuth token
-                twitchCredentials['oauth_token'] = cookie['value'];
+                oauthToken = cookie['value'];
                 break;
 
             case 'persistent':  // "channelLogin" Used for "DropCampaignDetails" operation
-                twitchCredentials['channel_login'] = cookie['value'].split('%3A')[0];
+                channelLogin = cookie['value'].split('%3A')[0];
                 break;
 
             case 'login':
@@ -202,6 +199,11 @@ if (config['username']) {
         }
     }
 
+    if (!oauthToken || !channelLogin) {
+        logger.error('Invalid cookies!');
+        process.exit(1);
+    }
+
     // Save cookies
     if (requireLogin) {
         cookiesPath = `./cookies-${config['username']}.json`;
@@ -209,9 +211,11 @@ if (config['username']) {
         logger.info('Saved cookies to ' + cookiesPath);
     }
 
-    const twitchClient = new twitch.Client(twitchCredentials['client_id'], twitchCredentials['oauth_token'], twitchCredentials['channel_login']);
+    // Seems to be the default hard-coded client ID
+    // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
+    const twitchClient = new twitch.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
 
-    const bot = new TwitchDropsBot(config, page, twitchClient);
+    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games']});
     await bot.start();
 
 })().catch(error => {

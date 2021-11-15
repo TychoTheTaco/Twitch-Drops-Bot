@@ -1,11 +1,13 @@
 'use strict';
 
-const prompt = require("prompt");
-const fs = require("fs");
+import fs from 'fs';
 
-async function asyncPrompt(schema) {
+const prompt = require('prompt');
+import {Page} from "puppeteer";
+
+async function asyncPrompt(schema: any) {
     return new Promise((resolve, reject) => {
-        prompt.get(schema, (error, result) => {
+        prompt.get(schema, (error: any, result: any) => {
             if (error) {
                 reject(error);
             }
@@ -14,7 +16,7 @@ async function asyncPrompt(schema) {
     });
 }
 
-async function saveScreenshotAndHtml(page, pathPrefix){
+async function saveScreenshotAndHtml(page: Page, pathPrefix: string){
     const time = new Date().getTime();
     const screenshotPath = pathPrefix + '-screenshot-' + time + '.png';
     const htmlPath = pathPrefix + '-page-' + time + '.html';
@@ -25,6 +27,7 @@ async function saveScreenshotAndHtml(page, pathPrefix){
     fs.writeFileSync(htmlPath, await page.content());
 }
 
-module.exports = {
-    asyncPrompt, saveScreenshotAndHtml
-}
+export default {
+    asyncPrompt,
+    saveScreenshotAndHtml
+};

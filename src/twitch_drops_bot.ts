@@ -1,15 +1,16 @@
 const SortedArray = require("sorted-array-type");
 const WaitNotify = require("wait-notify");
-const logger = require("./logger");
 const cliProgress = require("cli-progress");
-const {BarFormat} = require('cli-progress').Format;
+const {BarFormat} = cliProgress.Format;
 const TimeoutError = require("puppeteer").errors.TimeoutError;
 
-const WebSocketListener = require("./web_socket_listener");
-const {TwitchDropsWatchdog} = require("./watchdog");
-const {StreamPage} = require("./pages/stream");
-
-const utils = require('./utils')
+import WebSocketListener from "./web_socket_listener";
+import {TwitchDropsWatchdog} from "./watchdog";
+import {StreamPage} from "./pages/stream";
+import utils from './utils';
+import logger from "./logger";
+import {ElementHandle, Page} from "puppeteer";
+import {Client} from "./twitch";
 
 class NoStreamsError extends Error {
 
@@ -31,15 +32,63 @@ class StreamDownError extends Error {
 
 }
 
-class TwitchDropsBot {
+interface Game {
+    id: string,
+    displayName: string
+}
 
-    #config;
-    #page;
-    #twitchClient;
+interface Campaign {
+    id: string,
+    status: string,
+    game: Game,
+    self: {
+        isAccountConnected: boolean
+    },
+    endAt: string,
+    name: string
+}
 
-    #twitchDropsWatchdog;
+interface Drop {
+    id: string
+    self: {
+        currentMinutesWatched: number
+    },
+    benefitEdges: {
+        benefit: {
+            id: string,
+            name: string
+        }
+    }[],
+    startAt: string,
+    requiredMinutesWatched: number
+}
 
-    #pendingDropCampaignIds = new SortedArray((a, b) => {
+interface InventoryDrop {
+    id: string
+    self: {
+        currentMinutesWatched: number,
+        dropInstanceID: string
+    }
+}
+
+export class TwitchDropsBot {
+
+    // A list of game IDs to watch and claim drops for.
+    readonly #gameIds: string[] = [];
+
+    // The number of minutes in between refreshing the drop campaign list
+    readonly #interval: number = 15;
+
+    // When true, the bot will attempt to watch and claim drops for all games, even if they are not in 'gameIds'.
+    // The games in 'gameIds' still have priority.
+    readonly #watchUnlistedGames: boolean = false;
+
+    readonly #page: Page;
+    readonly #twitchClient: Client;
+
+    #twitchDropsWatchdog: TwitchDropsWatchdog;
+
+    #pendingDropCampaignIds = new SortedArray((a: string, b: string) => {
 
         if (a === b) {
             return 0;
@@ -49,8 +98,8 @@ class TwitchDropsBot {
         const campaignB = this.#getDropCampaignById(b);
 
         // Sort campaigns based on order of game IDs specified in config
-        const indexA = this.#config['games'].indexOf(campaignA['game']['id']);
-        const indexB = this.#config['games'].indexOf(campaignB['game']['id']);
+        const indexA = this.#gameIds.indexOf(campaignA['game']['id']);
+        const indexB = this.#gameIds.indexOf(campaignB['game']['id']);
         if (indexA === -1 && indexB !== -1) {
             return 1;
         } else if (indexA !== -1 && indexB === -1) {
@@ -67,51 +116,57 @@ class TwitchDropsBot {
     });
     #pendingDropCampaignIdsNotifier = new WaitNotify();
 
-    #progressBar = null;
-    #payload = null;
-    #total = null;
-    #currentProgress = null;
-    #isFirstOutput = true;
+    #progressBar: any = null;
+    #payload: any = null;
+    #total: any = null;
+    #currentProgress: any = null;
+    #isFirstOutput: boolean = true;
+    #hasWrittenNewLine: boolean = false;
 
     #webSocketListener = new WebSocketListener();
 
-    #currentDropCampaignId = null;
+    #currentDropCampaignId: string | null = null;
 
-    #dropCampaignMap = {};
+    #dropCampaignMap: { [key: string]: Campaign } = {};
 
-    #pendingHighPriority = false;
+    #pendingHighPriority: boolean = false;
 
     /**
      * The drop that we are currently making progress towards.
      */
-    #currentDrop = null;
+    #currentDrop: Drop | null = null;
 
     /**
      * The drop that we are trying to make progress towards. Sometimes when watching a stream, we make progress towards
      * a different drop than we had intended. This can happen when a game has multiple drop campaigns and we try to
      * process one, but a different one is currently active.
      */
-    #targetDrop = null;
+    #targetDrop: Drop | null = null;
 
-    #viewerCount = 0;
-    #currentMinutesWatched = {};
-    #lastMinutesWatched = {};
-    #lastProgressTime = {};
-    #isDropReadyToClaim = false;
-    #isStreamDown = false;
+    #viewerCount: number = 0;
+    #currentMinutesWatched: { [key: string]: number } = {};
+    #lastMinutesWatched: { [key: string]: number } = {};
+    #lastProgressTime: { [key: string]: number } = {};
+    #isDropReadyToClaim: boolean = false;
+    #isStreamDown: boolean = false;
 
-    constructor(config, page, client) {
-        this.#config = config;
+    constructor(page: Page, client: Client, optional?: {gameIds?: string[], interval?: number, watchUnlistedGames?: boolean}) {
         this.#page = page;
         this.#twitchClient = client;
 
+        optional?.gameIds?.forEach((id => {
+            this.#gameIds.push(id);
+        }));
+        this.#interval = optional?.interval ?? this.#interval;
+        this.#watchUnlistedGames = optional?.watchUnlistedGames ?? this.#watchUnlistedGames;
+
         // Set up Twitch Drops Watchdog
-        this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, config['interval']);
+        this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#interval);
         this.#twitchDropsWatchdog.on('before_update', () => {
             this.#stopProgressBar();
-            logger.info('Updating drop campaigns...');
+            //logger.info('Updating drop campaigns...');
         });
-        this.#twitchDropsWatchdog.on('update', async (campaigns) => {
+        this.#twitchDropsWatchdog.once('update', async (campaigns: Campaign[]) => {
 
             logger.info('Found ' + campaigns.length + ' campaigns.');
 
@@ -123,15 +178,15 @@ class TwitchDropsBot {
             campaigns.forEach(campaign => {
 
                 // Ignore drop campaigns that are not either active or upcoming
-                const campaignStatus = campaign['status'];
+                const campaignStatus = campaign.status;
                 if (campaignStatus !== 'ACTIVE' && campaignStatus !== 'UPCOMING') {
                     return;
                 }
 
-                const dropCampaignId = campaign['id'];
+                const dropCampaignId = campaign.id;
                 this.#dropCampaignMap[dropCampaignId] = campaign;
 
-                if (config['games'].length === 0 || config['games'].includes(campaign['game']['id']) || config['watch_unlisted_games']) {
+                if (this.#gameIds.length === 0 || this.#gameIds.includes(campaign.game.id) || this.#watchUnlistedGames) {
 
                     // Check if this campaign is finished already
                     /*if (this.#completedCampaignIds.has(dropCampaignId)) {
@@ -140,7 +195,7 @@ class TwitchDropsBot {
 
                     // Make sure Twitch account is linked
                     if (!campaign['self']['isAccountConnected']) {
-                        //logger.warn('Twitch account not linked for drop campaign: ' + getDropCampaignFullName(dropCampaignId));
+                        logger.warn('Twitch account not linked for drop campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
                         return;
                     }
 
@@ -206,8 +261,8 @@ class TwitchDropsBot {
             // have multiple drop campaigns, but only one is active at a time. If this happens, then we will just set
             // the current drop to the one we are making progress on.
             const dropId = data['drop_id'];
-            if (dropId !== this.#currentDrop['id']) {
-                logger.debug('Drop progress message does not match expected drop: ' + this.#currentDrop['id'] + ' vs ' + dropId);
+            if (dropId !== this.#currentDrop?.id) {
+                logger.debug('Drop progress message does not match expected drop: ' + this.#currentDrop?.id + ' vs ' + dropId);
 
                 if (!(dropId in this.#currentMinutesWatched)) {
                     this.#currentMinutesWatched[dropId] = data['current_progress_min'];
@@ -221,17 +276,21 @@ class TwitchDropsBot {
                 this.#lastProgressTime[dropId] = new Date().getTime();
                 this.#lastMinutesWatched[dropId] = this.#currentMinutesWatched[dropId];
 
-                if (dropId !== this.#currentDrop['id']) {
+                if (dropId !== this.#currentDrop?.id) {
                     this.#stopProgressBar(true);
-                    logger.info('Drop progress does not match expected drop: ' + this.#currentDrop['id'] + ' vs ' + dropId);
+                    logger.info('Drop progress does not match expected drop: ' + this.#currentDrop?.id + ' vs ' + dropId);
 
                     // If we made progress for a different drop, switch to it
                     this.#currentDrop = await this.#twitchClient.getInventoryDrop(dropId);
 
-                    if (!(this.#currentDrop['id'] in this.#currentMinutesWatched)) {
-                        this.#currentMinutesWatched[this.#currentDrop['id']] = this.#currentDrop['self']['currentMinutesWatched'];
-                        this.#lastMinutesWatched[this.#currentDrop['id']] = this.#currentDrop['self']['currentMinutesWatched'];
-                        this.#lastProgressTime[this.#currentDrop['id']] = new Date();
+                    if (!this.#currentDrop) {
+                        throw new Error('Made progress towards a drop but did not find it in inventory!');
+                    }
+
+                    if (!(this.#currentDrop.id in this.#currentMinutesWatched)) {
+                        this.#currentMinutesWatched[this.#currentDrop?.id] = this.#currentDrop?.self.currentMinutesWatched;
+                        this.#lastMinutesWatched[this.#currentDrop?.id] = this.#currentDrop?.self.currentMinutesWatched;
+                        this.#lastProgressTime[this.#currentDrop.id] = new Date().getTime();
                     }
 
                     // Restart the progress bar
@@ -277,7 +336,7 @@ class TwitchDropsBot {
     async start() {
 
         // The last time we attempted to make progress towards each drop campaign
-        const lastDropCampaignAttemptTimes = {};
+        const lastDropCampaignAttemptTimes: { [key: string]: number } = {};
 
         // Amount of time to wait after failing to make progress towards a drop campaign before trying it again
         const SLEEP_TIME_MS = 1000 * 60 * 5;
@@ -293,7 +352,7 @@ class TwitchDropsBot {
                 if (this.#pendingDropCampaignIds.length > 0) {
 
                     // Find the first pending drop campaign that we haven't checked in the past 5 minutes
-                    let minLastDropCampaignCheckTime = null;
+                    let minLastDropCampaignCheckTime = new Date().getTime();
                     for (const pendingDropCampaignId of this.#pendingDropCampaignIds) {
                         const lastCheckTime = lastDropCampaignAttemptTimes[pendingDropCampaignId];
                         if (lastCheckTime) {
@@ -310,7 +369,6 @@ class TwitchDropsBot {
 
                     // We already checked all pending drop campaigns in the past 5 minutes, lets wait for the oldest one
                     logger.debug('final minlastdropcampaignchecktime: ' + minLastDropCampaignCheckTime + ' time: ' + new Date().getTime());
-                    logger.debug(SLEEP_TIME_MS + ' ' + (new Date().getTime() - minLastDropCampaignCheckTime));
                     const sleepTime = Math.max(0, SLEEP_TIME_MS - (new Date().getTime() - minLastDropCampaignCheckTime));
                     logger.info('No campaigns/streams active. Sleeping for ' + (sleepTime / 1000 / 60).toFixed(1) + ' min.');
                     setTimeout(() => {
@@ -325,12 +383,16 @@ class TwitchDropsBot {
                 logger.debug('done');
             }
 
+            if (!this.#currentDropCampaignId) {
+                continue;  // This should never happen. Its here to make Typescript happy.
+            }
+
             // Attempt to make progress towards the current drop campaign
             logger.info('Processing campaign: ' + this.#getDropCampaignFullName(this.#currentDropCampaignId));
             lastDropCampaignAttemptTimes[this.#currentDropCampaignId] = new Date().getTime();
 
             // Check if this drop campaign is active
-            if (this.#dropCampaignMap[this.#currentDropCampaignId]['status'] !== 'ACTIVE'){
+            if (this.#dropCampaignMap[this.#currentDropCampaignId]['status'] !== 'ACTIVE') {
                 logger.info('campaign not active');
                 this.#currentDropCampaignId = null;
                 continue;
@@ -364,7 +426,7 @@ class TwitchDropsBot {
      * @param dropCampaignId
      * @returns {Promise<void>}
      */
-    async #processDropCampaign(dropCampaignId) {
+    async #processDropCampaign(dropCampaignId: string) {
         const details = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
 
         while (true) {
@@ -386,7 +448,7 @@ class TwitchDropsBot {
             }
 
             // A mapping of stream URLs to an integer representing the number of times the stream failed while we were trying to watch it
-            const failedStreamUrlCounts = {};
+            const failedStreamUrlCounts: { [key: string]: number } = {};
 
             const failedStreamUrls = new Set();
 
@@ -456,12 +518,12 @@ class TwitchDropsBot {
         }
     }
 
-    async #claimDropReward(drop) {
+    async #claimDropReward(drop: InventoryDrop) {
         logger.info('Claiming drop!');
-        await this.#twitchClient.claimDropReward(drop['self']['dropInstanceID']);
+        await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
     }
 
-    async #waitUntilElementRendered(page, element, timeout = 1000 * 30) {
+    async #waitUntilElementRendered(page: Page, element: ElementHandle, timeout = 1000 * 30) {
         const checkDurationMsecs = 1000;
         const maxChecks = timeout / checkDurationMsecs;
         let lastHTMLSize = 0;
@@ -470,7 +532,10 @@ class TwitchDropsBot {
         const minStableSizeIterations = 3;
 
         while (checkCounts++ <= maxChecks) {
-            let html = await (await element.getProperty('outerHTML')).jsonValue();
+            let html: string | undefined = await (await element.getProperty('outerHTML'))?.jsonValue();
+            if (!html) {
+                throw new Error('HTML was undefined!');
+            }
             let currentHTMLSize = html.length;
 
             if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
@@ -488,7 +553,7 @@ class TwitchDropsBot {
         }
     }
 
-    #ansiEscape(code) {
+    #ansiEscape(code: string) {
         return '\x1B[' + code;
     }
 
@@ -498,6 +563,7 @@ class TwitchDropsBot {
         this.#payload = p;
         if (this.#progressBar !== null) {
             this.#progressBar.start(t, 0, p);
+            this.#hasWrittenNewLine = false;
         }
     }
 
@@ -509,9 +575,16 @@ class TwitchDropsBot {
         }
     }
 
-    #stopProgressBar(clear = false) {
+    #stopProgressBar(clear: boolean = false) {
         if (this.#progressBar !== null) {
             this.#progressBar.stop();
+            logger.debug('stop: ' + this.#hasWrittenNewLine);
+            if (!this.#hasWrittenNewLine){
+                //process.stdout.write('\n');
+                this.#hasWrittenNewLine = true;
+                //logger.debug('new line!');
+            }
+
         }
         if (clear) {
             this.#progressBar = null;
@@ -525,10 +598,9 @@ class TwitchDropsBot {
         // Create progress bar
         this.#progressBar = new cliProgress.SingleBar(
             {
-                clearOnComplete: true,
                 barsize: 20,
                 stream: process.stdout,
-                format: (options, params, payload) => {
+                format: (options: any, params: any, payload: any) => {
                     let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + this.#ansiEscape('0K') + '\n'
                         + `${payload['drop_name']} ${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + this.#ansiEscape('0K') + '\n';
                     if (this.#isFirstOutput) {
@@ -544,7 +616,7 @@ class TwitchDropsBot {
         });
     }
 
-    async #watchStreamUntilCampaignCompleted(streamUrl, campaignId, targetDrop) {
+    async #watchStreamUntilCampaignCompleted(streamUrl: string, campaignId: string, targetDrop: Drop) {
         this.#targetDrop = targetDrop;
         this.#currentDrop = targetDrop;
         logger.debug('target: ' + targetDrop['id']);
@@ -556,13 +628,13 @@ class TwitchDropsBot {
         this.#lastMinutesWatched = {};
         this.#lastMinutesWatched[targetDrop['id']] = -1;
         this.#lastProgressTime = {};
-        this.#lastProgressTime[targetDrop['id']] = new Date();
+        this.#lastProgressTime[targetDrop['id']] = new Date().getTime();
         this.#isDropReadyToClaim = false;
         this.#isStreamDown = false;
 
         // Get initial drop progress
-        const inventoryDrop = await this.#twitchClient.getInventoryDrop(targetDrop['id']);
-        if (inventoryDrop){
+        const inventoryDrop = await this.#twitchClient.getInventoryDrop(targetDrop.id);
+        if (inventoryDrop) {
             this.#currentMinutesWatched[targetDrop['id']] = inventoryDrop['self']['currentMinutesWatched'];
             this.#lastMinutesWatched[targetDrop['id']] = this.#currentMinutesWatched[targetDrop['id']];
         }
@@ -627,7 +699,7 @@ class TwitchDropsBot {
                 // Maybe we haven't got any updates from the web socket, lets check our inventory
                 const currentDropId = this.#currentDrop['id'];
                 const inventoryDrop = await this.#twitchClient.getInventoryDrop(currentDropId);
-                if (inventoryDrop){
+                if (inventoryDrop) {
                     this.#currentMinutesWatched[currentDropId] = inventoryDrop['self']['currentMinutesWatched'];
                     if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
                         this.#lastProgressTime[currentDropId] = new Date().getTime();
@@ -670,7 +742,7 @@ class TwitchDropsBot {
         }
     }
 
-    async #getFirstUnclaimedDrop(campaignId) {
+    async #getFirstUnclaimedDrop(campaignId: string) {
         // Get all drops for this campaign
         const details = await this.#twitchClient.getDropCampaignDetails(campaignId);
 
@@ -697,7 +769,7 @@ class TwitchDropsBot {
         return null;
     }
 
-    async #isDropClaimed(drop) {
+    async #isDropClaimed(drop: Drop) {
         const inventory = await this.#twitchClient.getInventory();
 
         // Check campaigns in progress
@@ -731,7 +803,7 @@ class TwitchDropsBot {
         return false;
     }
 
-    async #getActiveStreams(campaignId, details) {
+    async #getActiveStreams(campaignId: string, details: any) {
         // Get a list of active streams that have drops enabled
         let streams = await this.#twitchClient.getDropEnabledStreams(this.#getDropCampaignById(campaignId)['game']['displayName']);
 
@@ -750,20 +822,16 @@ class TwitchDropsBot {
         return streams;
     }
 
-    #getDropCampaignFullName(campaignId) {
+    #getDropCampaignFullName(campaignId: string) {
         const campaign = this.#getDropCampaignById(campaignId);
         return campaign['game']['displayName'] + ' ' + campaign['name'];
     }
 
-    #getDropCampaignById(campaignId) {
+    #getDropCampaignById(campaignId: string) {
         return this.#dropCampaignMap[campaignId];
     }
 
-    #getDropName(drop) {
+    #getDropName(drop: Drop) {
         return drop['benefitEdges'][0]['benefit']['name'];
     }
-}
-
-module.exports = {
-    TwitchDropsBot
 }

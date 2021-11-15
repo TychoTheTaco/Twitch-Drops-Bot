@@ -1,15 +1,15 @@
 'use strict';
 
 // Set up logger
-const {transports, createLogger, format} = require('winston');
+import {transports, createLogger, format} from 'winston';
 const logger = createLogger({
     format: format.combine(
         format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
         {
-            transform(info, opts) {
+            transform(info: any, opts) {
                 const message = info.message;
                 if (message instanceof Error) {
-                    info.message = message.stack.replace(/^Error/g, message.constructor.name);
+                    info.message = message.stack?.replace(/^Error/g, message.constructor.name);
                 }
                 return info;
             }
@@ -31,4 +31,4 @@ const logger = createLogger({
     ]
 });
 
-module.exports = logger;
+export default logger;

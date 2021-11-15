@@ -1,16 +1,19 @@
 'use strict';
 
-const EventEmitter = require('events');
+import EventEmitter from 'events';
 
-const logger = require('./logger');
+import logger from './logger';
+import {CDPSession, Page} from "puppeteer";
 
 class WebSocketListener extends EventEmitter {
 
-    #ignoreTopicHandler = message => {
+    #cdp?: CDPSession;
+
+    #ignoreTopicHandler = (message: any) => {
         return true;
     }
 
-    #topicHandlers = {
+    #topicHandlers: {[key: string] : (message: any) => boolean} = {
         'user-drop-events': message => {
             const messageType = message['type'];
             switch (messageType) {
@@ -24,6 +27,7 @@ class WebSocketListener extends EventEmitter {
                     this.emit(messageType, message['data']);
                     return true;
             }
+            return false;
         },
         'video-playback-by-id': message => {
             const messageType = message['type'];
@@ -43,6 +47,7 @@ class WebSocketListener extends EventEmitter {
                 case 'commercial':
                     return true;
             }
+            return false;
         },
         'community-points-user-v1': message => {
             const messageType = message['type'];
@@ -55,6 +60,7 @@ class WebSocketListener extends EventEmitter {
                 case 'reward-redeemed':
                     return true;
             }
+            return false;
         },
         'presence': this.#ignoreTopicHandler,
         'leaderboard-events-v1': this.#ignoreTopicHandler,
@@ -75,17 +81,17 @@ class WebSocketListener extends EventEmitter {
         'crowd-chant-channel-v1': this.#ignoreTopicHandler
     };
 
-    async attach(page) {
-        this.cdp = await page.target().createCDPSession();
-        await this.cdp.send('Network.enable');
-        await this.cdp.send('Page.enable');
-        let pubSubWebSocketRequestId = null;
-        this.cdp.on('Network.webSocketCreated', socket => {
+    async attach(page: Page) {
+        this.#cdp = await page.target().createCDPSession();
+        await this.#cdp.send('Network.enable');
+        await this.#cdp.send('Page.enable');
+        let pubSubWebSocketRequestId: string;
+        this.#cdp.on('Network.webSocketCreated', socket => {
             if (socket['url'] === 'wss://pubsub-edge.twitch.tv/v1') {
                 pubSubWebSocketRequestId = socket['requestId'];
             }
         });
-        this.cdp.on('Network.webSocketFrameReceived', frame => {
+        this.#cdp.on('Network.webSocketFrameReceived', frame => {
             if (frame['requestId'] === pubSubWebSocketRequestId) {
                 const payload = JSON.parse(frame['response']['payloadData']);
                 const payloadType = payload['type'];
@@ -126,9 +132,9 @@ class WebSocketListener extends EventEmitter {
     }
 
     async detach() {
-        await this.cdp.detach();
+        await this.#cdp?.detach();
     }
 
 }
 
-module.exports = WebSocketListener;
+export default WebSocketListener;

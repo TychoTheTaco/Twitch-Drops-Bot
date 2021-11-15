@@ -1,21 +1,23 @@
 'use strict';
-const fs = require('fs');
 
-const axios = require('axios');
-const TimeoutError = require("puppeteer").errors.TimeoutError;
+import fs from 'fs';
+
+import axios from 'axios';
+import {errors, Browser} from 'puppeteer';
+const {TimeoutError} = errors;
 const prompt = require('prompt');
 
-const logger = require("./logger");
-const utils = require('./utils');
+import logger from "./logger";
+import utils from './utils';
 
-class Client {
+export class Client {
 
-    #clientId;
-    #oauthToken;
-    #channelLogin;
-    #defaultHeaders;
+    readonly #clientId: string;
+    readonly #oauthToken: string;
+    readonly #channelLogin: string;
+    readonly #defaultHeaders;
 
-    constructor(clientId, oauthToken, channelLogin) {
+    constructor(clientId: string, oauthToken: string, channelLogin: string) {
         this.#clientId = clientId;
         this.#oauthToken = oauthToken;
         this.#channelLogin = channelLogin;
@@ -56,7 +58,7 @@ class Client {
         }
     }
 
-    async getDropCampaignDetails(dropId){
+    async getDropCampaignDetails(dropId: string){
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 'operationName': 'DropCampaignDetails',
@@ -96,7 +98,7 @@ class Client {
         return response['data']['data']['currentUser']['inventory'];
     }
 
-    async getDropEnabledStreams(gameName) {
+    async getDropEnabledStreams(gameName: string) {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 "operationName": "DirectoryPage_Game",
@@ -144,7 +146,7 @@ class Client {
         return result;
     }
 
-    async claimDropReward(dropId) {
+    async claimDropReward(dropId: string) {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 "operationName": "DropsPage_ClaimDropRewards",
@@ -178,7 +180,7 @@ class Client {
         return campaigns;
     }
 
-    async getInventoryDrop(dropId, campaignId) {
+    async getInventoryDrop(dropId: string, campaignId?: string) {
         const campaigns = await this.getDropCampaignsInProgress();
         for (const campaign of campaigns) {
             if (!campaignId || campaign['id'] === campaignId) {
@@ -195,7 +197,7 @@ class Client {
 
 }
 
-async function login(browser, username, password, headless = false) {
+export async function login(browser: Browser, username?: string, password?: string, headless: boolean = false) {
     const page = await browser.newPage();
 
     // Throw an error if the page is closed for any reason
@@ -237,12 +239,16 @@ async function login(browser, username, password, headless = false) {
 
                 // Prompt user for code
                 prompt.start();
-                const result = await utils.asyncPrompt(['code']);
+                const result: any = await utils.asyncPrompt(['code']);
                 const code = result['code'];
                 prompt.stop();
 
                 // Enter code
                 const first_input = await page.waitForXPath('(//input)[1]');
+                if (first_input == null){
+                    logger.error('first_input was null!');
+                    break
+                }
                 await first_input.click();
                 await page.keyboard.type(code);
                 break;
@@ -262,17 +268,25 @@ async function login(browser, username, password, headless = false) {
 
                 // Prompt user for code
                 prompt.start();
-                const result = await utils.asyncPrompt(['code']);
+                const result: any = await utils.asyncPrompt(['code']);
                 const code = result['code'];
                 prompt.stop();
 
                 // Enter code
                 const first_input = await page.waitForXPath('(//input[@type="text"])');
+                if (first_input == null){
+                    logger.error('first_input was null!');
+                    break
+                }
                 await first_input.click();
                 await page.keyboard.type(code);
 
                 // Click submit
                 const button = await page.waitForXPath('//button[@target="submit_button"]');
+                if (button == null){
+                    logger.error('button was null!');
+                    break
+                }
                 await button.click();
 
                 break;
@@ -322,7 +336,7 @@ async function login(browser, username, password, headless = false) {
     return cookies;
 }
 
-module.exports = {
+export default {
     Client,
     login
 }

@@ -1,21 +1,22 @@
 'use strict';
 
-const fs = require('fs');
+import fs from 'fs';
 const {ArgumentParser} = require('argparse');
 
-const logger = require('./logger');
+import logger from './logger';
+import {Option} from "./options";
 
-class ConfigurationParser {
+export class ConfigurationParser {
 
     #options;
     #saveIfNotExist;
 
-    constructor(options, saveIfNotExist = true) {
+    constructor(options: Option<any>[], saveIfNotExist: boolean = true) {
         this.#options = options;
         this.#saveIfNotExist = saveIfNotExist;
     }
 
-    parse() {
+    parse(): object {
 
         // Parse arguments
         const parser = new ArgumentParser();
@@ -30,7 +31,7 @@ class ConfigurationParser {
         const args = parser.parse_args();
 
         // Load config from file if it exists
-        let config = {};
+        let config: any = {};
         logger.info('Loading config file: ' + args['config']);
         const configFileExists = fs.existsSync(args['config']);
         if (configFileExists) {
@@ -78,7 +79,3 @@ class ConfigurationParser {
     }
 
 }
-
-module.exports = {
-    ConfigurationParser
-};
