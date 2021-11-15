@@ -70,7 +70,8 @@ const options = [
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new options_1.BooleanOption('--watch-unlisted-games'),
     new options_1.StringOption('--cookies-path'),
-    new options_1.StringOption('--log-level')
+    new options_1.StringOption('--log-level'),
+    new options_1.BooleanOption('--show-account-not-linked-warning', false, { defaultValue: true, alias: '-sanlw' })
 ];
 // Parse arguments
 const configurationParser = new configuration_parser_1.ConfigurationParser(options);
@@ -190,7 +191,7 @@ if (config['username']) {
     // Seems to be the default hard-coded client ID
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
     const twitchClient = new twitch_1.default.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
-    const bot = new twitch_drops_bot_1.TwitchDropsBot(page, twitchClient, { gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games'] });
+    const bot = new twitch_drops_bot_1.TwitchDropsBot(page, twitchClient, { gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning'] });
     yield bot.start();
 }))().catch(error => {
     logger_1.default.error(error);

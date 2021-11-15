@@ -68,7 +68,8 @@ const options = [
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new BooleanOption('--watch-unlisted-games'),
     new StringOption('--cookies-path'),
-    new StringOption('--log-level')
+    new StringOption('--log-level'),
+    new BooleanOption('--show-account-not-linked-warning', false, {defaultValue: true, alias: '-sanlw'})
 ];
 
 // Parse arguments
@@ -215,7 +216,7 @@ if (config['username']) {
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
     const twitchClient = new twitch.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
 
-    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games']});
+    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning']});
     await bot.start();
 
 })().catch(error => {

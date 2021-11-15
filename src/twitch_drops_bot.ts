@@ -83,6 +83,9 @@ export class TwitchDropsBot {
     // The games in 'gameIds' still have priority.
     readonly #watchUnlistedGames: boolean = false;
 
+    // Show a warning if the Twitch account is not linked to the drop campaign
+    readonly #showAccountNotLinkedWarning: boolean = true;
+
     readonly #page: Page;
     readonly #twitchClient: Client;
 
@@ -150,7 +153,7 @@ export class TwitchDropsBot {
     #isDropReadyToClaim: boolean = false;
     #isStreamDown: boolean = false;
 
-    constructor(page: Page, client: Client, optional?: {gameIds?: string[], interval?: number, watchUnlistedGames?: boolean}) {
+    constructor(page: Page, client: Client, optional?: {gameIds?: string[], interval?: number, watchUnlistedGames?: boolean, showAccountNotLinkedWarning?: boolean}) {
         this.#page = page;
         this.#twitchClient = client;
 
@@ -159,6 +162,7 @@ export class TwitchDropsBot {
         }));
         this.#interval = optional?.interval ?? this.#interval;
         this.#watchUnlistedGames = optional?.watchUnlistedGames ?? this.#watchUnlistedGames;
+        this.#showAccountNotLinkedWarning = optional?.showAccountNotLinkedWarning ?? this.#showAccountNotLinkedWarning;
 
         // Set up Twitch Drops Watchdog
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#interval);
@@ -195,7 +199,9 @@ export class TwitchDropsBot {
 
                     // Make sure Twitch account is linked
                     if (!campaign['self']['isAccountConnected']) {
-                        logger.warn('Twitch account not linked for drop campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
+                        if (this.#showAccountNotLinkedWarning){
+                            logger.warn('Twitch account not linked for drop campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
+                        }
                         return;
                     }
 
