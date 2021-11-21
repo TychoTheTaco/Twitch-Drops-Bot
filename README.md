@@ -41,11 +41,21 @@ Below is a list of all available options.
 | <code>&#8209;&#8209;watch&#8209;unlisted&#8209;games</code> | `watch_unlisted_games` | If this is set to `true`, the app will watch streams of games that are not listed in the config after listed games have completed. | `false` |
 | <code>&#8209;&#8209;cookies&#8209;path</code> | `cookies_path` | The path to a file containing Twitch login cookies. If the file does not exist, one will be created after logging in. | <code>cookies&#8209;\<username>.json</code> |
 | <code>&#8209;&#8209;log&#8209;level</code> | `log_level` | The log level to display in the console. All log levels are still logged to the log file. | <code>info</code> |
+| <code>&#8209;&#8209;show&#8209;account&#8209;not&#8209;linked&#8209;warning</code> | `show_account_not_linked_warning` | Show a warning if your Twitch account is not linked to a Drop Campaign. | <code>true</code> |
 
 ### Update Games List
 
 If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
 
-### Docker
+## Docker
 
-You can also run this bot in a docker container. You can download the latest image [here](https://github.com/TychoTheTaco/Twitch-Drops-Bot/pkgs/container/twitch-drops-bot).
+You can also run this bot in a docker container. The latest image can be downloaded [here](https://github.com/TychoTheTaco/Twitch-Drops-Bot/pkgs/container/twitch-drops-bot).
+
+### Starting the container
+
+Use one of the following commands to start the container. Make sure you run this command in the same directory as `config.json`, since it will map the current directory to the `/app/data` directory in the container. If this is the first
+time running the bot, a `config.json` file will be created in the current directory. 
+
+Windows (Command Prompt): `docker run -v %cd%:/app/data -i --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+
+Linux: `docker run -v ${PWD}:/app/data -i --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`

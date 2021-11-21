@@ -376,7 +376,7 @@ export class TwitchDropsBot {
                     // We already checked all pending drop campaigns in the past 5 minutes, lets wait for the oldest one
                     logger.debug('final minlastdropcampaignchecktime: ' + minLastDropCampaignCheckTime + ' time: ' + new Date().getTime());
                     const sleepTime = Math.max(0, SLEEP_TIME_MS - (new Date().getTime() - minLastDropCampaignCheckTime));
-                    logger.info('No campaigns/streams active. Sleeping for ' + (sleepTime / 1000 / 60).toFixed(1) + ' min.');
+                    logger.info('No campaigns active/streams online. Checking again in ' + (sleepTime / 1000 / 60).toFixed(1) + ' min.');
                     setTimeout(() => {
                         logger.debug('notify all!');
                         this.#pendingDropCampaignIdsNotifier.notifyAll();
