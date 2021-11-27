@@ -216,7 +216,7 @@ if (config['username']) {
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
     const twitchClient = new twitch.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
 
-    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning']});
+    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], failedStreamTimeout: config['failed_stream_timeout'], failedStreamRetry: config['failed_stream_retry'], interval: config['interval'], loadTimeoutSecs: config['load_timeout_secs'], hideVideo: config['hide_video'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning']});
     await bot.start();
 
 })().catch(error => {

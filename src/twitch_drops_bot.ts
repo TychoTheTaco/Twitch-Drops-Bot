@@ -79,6 +79,18 @@ export class TwitchDropsBot {
     // The number of minutes in between refreshing the drop campaign list
     readonly #interval: number = 15;
 
+    // When a Stream fails #failedStreamRetry times (it went offline, or other reasons), we need to remove them
+    // from the block list after #failedStreamTimeout seconds.
+    readonly #failedStreamTimeout: number = 30;
+    readonly #failedStreamRetry: number = 3;
+
+    // When we use page.load the default timeout is 30 seconds, increasing this value can help when using low-end
+    // devices (such as a Raspberry Pi).
+    readonly #loadTimeoutSecs: number = 30;
+
+    // Setting the visibility of a video to "hidden" will lower the CPU usage.
+    readonly #hideVideo: boolean = false;
+
     // When true, the bot will attempt to watch and claim drops for all games, even if they are not in 'gameIds'.
     // The games in 'gameIds' still have priority.
     readonly #watchUnlistedGames: boolean = false;
@@ -153,7 +165,7 @@ export class TwitchDropsBot {
     #isDropReadyToClaim: boolean = false;
     #isStreamDown: boolean = false;
 
-    constructor(page: Page, client: Client, optional?: {gameIds?: string[], interval?: number, watchUnlistedGames?: boolean, showAccountNotLinkedWarning?: boolean}) {
+    constructor(page: Page, client: Client, optional?: {gameIds?: string[], failedStreamTimeout?: number, failedStreamRetry?: number, interval?: number, loadTimeoutSecs?: number, hideVideo?: boolean, watchUnlistedGames?: boolean, showAccountNotLinkedWarning?: boolean}) {
         this.#page = page;
         this.#twitchClient = client;
 
@@ -161,6 +173,12 @@ export class TwitchDropsBot {
             this.#gameIds.push(id);
         }));
         this.#interval = optional?.interval ?? this.#interval;
+
+        this.#failedStreamTimeout = optional?.failedStreamTimeout ?? this.#failedStreamTimeout;
+        this.#failedStreamRetry = optional?.failedStreamRetry ?? this.#failedStreamRetry;
+        this.#loadTimeoutSecs = optional?.loadTimeoutSecs ?? this.#loadTimeoutSecs;
+        this.#hideVideo = optional?.hideVideo ?? this.#hideVideo;
+
         this.#watchUnlistedGames = optional?.watchUnlistedGames ?? this.#watchUnlistedGames;
         this.#showAccountNotLinkedWarning = optional?.showAccountNotLinkedWarning ?? this.#showAccountNotLinkedWarning;
 
@@ -373,6 +391,9 @@ export class TwitchDropsBot {
                         break inner;
                     }
 
+                    // If no campaigns active/streams online, then set the page to "about:blank"
+                    await this.#page.goto("about:blank", {waitUntil: 'load', timeout: 1000 * this.#loadTimeoutSecs});
+
                     // We already checked all pending drop campaigns in the past 5 minutes, lets wait for the oldest one
                     logger.debug('final minlastdropcampaignchecktime: ' + minLastDropCampaignCheckTime + ' time: ' + new Date().getTime());
                     const sleepTime = Math.max(0, SLEEP_TIME_MS - (new Date().getTime() - minLastDropCampaignCheckTime));
@@ -455,6 +476,7 @@ export class TwitchDropsBot {
 
             // A mapping of stream URLs to an integer representing the number of times the stream failed while we were trying to watch it
             const failedStreamUrlCounts: { [key: string]: number } = {};
+            const failedStreamUrlExpireTime: { [key: string]: number } = {};
 
             const failedStreamUrls = new Set();
 
@@ -463,6 +485,19 @@ export class TwitchDropsBot {
                 // Get a list of active streams that have drops enabled
                 let streams = await this.#getActiveStreams(dropCampaignId, details);
                 logger.info('Found ' + streams.length + ' active streams');
+
+                // Check expire time to remove streams that failed too many times after
+                // "this.#failedStreamTimeout" minutes and remove them from block list..
+                for (const x of streams) {
+                    if (failedStreamUrls.has(x['url'])) {
+                        // Check Timeout!
+                        if ((new Date()).getTime() >= failedStreamUrlExpireTime[x['url']]) {
+                            // Remove and reset fail counter...
+                            failedStreamUrls.delete(x['url']);
+                            failedStreamUrlCounts[x['url']] = 0;
+                        }
+                    }
+                }
 
                 // Filter out streams that failed too many times
                 streams = streams.filter(stream => {
@@ -491,13 +526,15 @@ export class TwitchDropsBot {
                     } else if (error instanceof StreamLoadFailedError) {
                         logger.warn('Stream failed to load!');
                     } else if (error instanceof StreamDownError) {
-                        logger.info('stream went down');
+                        logger.info('Stream went down');
                         /*
                         If the stream goes down, add it to the failed stream urls immediately so we don't try it again.
                         This is needed because getActiveStreams() can return streams that are down if they went down
                         very recently.
                          */
                         failedStreamUrls.add(streamUrl);
+                        // Schedule removal from block list!
+                        failedStreamUrlExpireTime[streamUrl] = (new Date()).getTime() + 1000 * 60 * this.#failedStreamTimeout;
                     } else {
                         logger.error(error);
                         await utils.saveScreenshotAndHtml(this.#page, 'error')
@@ -510,9 +547,11 @@ export class TwitchDropsBot {
                     failedStreamUrlCounts[streamUrl]++;
 
                     // Move on if this stream failed too many times
-                    if (failedStreamUrlCounts[streamUrl] >= 3) {
-                        logger.error('Stream failed too many times. Giving up...');
+                    if (failedStreamUrlCounts[streamUrl] >= this.#failedStreamRetry) {
+                        logger.error('Stream failed too many times. Giving up for ' + + this.#failedStreamTimeout + ' minutes...');
                         failedStreamUrls.add(streamUrl);
+                        // Schedule removal from block list!
+                        failedStreamUrlExpireTime[streamUrl] = (new Date()).getTime() + 1000 * 60 * this.#failedStreamTimeout;
                     }
                     continue;
                 } finally {
@@ -529,7 +568,8 @@ export class TwitchDropsBot {
         await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
     }
 
-    async #waitUntilElementRendered(page: Page, element: ElementHandle, timeout = 1000 * 30) {
+    // If user specified an increased timeout, use it, otherwise use the default 30 seconds
+    async #waitUntilElementRendered(page: Page, element: ElementHandle, timeout = 1000 * this.#loadTimeoutSecs) {
         const checkDurationMsecs = 1000;
         const maxChecks = timeout / checkDurationMsecs;
         let lastHTMLSize = 0;
@@ -641,6 +681,7 @@ export class TwitchDropsBot {
         this.#isStreamDown = false;
 
         // Get initial drop progress
+        logger.info('Updating drop progress...');
         const inventoryDrop = await this.#twitchClient.getInventoryDrop(targetDrop.id);
         if (inventoryDrop) {
             this.#currentMinutesWatched[targetDrop['id']] = inventoryDrop['self']['currentMinutesWatched'];
@@ -650,7 +691,9 @@ export class TwitchDropsBot {
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         await this.#webSocketListener.attach(this.#page)
 
-        await this.#page.goto(streamUrl);
+        // If user specified an increased timeout, use it, otherwise use the default 30 seconds.
+        // Tweak for low-end devices such as Raspberry Pi
+        await this.#page.goto(streamUrl, {waitUntil: 'load', timeout: 1000 * this.#loadTimeoutSecs});
 
         // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
         logger.info('Waiting for page to load...');
@@ -682,6 +725,16 @@ export class TwitchDropsBot {
             throw error;
         }
 
+        // This does not affect the drops, so if the user requests lets hide the videos
+        if (this.#hideVideo) {
+            try {
+                await streamPage.hideVideo();
+                logger.info('Set stream visibility to hidden');
+            } catch (error) {
+                logger.error('Failed to set stream visibility to hidden!');
+                throw error;
+            }
+        }
         const requiredMinutesWatched = targetDrop['requiredMinutesWatched'];
 
         this.#createProgressBar();
@@ -696,6 +749,7 @@ export class TwitchDropsBot {
             if (this.#isStreamDown) {
                 this.#isStreamDown = false;
                 this.#stopProgressBar(true);
+                await this.#page.goto("about:blank", {waitUntil: 'load', timeout: 1000 * this.#loadTimeoutSecs});
                 throw new StreamDownError('Stream went down!');
             }
 
@@ -712,13 +766,15 @@ export class TwitchDropsBot {
                     if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
                         this.#lastProgressTime[currentDropId] = new Date().getTime();
                         this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
-                        logger.debug('no progress from web socket! using inventory progress');
+                        logger.debug('No progress from web socket! using inventory progress');
                     } else {
                         this.#stopProgressBar(true);
+                        await this.#page.goto("about:blank", {waitUntil: 'load', timeout: 1000 * this.#loadTimeoutSecs});
                         throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
                     }
                 } else {
                     this.#stopProgressBar(true);
+                    await this.#page.goto("about:blank", {waitUntil: 'load', timeout: 1000 * this.#loadTimeoutSecs});
                     throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
                 }
 
@@ -740,6 +796,9 @@ export class TwitchDropsBot {
 
                 // Claim the drop
                 await this.#claimDropReward(inventoryDrop);
+
+                // After the reward was claimed set streamUrl to "about:blank".
+                await this.#page.goto("about:blank", {waitUntil: 'load', timeout: 1000 * this.#loadTimeoutSecs});
 
                 // TODO: dont return, check for more drops
 

@@ -16,6 +16,21 @@ export class StreamPage {
         this.#page = page;
     }
 
+    async hideVideo() {
+        // Change the "visibility" of videos to "hidden" to lower CPU usage
+        await this.#page.evaluate(() => {
+            var videoTags = document.getElementsByTagName('video');
+            for (var i = 0; i < videoTags.length; i++) {
+                var v = videoTags.item(i);
+                if (v !== null) {
+                    if (v.currentTime > 0) {
+                        v.style.visibility = "hidden";
+                    }
+                }
+            }
+        });
+    }
+
     async waitForLoad(){
         // Wait for the viewer count and uptime to be visible
         await this.#page.waitForSelector('p[data-a-target="animated-channel-viewers-count"]');

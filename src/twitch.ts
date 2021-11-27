@@ -1,5 +1,7 @@
 'use strict';
 
+require('dnscache')({ enable: true });
+
 import fs from 'fs';
 
 import axios from 'axios';

@@ -42,6 +42,10 @@ Below is a list of all available options.
 | <code>&#8209;&#8209;cookies&#8209;path</code> | `cookies_path` | The path to a file containing Twitch login cookies. If the file does not exist, one will be created after logging in. | <code>cookies&#8209;\<username>.json</code> |
 | <code>&#8209;&#8209;log&#8209;level</code> | `log_level` | The log level to display in the console. All log levels are still logged to the log file. | <code>info</code> |
 | <code>&#8209;&#8209;show&#8209;account&#8209;not&#8209;linked&#8209;warning</code> | `show_account_not_linked_warning` | Show a warning if your Twitch account is not linked to a Drop Campaign. | <code>true</code> |
+| <code>&#8209;&#8209;load&#8209;timeout&#8209;secs</code> | `load_timeout_secs` | Increasing the timeout can help with low-end devices (such as: Raspberry Pi). | <code>30</code>
+| <code>&#8209;&#8209;failed&#8209;stream&#8209;retry</code> | `failed_stream_retry` | The number of failures a stream can have before being blacklisted. | <code>3</code>
+| <code>&#8209;&#8209;failed&#8209;stream&#8209;timeout</code> | `failed_stream_timeout` | The number of minutes to wait before removing a stream from blacklist. | <code>30</code>
+| <code>&#8209;&#8209;hide&#8209;video</code> | `hide_video` | Setting the visibility of a video to "hidden" will lower the CPU usage. | <code>false</code>
 
 ### Update Games List
 
@@ -59,3 +63,14 @@ time running the bot, a `config.json` file will be created in the current direct
 Windows (Command Prompt): `docker run -v %cd%:/app/data -i --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
 Linux: `docker run -v ${PWD}:/app/data -i --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+
+## Raspberry Pi
+
+Make sure to install the latest version of Node.js, look at [this link](https://github.com/nodesource/distributions/blob/master/README.md).
+
+To install Node.js 16 use the following commands:
+
+```sh
+$ sudo curl -sL https://deb.nodesource.com/setup_16.x | bash -
+$ sudo sudo apt-get update && apt-get install -y nodejs
+```
