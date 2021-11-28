@@ -34,7 +34,7 @@ export class Client {
      * Get a list of drop campaigns. This can include expired, active, and future campaigns.
      * @returns {Promise<*>}
      */
-    async getDropCampaigns(){
+    async getDropCampaigns() {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 'operationName': 'ViewerDropsDashboard',
@@ -49,18 +49,15 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
-
-        // todo: dont leave this here
         try {
-            return response['data']['data']['currentUser']['dropCampaigns']
+            return response['data']['data']['currentUser']['dropCampaigns'];
         } catch (error) {
-            console.log('ERROR!');
-            console.log('getDropCampaigns: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4));
-            logger.debug('getDropCampaigns: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4))
+            logger.error('Error in function getDropCampaigns! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+            throw error;
         }
     }
 
-    async getDropCampaignDetails(dropId: string){
+    async getDropCampaignDetails(dropId: string) {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 'operationName': 'DropCampaignDetails',
@@ -79,7 +76,12 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
-        return response['data']['data']['user']['dropCampaign']
+        try {
+            return response['data']['data']['user']['dropCampaign'];
+        } catch (error) {
+            logger.error('Error in function getDropCampaignDetails! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+            throw error;
+        }
     }
 
     async getInventory() {
@@ -97,7 +99,12 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
-        return response['data']['data']['currentUser']['inventory'];
+        try {
+            return response['data']['data']['currentUser']['inventory'];
+        } catch (error) {
+            logger.error('Error in function getInventory! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+            throw error;
+        }
     }
 
     async getDropEnabledStreams(gameName: string) {
@@ -173,6 +180,32 @@ export class Client {
         }
     }
 
+    /*async claimCommunityPoints(channelId: string, claimId: string) {
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                "operationName": "ClaimCommunityPoints",
+                "variables": {
+                    "input": {
+                        "channelID": channelId,
+                        "claimID": claimId
+                    }
+                },
+                "extensions": {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "46aaeebe02c99afdf4fc97c7c0cba964124bf6b0af229395f1f6d1feed05b3d0"
+                    }
+                }
+            },
+            {
+                headers: this.#defaultHeaders
+            }
+        );
+        if ('errors' in response.data) {
+            throw new Error(JSON.stringify(response.data['errors']));
+        }
+    }*/
+
     async getDropCampaignsInProgress() {
         const inventory = await this.getInventory();
         const campaigns = inventory['dropCampaignsInProgress'];
@@ -247,7 +280,7 @@ export async function login(browser: Browser, username?: string, password?: stri
 
                 // Enter code
                 const first_input = await page.waitForXPath('(//input)[1]');
-                if (first_input == null){
+                if (first_input == null) {
                     logger.error('first_input was null!');
                     break
                 }
@@ -276,7 +309,7 @@ export async function login(browser: Browser, username?: string, password?: stri
 
                 // Enter code
                 const first_input = await page.waitForXPath('(//input[@type="text"])');
-                if (first_input == null){
+                if (first_input == null) {
                     logger.error('first_input was null!');
                     break
                 }
@@ -285,7 +318,7 @@ export async function login(browser: Browser, username?: string, password?: stri
 
                 // Click submit
                 const button = await page.waitForXPath('//button[@target="submit_button"]');
-                if (button == null){
+                if (button == null) {
                     logger.error('button was null!');
                     break
                 }
@@ -309,7 +342,7 @@ export async function login(browser: Browser, username?: string, password?: stri
         try {
             await page.waitForNavigation();
         } catch (error) {
-            if (error instanceof TimeoutError){
+            if (error instanceof TimeoutError) {
                 const time = new Date().getTime();
                 const screenshotPath = 'failed-login-screenshot-' + time + '.png';
                 const htmlPath = 'failed-login-html-' + time + '.html';

@@ -71,6 +71,24 @@ interface InventoryDrop {
     }
 }
 
+interface CampaignDetails {
+    id: string,
+    status: string,
+    game: Game,
+    self: {
+        isAccountConnected: boolean
+    },
+    endAt: string,
+    name: string,
+    timeBasedDrops: Drop[],
+    allow: {
+        channels: {
+            id: string,
+            displayName: string
+        }[]
+    }
+}
+
 export class TwitchDropsBot {
 
     // A list of game IDs to watch and claim drops for.
@@ -219,7 +237,7 @@ export class TwitchDropsBot {
 
                     // Make sure Twitch account is linked
                     if (!campaign['self']['isAccountConnected']) {
-                        if (this.#showAccountNotLinkedWarning){
+                        if (this.#showAccountNotLinkedWarning) {
                             logger.warn('Twitch account not linked for drop campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
                         }
                         return;
@@ -331,28 +349,6 @@ export class TwitchDropsBot {
         this.#webSocketListener.on('stream-down', message => {
             this.#isStreamDown = true;
         });
-        this.#webSocketListener.on('claim-available', data => {
-            logger.debug('Claim available: ' + JSON.stringify(data, null, 4));
-            // TODO: Claim button may not be visible
-            /*await page.screenshot({
-                fullPage: true,
-                path: 'claim-ss.png'
-            })
-             try {
-                 await page.evaluate(() => {
-                     const element = document.evaluate('//button[@aria-label="Claim Bonus"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue;
-                     if (element.nodeType === Node.ELEMENT_NODE) {
-                         element.click();
-                     }
-                 });
-             } catch (error) {
-                 // Ignore errors
-                 console.log('oof', error);
-             }*/
-        });
-        this.#webSocketListener.on('claim-claimed', data => {
-            logger.debug('Claim claimed: ' + JSON.stringify(data, null, 4));
-        })
     }
 
     /*async login(username, password, headless = false) {
@@ -550,7 +546,7 @@ export class TwitchDropsBot {
 
                     // Move on if this stream failed too many times
                     if (failedStreamUrlCounts[streamUrl] >= this.#failedStreamRetry) {
-                        logger.error('Stream failed too many times. Giving up for ' + + this.#failedStreamTimeout + ' minutes...');
+                        logger.error('Stream failed too many times. Giving up for ' + this.#failedStreamTimeout + ' minutes...');
                         failedStreamUrls.add(streamUrl);
                         // Schedule removal from block list!
                         failedStreamUrlExpireTime[streamUrl] = (new Date()).getTime() + 1000 * 60 * this.#failedStreamTimeout;
@@ -630,7 +626,7 @@ export class TwitchDropsBot {
             // intended to be used for 1 line. Also the logger does not play nice with it.
             // This is a workaround to try and avoid overwriting some lines in the terminal.
             // For more reliable logs, just look at the log file instead of the console.
-            if (!this.#hasWrittenNewLine){
+            if (!this.#hasWrittenNewLine) {
                 process.stdout.write('\n');
                 this.#hasWrittenNewLine = true;
             }
@@ -693,8 +689,6 @@ export class TwitchDropsBot {
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         await this.#webSocketListener.attach(this.#page)
 
-        // If user specified an increased timeout, use it, otherwise use the default 30 seconds.
-        // Tweak for low-end devices such as Raspberry Pi
         await this.#page.goto(streamUrl);
 
         // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
@@ -756,6 +750,19 @@ export class TwitchDropsBot {
             }
 
             this.#updateProgressBar(this.#currentMinutesWatched[this.#currentDrop['id']], {'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), drop_name: this.#getDropName(this.#currentDrop), stream_url: streamUrl});
+
+            // Check if there are community points that we can claim
+            const claimCommunityPointsSelector = 'div[data-test-selector="community-points-summary"] div.GTGMR button';
+            const claimCommunityPointsButton = await this.#page.$(claimCommunityPointsSelector);
+            if (claimCommunityPointsButton){
+                try {
+                    await claimCommunityPointsButton.click();
+                    logger.debug('Claimed community points!');
+                } catch (error){
+                    logger.error('Failed to claim community points!');
+                    logger.error(error);
+                }
+            }
 
             // Check if we have made progress towards the current drop
             if (new Date().getTime() - this.#lastProgressTime[this.#currentDrop['id']] >= maxNoProgressTime) {
@@ -872,7 +879,7 @@ export class TwitchDropsBot {
         return false;
     }
 
-    async #getActiveStreams(campaignId: string, details: any) {
+    async #getActiveStreams(campaignId: string, details: CampaignDetails) {
         // Get a list of active streams that have drops enabled
         let streams = await this.#twitchClient.getDropEnabledStreams(this.#getDropCampaignById(campaignId)['game']['displayName']);
 

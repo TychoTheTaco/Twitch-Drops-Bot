@@ -240,28 +240,6 @@ class TwitchDropsBot {
         __classPrivateFieldGet(this, _TwitchDropsBot_webSocketListener, "f").on('stream-down', message => {
             __classPrivateFieldSet(this, _TwitchDropsBot_isStreamDown, true, "f");
         });
-        __classPrivateFieldGet(this, _TwitchDropsBot_webSocketListener, "f").on('claim-available', data => {
-            logger_1.default.debug('Claim available: ' + JSON.stringify(data, null, 4));
-            // TODO: Claim button may not be visible
-            /*await page.screenshot({
-                fullPage: true,
-                path: 'claim-ss.png'
-            })
-             try {
-                 await page.evaluate(() => {
-                     const element = document.evaluate('//button[@aria-label="Claim Bonus"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue;
-                     if (element.nodeType === Node.ELEMENT_NODE) {
-                         element.click();
-                     }
-                 });
-             } catch (error) {
-                 // Ignore errors
-                 console.log('oof', error);
-             }*/
-        });
-        __classPrivateFieldGet(this, _TwitchDropsBot_webSocketListener, "f").on('claim-claimed', data => {
-            logger_1.default.debug('Claim claimed: ' + JSON.stringify(data, null, 4));
-        });
     }
     /*async login(username, password, headless = false) {
 
@@ -577,6 +555,19 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
                 throw new StreamDownError('Stream went down!');
             }
             __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_updateProgressBar).call(this, __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']], { 'viewers': __classPrivateFieldGet(this, _TwitchDropsBot_viewerCount, "f"), 'uptime': yield streamPage.getUptime(), drop_name: __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropName).call(this, __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")), stream_url: streamUrl });
+            // Check if there are community points that we can claim
+            const claimCommunityPointsSelector = 'div[data-test-selector="community-points-summary"] div.GTGMR button';
+            const claimCommunityPointsButton = yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").$(claimCommunityPointsSelector);
+            if (claimCommunityPointsButton) {
+                try {
+                    yield claimCommunityPointsButton.click();
+                    logger_1.default.debug('Claimed community points!');
+                }
+                catch (error) {
+                    logger_1.default.error('Failed to claim community points!');
+                    logger_1.default.error(error);
+                }
+            }
             // Check if we have made progress towards the current drop
             if (new Date().getTime() - __classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']] >= maxNoProgressTime) {
                 // Maybe we haven't got any updates from the web socket, lets check our inventory

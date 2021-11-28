@@ -2,11 +2,7 @@
 
 import {Page} from "puppeteer";
 
-async function click(page: Page, selector: string) {
-    return page.evaluate((selector) => {
-        document.querySelector(selector).click();
-    }, selector);
-}
+import {click} from '../utils';
 
 export class StreamPage {
 

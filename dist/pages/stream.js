@@ -22,13 +22,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _StreamPage_instances, _StreamPage_page, _StreamPage_clickSettingsButton;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StreamPage = void 0;
-function click(page, selector) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return page.evaluate((selector) => {
-            document.querySelector(selector).click();
-        }, selector);
-    });
-}
+const utils_1 = require("../utils");
 class StreamPage {
     constructor(page) {
         _StreamPage_instances.add(this);
@@ -44,7 +38,7 @@ class StreamPage {
     }
     acceptMatureContent() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), '[data-a-target="player-overlay-mature-accept"]');
+            yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), '[data-a-target="player-overlay-mature-accept"]');
         });
     }
     setLowestStreamQuality() {
@@ -53,11 +47,11 @@ class StreamPage {
             yield __classPrivateFieldGet(this, _StreamPage_instances, "m", _StreamPage_clickSettingsButton).call(this);
             const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
             yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector(qualityButtonSelector);
-            yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), qualityButtonSelector);
+            yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), qualityButtonSelector);
             const lowestQualityButtonSelector = 'div[data-a-target="player-settings-menu"]>div:last-child input';
             const lowestQualityButton = yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector(lowestQualityButtonSelector);
             if (!(yield ((_a = (yield (lowestQualityButton === null || lowestQualityButton === void 0 ? void 0 : lowestQualityButton.getProperty('checked')))) === null || _a === void 0 ? void 0 : _a.jsonValue()))) {
-                yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), lowestQualityButtonSelector);
+                yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), lowestQualityButtonSelector);
             }
             else {
                 yield __classPrivateFieldGet(this, _StreamPage_instances, "m", _StreamPage_clickSettingsButton).call(this);
@@ -86,11 +80,11 @@ class StreamPage {
             yield __classPrivateFieldGet(this, _StreamPage_instances, "m", _StreamPage_clickSettingsButton).call(this);
             const advancedButtonSelector = '[data-a-target="player-settings-menu-item-advanced"]';
             yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector(advancedButtonSelector);
-            yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), advancedButtonSelector);
+            yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), advancedButtonSelector);
             const videoStatsButtonSelector = '[data-a-target="player-settings-submenu-advanced-video-stats"] input';
             const videoStatsButton = yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector(videoStatsButtonSelector);
             if (!(yield ((_a = (yield (videoStatsButton === null || videoStatsButton === void 0 ? void 0 : videoStatsButton.getProperty('checked')))) === null || _a === void 0 ? void 0 : _a.jsonValue()))) {
-                yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), videoStatsButtonSelector);
+                yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), videoStatsButtonSelector);
             }
             yield __classPrivateFieldGet(this, _StreamPage_instances, "m", _StreamPage_clickSettingsButton).call(this);
         });
@@ -110,7 +104,7 @@ class StreamPage {
             if ((yield __classPrivateFieldGet(this, _StreamPage_page, "f").$x(dropProgressBarXpath)).length === 0) {
                 // Open the user menu. We can leave it open to avoid having to reopen it every time.
                 const menuToggleButtonSelector = 'button[data-a-target="user-menu-toggle"]';
-                yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), menuToggleButtonSelector);
+                yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), menuToggleButtonSelector);
             }
             // Return drop progress as a percentage between 0 and 1
             return yield ((_a = (yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForXPath(dropProgressBarXpath))) === null || _a === void 0 ? void 0 : _a.evaluate((element) => {
@@ -124,6 +118,6 @@ _StreamPage_page = new WeakMap(), _StreamPage_instances = new WeakSet(), _Stream
     return __awaiter(this, void 0, void 0, function* () {
         const settingsButtonSelector = '[data-a-target="player-settings-button"]';
         yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector(settingsButtonSelector);
-        yield click(__classPrivateFieldGet(this, _StreamPage_page, "f"), settingsButtonSelector);
+        yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), settingsButtonSelector);
     });
 };

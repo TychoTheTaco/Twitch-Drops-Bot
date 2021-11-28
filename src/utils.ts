@@ -5,7 +5,7 @@ import fs from 'fs';
 const prompt = require('prompt');
 import {Page} from "puppeteer";
 
-async function asyncPrompt(schema: any) {
+export async function asyncPrompt(schema: any) {
     return new Promise((resolve, reject) => {
         prompt.get(schema, (error: any, result: any) => {
             if (error) {
@@ -16,7 +16,7 @@ async function asyncPrompt(schema: any) {
     });
 }
 
-async function saveScreenshotAndHtml(page: Page, pathPrefix: string){
+export async function saveScreenshotAndHtml(page: Page, pathPrefix: string){
     const time = new Date().getTime();
     const screenshotPath = pathPrefix + '-screenshot-' + time + '.png';
     const htmlPath = pathPrefix + '-page-' + time + '.html';
@@ -27,7 +27,21 @@ async function saveScreenshotAndHtml(page: Page, pathPrefix: string){
     fs.writeFileSync(htmlPath, await page.content());
 }
 
+/**
+ * Click the element specified by 'selector' by calling its click() method. This is usually better than using
+ * Puppeteer's Page.click() because Puppeteer attempts to scroll the page and simulate an actual mouse click.
+ * This can cause the click to fail if elements are displayed on top of it (for example popup dialogs).
+ * @param page
+ * @param selector
+ */
+export async function click(page: Page, selector: string) {
+    return page.evaluate((selector) => {
+        document.querySelector(selector).click();
+    }, selector);
+}
+
 export default {
     asyncPrompt,
-    saveScreenshotAndHtml
+    saveScreenshotAndHtml,
+    click
 };

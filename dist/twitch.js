@@ -64,14 +64,12 @@ class Client {
             }, {
                 headers: __classPrivateFieldGet(this, _Client_defaultHeaders, "f")
             });
-            // todo: dont leave this here
             try {
                 return response['data']['data']['currentUser']['dropCampaigns'];
             }
             catch (error) {
-                console.log('ERROR!');
-                console.log('getDropCampaigns: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4));
-                logger_1.default.debug('getDropCampaigns: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4));
+                logger_1.default.error('Error in function getDropCampaigns! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+                throw error;
             }
         });
     }
@@ -92,7 +90,13 @@ class Client {
             }, {
                 headers: __classPrivateFieldGet(this, _Client_defaultHeaders, "f")
             });
-            return response['data']['data']['user']['dropCampaign'];
+            try {
+                return response['data']['data']['user']['dropCampaign'];
+            }
+            catch (error) {
+                logger_1.default.error('Error in function getDropCampaignDetails! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+                throw error;
+            }
         });
     }
     getInventory() {
@@ -108,7 +112,13 @@ class Client {
             }, {
                 headers: __classPrivateFieldGet(this, _Client_defaultHeaders, "f")
             });
-            return response['data']['data']['currentUser']['inventory'];
+            try {
+                return response['data']['data']['currentUser']['inventory'];
+            }
+            catch (error) {
+                logger_1.default.error('Error in function getInventory! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+                throw error;
+            }
         });
     }
     getDropEnabledStreams(gameName) {
@@ -179,6 +189,31 @@ class Client {
             }
         });
     }
+    /*async claimCommunityPoints(channelId: string, claimId: string) {
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                "operationName": "ClaimCommunityPoints",
+                "variables": {
+                    "input": {
+                        "channelID": channelId,
+                        "claimID": claimId
+                    }
+                },
+                "extensions": {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "46aaeebe02c99afdf4fc97c7c0cba964124bf6b0af229395f1f6d1feed05b3d0"
+                    }
+                }
+            },
+            {
+                headers: this.#defaultHeaders
+            }
+        );
+        if ('errors' in response.data) {
+            throw new Error(JSON.stringify(response.data['errors']));
+        }
+    }*/
     getDropCampaignsInProgress() {
         return __awaiter(this, void 0, void 0, function* () {
             const inventory = yield this.getInventory();
