@@ -80,7 +80,7 @@ export class TwitchDropsBot {
     readonly #interval: number = 15;
 
     // When a Stream fails #failedStreamRetry times (it went offline, or other reasons), we need to remove them
-    // from the block list after #failedStreamTimeout seconds.
+    // from the block list after #failedStreamTimeout minutes.
     readonly #failedStreamTimeout: number = 30;
     readonly #failedStreamRetry: number = 3;
 
