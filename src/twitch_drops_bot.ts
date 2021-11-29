@@ -179,7 +179,7 @@ export class TwitchDropsBot {
         this.#hideVideo = optional?.hideVideo ?? this.#hideVideo;
 
         this.#loadTimeoutSecs = optional?.loadTimeoutSecs ?? this.#loadTimeoutSecs;
-        this.#page.setDefaultTimeout(this.#loadTimeoutSecs);
+        this.#page.setDefaultTimeout(this.#loadTimeoutSecs * 1000);
         
         this.#watchUnlistedGames = optional?.watchUnlistedGames ?? this.#watchUnlistedGames;
         this.#showAccountNotLinkedWarning = optional?.showAccountNotLinkedWarning ?? this.#showAccountNotLinkedWarning;

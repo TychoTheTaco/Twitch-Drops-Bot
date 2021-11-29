@@ -18,17 +18,12 @@ export class StreamPage {
 
     async hideVideo() {
         // Change the "visibility" of videos to "hidden" to lower CPU usage
-        await this.#page.evaluate(() => {
-            var videoTags = document.getElementsByTagName('video');
-            for (var i = 0; i < videoTags.length; i++) {
-                var v = videoTags.item(i);
-                if (v !== null) {
-                    if (v.currentTime > 0) {
-                        v.style.visibility = "hidden";
-                    }
-                }
-            }
-        });
+        const videoElements = await this.#page.$$('video');
+        for (let handle of videoElements) {
+            await handle.evaluate((element: any) => {
+                element.style.visibility = 'hidden';
+            });
+        }
     }
 
     async waitForLoad(){
