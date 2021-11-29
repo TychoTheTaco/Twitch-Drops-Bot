@@ -16,6 +16,16 @@ export class StreamPage {
         this.#page = page;
     }
 
+    async hideVideo() {
+        // Change the "visibility" of videos to "hidden" to lower CPU usage
+        const videoElements = await this.#page.$$('video');
+        for (let handle of videoElements) {
+            await handle.evaluate((element: any) => {
+                element.style.visibility = 'hidden';
+            });
+        }
+    }
+
     async waitForLoad(){
         // Wait for the viewer count and uptime to be visible
         await this.#page.waitForSelector('p[data-a-target="animated-channel-viewers-count"]');

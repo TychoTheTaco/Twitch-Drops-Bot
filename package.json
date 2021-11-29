@@ -4,6 +4,10 @@
   "description": "A Node.js bot for automatically collecting Twitch drops.",
   "main": "dist/index.js",
   "scripts": {
+    "cleanup": "rimraf dist",
+    "compiler": "tsc --pretty",
+    "compiler:watch": "tsc --watch",
+    "build": "npm run cleanup && npm run compiler",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/index.js",
     "updateGames": "node dist/update_games.js"
@@ -15,6 +19,7 @@
     "argparse": "^2.0.1",
     "axios": "^0.21.4",
     "cli-progress": "^3.9.1",
+    "dnscache": "^1.0.2",
     "prompt": "^1.2.0",
     "puppeteer": "^10.4.0",
     "puppeteer-extra": "^3.2.3",
@@ -24,6 +29,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "rimraf": "^2.6.2",
     "typescript": "^4.4.4"
   }
 }

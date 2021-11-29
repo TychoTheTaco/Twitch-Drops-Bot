@@ -64,9 +64,13 @@ const options = [
     new BooleanOption('--headless', false, {defaultValue: true}),
     new BooleanOption('--headless-login'),
     new IntegerOption('--interval', {alias: '-i', defaultValue: 15}),
+    new IntegerOption('--load-timeout-secs', {alias: '-t', defaultValue: 30}),
+    new IntegerOption('--failed-stream-retry', {defaultValue: 3}),
+    new IntegerOption('--failed-stream-timeout', {defaultValue: 30}),
     new StringListOption('--browser-args', {defaultValue: []}),
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new BooleanOption('--watch-unlisted-games'),
+    new BooleanOption('--hide-video'),
     new StringOption('--cookies-path'),
     new StringOption('--log-level'),
     new BooleanOption('--show-account-not-linked-warning', false, {defaultValue: true, alias: '-sanlw'})
@@ -216,7 +220,7 @@ if (config['username']) {
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
     const twitchClient = new twitch.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
 
-    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning']});
+    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], failedStreamTimeout: config['failed_stream_timeout'], failedStreamRetry: config['failed_stream_retry'], interval: config['interval'], loadTimeoutSecs: config['load_timeout_secs'], hideVideo: config['hide_video'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning']});
     await bot.start();
 
 })().catch(error => {
