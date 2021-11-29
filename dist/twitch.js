@@ -25,6 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var _Client_clientId, _Client_oauthToken, _Client_channelLogin, _Client_defaultHeaders;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.Client = void 0;
+require('dnscache')({ enable: true });
 const fs_1 = __importDefault(require("fs"));
 const axios_1 = __importDefault(require("axios"));
 const puppeteer_1 = require("puppeteer");

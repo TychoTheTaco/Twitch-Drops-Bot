@@ -22,7 +22,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _TwitchDropsBot_instances, _TwitchDropsBot_gameIds, _TwitchDropsBot_interval, _TwitchDropsBot_watchUnlistedGames, _TwitchDropsBot_showAccountNotLinkedWarning, _TwitchDropsBot_page, _TwitchDropsBot_twitchClient, _TwitchDropsBot_twitchDropsWatchdog, _TwitchDropsBot_pendingDropCampaignIds, _TwitchDropsBot_pendingDropCampaignIdsNotifier, _TwitchDropsBot_progressBar, _TwitchDropsBot_payload, _TwitchDropsBot_total, _TwitchDropsBot_currentProgress, _TwitchDropsBot_isFirstOutput, _TwitchDropsBot_hasWrittenNewLine, _TwitchDropsBot_webSocketListener, _TwitchDropsBot_currentDropCampaignId, _TwitchDropsBot_dropCampaignMap, _TwitchDropsBot_pendingHighPriority, _TwitchDropsBot_currentDrop, _TwitchDropsBot_targetDrop, _TwitchDropsBot_viewerCount, _TwitchDropsBot_currentMinutesWatched, _TwitchDropsBot_lastMinutesWatched, _TwitchDropsBot_lastProgressTime, _TwitchDropsBot_isDropReadyToClaim, _TwitchDropsBot_isStreamDown, _TwitchDropsBot_processDropCampaign, _TwitchDropsBot_claimDropReward, _TwitchDropsBot_waitUntilElementRendered, _TwitchDropsBot_ansiEscape, _TwitchDropsBot_startProgressBar, _TwitchDropsBot_updateProgressBar, _TwitchDropsBot_stopProgressBar, _TwitchDropsBot_createProgressBar, _TwitchDropsBot_watchStreamUntilCampaignCompleted, _TwitchDropsBot_getFirstUnclaimedDrop, _TwitchDropsBot_isDropClaimed, _TwitchDropsBot_getActiveStreams, _TwitchDropsBot_getDropCampaignFullName, _TwitchDropsBot_getDropCampaignById, _TwitchDropsBot_getDropName;
+var _TwitchDropsBot_instances, _TwitchDropsBot_gameIds, _TwitchDropsBot_interval, _TwitchDropsBot_failedStreamTimeout, _TwitchDropsBot_failedStreamRetry, _TwitchDropsBot_loadTimeoutSecs, _TwitchDropsBot_hideVideo, _TwitchDropsBot_watchUnlistedGames, _TwitchDropsBot_showAccountNotLinkedWarning, _TwitchDropsBot_page, _TwitchDropsBot_twitchClient, _TwitchDropsBot_twitchDropsWatchdog, _TwitchDropsBot_pendingDropCampaignIds, _TwitchDropsBot_pendingDropCampaignIdsNotifier, _TwitchDropsBot_progressBar, _TwitchDropsBot_payload, _TwitchDropsBot_total, _TwitchDropsBot_currentProgress, _TwitchDropsBot_isFirstOutput, _TwitchDropsBot_hasWrittenNewLine, _TwitchDropsBot_webSocketListener, _TwitchDropsBot_currentDropCampaignId, _TwitchDropsBot_dropCampaignMap, _TwitchDropsBot_pendingHighPriority, _TwitchDropsBot_currentDrop, _TwitchDropsBot_targetDrop, _TwitchDropsBot_viewerCount, _TwitchDropsBot_currentMinutesWatched, _TwitchDropsBot_lastMinutesWatched, _TwitchDropsBot_lastProgressTime, _TwitchDropsBot_isDropReadyToClaim, _TwitchDropsBot_isStreamDown, _TwitchDropsBot_processDropCampaign, _TwitchDropsBot_claimDropReward, _TwitchDropsBot_waitUntilElementRendered, _TwitchDropsBot_ansiEscape, _TwitchDropsBot_startProgressBar, _TwitchDropsBot_updateProgressBar, _TwitchDropsBot_stopProgressBar, _TwitchDropsBot_createProgressBar, _TwitchDropsBot_watchStreamUntilCampaignCompleted, _TwitchDropsBot_getFirstUnclaimedDrop, _TwitchDropsBot_isDropClaimed, _TwitchDropsBot_getActiveStreams, _TwitchDropsBot_getDropCampaignFullName, _TwitchDropsBot_getDropCampaignById, _TwitchDropsBot_getDropName;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TwitchDropsBot = void 0;
 const SortedArray = require("sorted-array-type");
@@ -47,12 +47,21 @@ class StreamDownError extends Error {
 }
 class TwitchDropsBot {
     constructor(page, client, optional) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         _TwitchDropsBot_instances.add(this);
         // A list of game IDs to watch and claim drops for.
         _TwitchDropsBot_gameIds.set(this, []);
         // The number of minutes in between refreshing the drop campaign list
         _TwitchDropsBot_interval.set(this, 15);
+        // When a Stream fails #failedStreamRetry times (it went offline, or other reasons), we need to remove them
+        // from the block list after #failedStreamTimeout minutes.
+        _TwitchDropsBot_failedStreamTimeout.set(this, 30);
+        _TwitchDropsBot_failedStreamRetry.set(this, 3);
+        // When we use page.load the default timeout is 30 seconds, increasing this value can help when using low-end
+        // devices (such as a Raspberry Pi).
+        _TwitchDropsBot_loadTimeoutSecs.set(this, 30);
+        // Setting the visibility of a video to "hidden" will lower the CPU usage.
+        _TwitchDropsBot_hideVideo.set(this, false);
         // When true, the bot will attempt to watch and claim drops for all games, even if they are not in 'gameIds'.
         // The games in 'gameIds' still have priority.
         _TwitchDropsBot_watchUnlistedGames.set(this, false);
@@ -119,8 +128,13 @@ class TwitchDropsBot {
             __classPrivateFieldGet(this, _TwitchDropsBot_gameIds, "f").push(id);
         }));
         __classPrivateFieldSet(this, _TwitchDropsBot_interval, (_b = optional === null || optional === void 0 ? void 0 : optional.interval) !== null && _b !== void 0 ? _b : __classPrivateFieldGet(this, _TwitchDropsBot_interval, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_watchUnlistedGames, (_c = optional === null || optional === void 0 ? void 0 : optional.watchUnlistedGames) !== null && _c !== void 0 ? _c : __classPrivateFieldGet(this, _TwitchDropsBot_watchUnlistedGames, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_showAccountNotLinkedWarning, (_d = optional === null || optional === void 0 ? void 0 : optional.showAccountNotLinkedWarning) !== null && _d !== void 0 ? _d : __classPrivateFieldGet(this, _TwitchDropsBot_showAccountNotLinkedWarning, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_failedStreamTimeout, (_c = optional === null || optional === void 0 ? void 0 : optional.failedStreamTimeout) !== null && _c !== void 0 ? _c : __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamTimeout, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_failedStreamRetry, (_d = optional === null || optional === void 0 ? void 0 : optional.failedStreamRetry) !== null && _d !== void 0 ? _d : __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamRetry, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_hideVideo, (_e = optional === null || optional === void 0 ? void 0 : optional.hideVideo) !== null && _e !== void 0 ? _e : __classPrivateFieldGet(this, _TwitchDropsBot_hideVideo, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_loadTimeoutSecs, (_f = optional === null || optional === void 0 ? void 0 : optional.loadTimeoutSecs) !== null && _f !== void 0 ? _f : __classPrivateFieldGet(this, _TwitchDropsBot_loadTimeoutSecs, "f"), "f");
+        __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").setDefaultTimeout(__classPrivateFieldGet(this, _TwitchDropsBot_loadTimeoutSecs, "f") * 1000);
+        __classPrivateFieldSet(this, _TwitchDropsBot_watchUnlistedGames, (_g = optional === null || optional === void 0 ? void 0 : optional.watchUnlistedGames) !== null && _g !== void 0 ? _g : __classPrivateFieldGet(this, _TwitchDropsBot_watchUnlistedGames, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_showAccountNotLinkedWarning, (_h = optional === null || optional === void 0 ? void 0 : optional.showAccountNotLinkedWarning) !== null && _h !== void 0 ? _h : __classPrivateFieldGet(this, _TwitchDropsBot_showAccountNotLinkedWarning, "f"), "f");
         // Set up Twitch Drops Watchdog
         __classPrivateFieldSet(this, _TwitchDropsBot_twitchDropsWatchdog, new watchdog_1.TwitchDropsWatchdog(__classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f"), __classPrivateFieldGet(this, _TwitchDropsBot_interval, "f")), "f");
         __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").on('before_update', () => {
@@ -198,13 +212,13 @@ class TwitchDropsBot {
             __classPrivateFieldSet(this, _TwitchDropsBot_viewerCount, count, "f");
         });
         __classPrivateFieldGet(this, _TwitchDropsBot_webSocketListener, "f").on('drop-progress', (data) => __awaiter(this, void 0, void 0, function* () {
-            var _e, _f, _g, _h, _j, _k, _l, _m;
+            var _j, _k, _l, _m, _o, _p, _q, _r;
             // Check if we are making progress towards the expected drop. This is not always the case since a game may
             // have multiple drop campaigns, but only one is active at a time. If this happens, then we will just set
             // the current drop to the one we are making progress on.
             const dropId = data['drop_id'];
-            if (dropId !== ((_e = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _e === void 0 ? void 0 : _e.id)) {
-                logger_1.default.debug('Drop progress message does not match expected drop: ' + ((_f = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _f === void 0 ? void 0 : _f.id) + ' vs ' + dropId);
+            if (dropId !== ((_j = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _j === void 0 ? void 0 : _j.id)) {
+                logger_1.default.debug('Drop progress message does not match expected drop: ' + ((_k = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _k === void 0 ? void 0 : _k.id) + ' vs ' + dropId);
                 if (!(dropId in __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f"))) {
                     __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[dropId] = data['current_progress_min'];
                     __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[dropId] = data['current_progress_min'];
@@ -215,17 +229,17 @@ class TwitchDropsBot {
             if (__classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[dropId] > __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[dropId]) {
                 __classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[dropId] = new Date().getTime();
                 __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[dropId] = __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[dropId];
-                if (dropId !== ((_g = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _g === void 0 ? void 0 : _g.id)) {
+                if (dropId !== ((_l = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _l === void 0 ? void 0 : _l.id)) {
                     __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this, true);
-                    logger_1.default.info('Drop progress does not match expected drop: ' + ((_h = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _h === void 0 ? void 0 : _h.id) + ' vs ' + dropId);
+                    logger_1.default.info('Drop progress does not match expected drop: ' + ((_m = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _m === void 0 ? void 0 : _m.id) + ' vs ' + dropId);
                     // If we made progress for a different drop, switch to it
                     __classPrivateFieldSet(this, _TwitchDropsBot_currentDrop, yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getInventoryDrop(dropId), "f");
                     if (!__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) {
                         throw new Error('Made progress towards a drop but did not find it in inventory!');
                     }
                     if (!(__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f").id in __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f"))) {
-                        __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[(_j = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _j === void 0 ? void 0 : _j.id] = (_k = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _k === void 0 ? void 0 : _k.self.currentMinutesWatched;
-                        __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[(_l = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _l === void 0 ? void 0 : _l.id] = (_m = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _m === void 0 ? void 0 : _m.self.currentMinutesWatched;
+                        __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[(_o = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _o === void 0 ? void 0 : _o.id] = (_p = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _p === void 0 ? void 0 : _p.self.currentMinutesWatched;
+                        __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[(_q = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _q === void 0 ? void 0 : _q.id] = (_r = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")) === null || _r === void 0 ? void 0 : _r.self.currentMinutesWatched;
                         __classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f").id] = new Date().getTime();
                     }
                     // Restart the progress bar
@@ -270,6 +284,8 @@ class TwitchDropsBot {
                             logger_1.default.debug('currentDropCampaignId=' + __classPrivateFieldGet(this, _TwitchDropsBot_currentDropCampaignId, "f"));
                             break inner;
                         }
+                        // If no campaigns active/streams online, then set the page to "about:blank"
+                        yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").goto("about:blank");
                         // We already checked all pending drop campaigns in the past 5 minutes, lets wait for the oldest one
                         logger_1.default.debug('final minlastdropcampaignchecktime: ' + minLastDropCampaignCheckTime + ' time: ' + new Date().getTime());
                         const sleepTime = Math.max(0, SLEEP_TIME_MS - (new Date().getTime() - minLastDropCampaignCheckTime));
@@ -321,7 +337,7 @@ class TwitchDropsBot {
     }
 }
 exports.TwitchDropsBot = TwitchDropsBot;
-_TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(), _TwitchDropsBot_watchUnlistedGames = new WeakMap(), _TwitchDropsBot_showAccountNotLinkedWarning = new WeakMap(), _TwitchDropsBot_page = new WeakMap(), _TwitchDropsBot_twitchClient = new WeakMap(), _TwitchDropsBot_twitchDropsWatchdog = new WeakMap(), _TwitchDropsBot_pendingDropCampaignIds = new WeakMap(), _TwitchDropsBot_pendingDropCampaignIdsNotifier = new WeakMap(), _TwitchDropsBot_progressBar = new WeakMap(), _TwitchDropsBot_payload = new WeakMap(), _TwitchDropsBot_total = new WeakMap(), _TwitchDropsBot_currentProgress = new WeakMap(), _TwitchDropsBot_isFirstOutput = new WeakMap(), _TwitchDropsBot_hasWrittenNewLine = new WeakMap(), _TwitchDropsBot_webSocketListener = new WeakMap(), _TwitchDropsBot_currentDropCampaignId = new WeakMap(), _TwitchDropsBot_dropCampaignMap = new WeakMap(), _TwitchDropsBot_pendingHighPriority = new WeakMap(), _TwitchDropsBot_currentDrop = new WeakMap(), _TwitchDropsBot_targetDrop = new WeakMap(), _TwitchDropsBot_viewerCount = new WeakMap(), _TwitchDropsBot_currentMinutesWatched = new WeakMap(), _TwitchDropsBot_lastMinutesWatched = new WeakMap(), _TwitchDropsBot_lastProgressTime = new WeakMap(), _TwitchDropsBot_isDropReadyToClaim = new WeakMap(), _TwitchDropsBot_isStreamDown = new WeakMap(), _TwitchDropsBot_instances = new WeakSet(), _TwitchDropsBot_processDropCampaign = function _TwitchDropsBot_processDropCampaign(dropCampaignId) {
+_TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(), _TwitchDropsBot_failedStreamTimeout = new WeakMap(), _TwitchDropsBot_failedStreamRetry = new WeakMap(), _TwitchDropsBot_loadTimeoutSecs = new WeakMap(), _TwitchDropsBot_hideVideo = new WeakMap(), _TwitchDropsBot_watchUnlistedGames = new WeakMap(), _TwitchDropsBot_showAccountNotLinkedWarning = new WeakMap(), _TwitchDropsBot_page = new WeakMap(), _TwitchDropsBot_twitchClient = new WeakMap(), _TwitchDropsBot_twitchDropsWatchdog = new WeakMap(), _TwitchDropsBot_pendingDropCampaignIds = new WeakMap(), _TwitchDropsBot_pendingDropCampaignIdsNotifier = new WeakMap(), _TwitchDropsBot_progressBar = new WeakMap(), _TwitchDropsBot_payload = new WeakMap(), _TwitchDropsBot_total = new WeakMap(), _TwitchDropsBot_currentProgress = new WeakMap(), _TwitchDropsBot_isFirstOutput = new WeakMap(), _TwitchDropsBot_hasWrittenNewLine = new WeakMap(), _TwitchDropsBot_webSocketListener = new WeakMap(), _TwitchDropsBot_currentDropCampaignId = new WeakMap(), _TwitchDropsBot_dropCampaignMap = new WeakMap(), _TwitchDropsBot_pendingHighPriority = new WeakMap(), _TwitchDropsBot_currentDrop = new WeakMap(), _TwitchDropsBot_targetDrop = new WeakMap(), _TwitchDropsBot_viewerCount = new WeakMap(), _TwitchDropsBot_currentMinutesWatched = new WeakMap(), _TwitchDropsBot_lastMinutesWatched = new WeakMap(), _TwitchDropsBot_lastProgressTime = new WeakMap(), _TwitchDropsBot_isDropReadyToClaim = new WeakMap(), _TwitchDropsBot_isStreamDown = new WeakMap(), _TwitchDropsBot_instances = new WeakSet(), _TwitchDropsBot_processDropCampaign = function _TwitchDropsBot_processDropCampaign(dropCampaignId) {
     return __awaiter(this, void 0, void 0, function* () {
         const details = yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getDropCampaignDetails(dropCampaignId);
         while (true) {
@@ -341,11 +357,24 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
             }
             // A mapping of stream URLs to an integer representing the number of times the stream failed while we were trying to watch it
             const failedStreamUrlCounts = {};
+            const failedStreamUrlExpireTime = {};
             const failedStreamUrls = new Set();
             while (true) {
                 // Get a list of active streams that have drops enabled
                 let streams = yield __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getActiveStreams).call(this, dropCampaignId, details);
                 logger_1.default.info('Found ' + streams.length + ' active streams');
+                // Check expire time to remove streams that failed too many times after
+                // "this.#failedStreamTimeout" minutes and remove them from block list..
+                for (const x of streams) {
+                    if (failedStreamUrls.has(x['url'])) {
+                        // Check Timeout!
+                        if ((new Date()).getTime() >= failedStreamUrlExpireTime[x['url']]) {
+                            // Remove and reset fail counter...
+                            failedStreamUrls.delete(x['url']);
+                            failedStreamUrlCounts[x['url']] = 0;
+                        }
+                    }
+                }
                 // Filter out streams that failed too many times
                 streams = streams.filter(stream => {
                     return !failedStreamUrls.has(stream['url']);
@@ -374,13 +403,15 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
                         logger_1.default.warn('Stream failed to load!');
                     }
                     else if (error instanceof StreamDownError) {
-                        logger_1.default.info('stream went down');
+                        logger_1.default.info('Stream went down');
                         /*
                         If the stream goes down, add it to the failed stream urls immediately so we don't try it again.
                         This is needed because getActiveStreams() can return streams that are down if they went down
                         very recently.
                          */
                         failedStreamUrls.add(streamUrl);
+                        // Schedule removal from block list!
+                        failedStreamUrlExpireTime[streamUrl] = (new Date()).getTime() + 1000 * 60 * __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamTimeout, "f");
                     }
                     else {
                         logger_1.default.error(error);
@@ -392,9 +423,11 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
                     }
                     failedStreamUrlCounts[streamUrl]++;
                     // Move on if this stream failed too many times
-                    if (failedStreamUrlCounts[streamUrl] >= 3) {
-                        logger_1.default.error('Stream failed too many times. Giving up...');
+                    if (failedStreamUrlCounts[streamUrl] >= __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamRetry, "f")) {
+                        logger_1.default.error('Stream failed too many times. Giving up for ' + __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamTimeout, "f") + ' minutes...');
                         failedStreamUrls.add(streamUrl);
+                        // Schedule removal from block list!
+                        failedStreamUrlExpireTime[streamUrl] = (new Date()).getTime() + 1000 * 60 * __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamTimeout, "f");
                     }
                     continue;
                 }
@@ -410,7 +443,7 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
         logger_1.default.info('Claiming drop!');
         yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").claimDropReward(drop.self.dropInstanceID);
     });
-}, _TwitchDropsBot_waitUntilElementRendered = function _TwitchDropsBot_waitUntilElementRendered(page, element, timeout = 1000 * 30) {
+}, _TwitchDropsBot_waitUntilElementRendered = function _TwitchDropsBot_waitUntilElementRendered(page, element, timeout = 1000 * __classPrivateFieldGet(this, _TwitchDropsBot_loadTimeoutSecs, "f")) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const checkDurationMsecs = 1000;
@@ -505,6 +538,7 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
         __classPrivateFieldSet(this, _TwitchDropsBot_isDropReadyToClaim, false, "f");
         __classPrivateFieldSet(this, _TwitchDropsBot_isStreamDown, false, "f");
         // Get initial drop progress
+        logger_1.default.info('Updating drop progress...');
         const inventoryDrop = yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getInventoryDrop(targetDrop.id);
         if (inventoryDrop) {
             __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[targetDrop['id']] = inventoryDrop['self']['currentMinutesWatched'];
@@ -542,6 +576,17 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
             logger_1.default.error('Failed to set stream to lowest quality!');
             throw error;
         }
+        // This does not affect the drops, so if the user requests lets hide the videos
+        if (__classPrivateFieldGet(this, _TwitchDropsBot_hideVideo, "f")) {
+            try {
+                yield streamPage.hideVideo();
+                logger_1.default.info('Set stream visibility to hidden');
+            }
+            catch (error) {
+                logger_1.default.error('Failed to set stream visibility to hidden!');
+                throw error;
+            }
+        }
         const requiredMinutesWatched = targetDrop['requiredMinutesWatched'];
         __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_createProgressBar).call(this);
         __classPrivateFieldSet(this, _TwitchDropsBot_viewerCount, yield streamPage.getViewersCount(), "f");
@@ -552,6 +597,7 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
             if (__classPrivateFieldGet(this, _TwitchDropsBot_isStreamDown, "f")) {
                 __classPrivateFieldSet(this, _TwitchDropsBot_isStreamDown, false, "f");
                 __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this, true);
+                yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").goto("about:blank");
                 throw new StreamDownError('Stream went down!');
             }
             __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_updateProgressBar).call(this, __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']], { 'viewers': __classPrivateFieldGet(this, _TwitchDropsBot_viewerCount, "f"), 'uptime': yield streamPage.getUptime(), drop_name: __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropName).call(this, __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")), stream_url: streamUrl });
@@ -578,15 +624,17 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
                     if (__classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[currentDropId] > __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[currentDropId]) {
                         __classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[currentDropId] = new Date().getTime();
                         __classPrivateFieldGet(this, _TwitchDropsBot_lastMinutesWatched, "f")[currentDropId] = __classPrivateFieldGet(this, _TwitchDropsBot_currentMinutesWatched, "f")[currentDropId];
-                        logger_1.default.debug('no progress from web socket! using inventory progress');
+                        logger_1.default.debug('No progress from web socket! using inventory progress');
                     }
                     else {
                         __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this, true);
+                        yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").goto("about:blank");
                         throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
                     }
                 }
                 else {
                     __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this, true);
+                    yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").goto("about:blank");
                     throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
                 }
             }
@@ -603,6 +651,8 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_interval = new WeakMap(
                 const inventoryDrop = yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getInventoryDrop(__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']);
                 // Claim the drop
                 yield __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_claimDropReward).call(this, inventoryDrop);
+                // After the reward was claimed set streamUrl to "about:blank".
+                yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").goto("about:blank");
                 // TODO: dont return, check for more drops
                 return;
             }
