@@ -61,9 +61,9 @@ You can also run this bot in a docker container. The latest image can be downloa
 Use one of the following commands to start the container. Make sure you run this command in the same directory as `config.json`, since it will map the current directory to the `/app/data` directory in the container. If this is the first
 time running the bot, a `config.json` file will be created in the current directory. 
 
-Windows (Command Prompt): `docker run -v %cd%:/app/data -i --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+Windows (Command Prompt): `docker run -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
-Linux: `docker run -v ${PWD}:/app/data -i --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+Linux: `docker run -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
 ## Raspberry Pi
 
