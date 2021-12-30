@@ -1,10 +1,7 @@
-FROM node:14-bullseye
+FROM node:current-bullseye
 
-# Install Google Chrome
-RUN apt-get update \
-    && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get install ./google-chrome*.deb --yes \
-    && rm ./google-chrome*.deb
+# Install Chromium
+RUN apt-get update && apt-get install chromium -y
 
 # Copy required files
 WORKDIR /app
@@ -29,6 +26,6 @@ WORKDIR /app/data
 CMD ["node", "--unhandled-rejections=strict", "/app/dist/index.js", \
      "--config", \
      "config.json", \
-     "--browser", "google-chrome-stable", \
+     "--browser", "chromium", \
      "--browser-args=--no-sandbox", \
      "--headless-login"]
