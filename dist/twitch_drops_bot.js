@@ -46,7 +46,7 @@ class StreamLoadFailedError extends Error {
 class StreamDownError extends Error {
 }
 class TwitchDropsBot {
-    constructor(page, client, optional) {
+    constructor(page, client, options) {
         var _a, _b, _c, _d, _e, _f, _g, _h;
         _TwitchDropsBot_instances.add(this);
         // A list of game IDs to watch and claim drops for.
@@ -126,17 +126,17 @@ class TwitchDropsBot {
         _TwitchDropsBot_isStreamDown.set(this, false);
         __classPrivateFieldSet(this, _TwitchDropsBot_page, page, "f");
         __classPrivateFieldSet(this, _TwitchDropsBot_twitchClient, client, "f");
-        (_a = optional === null || optional === void 0 ? void 0 : optional.gameIds) === null || _a === void 0 ? void 0 : _a.forEach((id => {
+        (_a = options === null || options === void 0 ? void 0 : options.gameIds) === null || _a === void 0 ? void 0 : _a.forEach((id => {
             __classPrivateFieldGet(this, _TwitchDropsBot_gameIds, "f").push(id);
         }));
-        __classPrivateFieldSet(this, _TwitchDropsBot_dropCampaignPollingInterval, (_b = optional === null || optional === void 0 ? void 0 : optional.dropCampaignPollingInterval) !== null && _b !== void 0 ? _b : __classPrivateFieldGet(this, _TwitchDropsBot_dropCampaignPollingInterval, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_failedStreamBlacklistTimeout, (_c = optional === null || optional === void 0 ? void 0 : optional.failedStreamBlacklistTimeout) !== null && _c !== void 0 ? _c : __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamBlacklistTimeout, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_failedStreamRetryCount, (_d = optional === null || optional === void 0 ? void 0 : optional.failedStreamRetryCount) !== null && _d !== void 0 ? _d : __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamRetryCount, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_hideVideo, (_e = optional === null || optional === void 0 ? void 0 : optional.hideVideo) !== null && _e !== void 0 ? _e : __classPrivateFieldGet(this, _TwitchDropsBot_hideVideo, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_loadTimeoutSeconds, (_f = optional === null || optional === void 0 ? void 0 : optional.loadTimeoutSeconds) !== null && _f !== void 0 ? _f : __classPrivateFieldGet(this, _TwitchDropsBot_loadTimeoutSeconds, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_dropCampaignPollingInterval, (_b = options === null || options === void 0 ? void 0 : options.dropCampaignPollingInterval) !== null && _b !== void 0 ? _b : __classPrivateFieldGet(this, _TwitchDropsBot_dropCampaignPollingInterval, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_failedStreamBlacklistTimeout, (_c = options === null || options === void 0 ? void 0 : options.failedStreamBlacklistTimeout) !== null && _c !== void 0 ? _c : __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamBlacklistTimeout, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_failedStreamRetryCount, (_d = options === null || options === void 0 ? void 0 : options.failedStreamRetryCount) !== null && _d !== void 0 ? _d : __classPrivateFieldGet(this, _TwitchDropsBot_failedStreamRetryCount, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_hideVideo, (_e = options === null || options === void 0 ? void 0 : options.hideVideo) !== null && _e !== void 0 ? _e : __classPrivateFieldGet(this, _TwitchDropsBot_hideVideo, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_loadTimeoutSeconds, (_f = options === null || options === void 0 ? void 0 : options.loadTimeoutSeconds) !== null && _f !== void 0 ? _f : __classPrivateFieldGet(this, _TwitchDropsBot_loadTimeoutSeconds, "f"), "f");
         __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").setDefaultTimeout(__classPrivateFieldGet(this, _TwitchDropsBot_loadTimeoutSeconds, "f") * 1000);
-        __classPrivateFieldSet(this, _TwitchDropsBot_watchUnlistedGames, (_g = optional === null || optional === void 0 ? void 0 : optional.watchUnlistedGames) !== null && _g !== void 0 ? _g : __classPrivateFieldGet(this, _TwitchDropsBot_watchUnlistedGames, "f"), "f");
-        __classPrivateFieldSet(this, _TwitchDropsBot_showAccountNotLinkedWarning, (_h = optional === null || optional === void 0 ? void 0 : optional.showAccountNotLinkedWarning) !== null && _h !== void 0 ? _h : __classPrivateFieldGet(this, _TwitchDropsBot_showAccountNotLinkedWarning, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_watchUnlistedGames, (_g = options === null || options === void 0 ? void 0 : options.watchUnlistedGames) !== null && _g !== void 0 ? _g : __classPrivateFieldGet(this, _TwitchDropsBot_watchUnlistedGames, "f"), "f");
+        __classPrivateFieldSet(this, _TwitchDropsBot_showAccountNotLinkedWarning, (_h = options === null || options === void 0 ? void 0 : options.showAccountNotLinkedWarning) !== null && _h !== void 0 ? _h : __classPrivateFieldGet(this, _TwitchDropsBot_showAccountNotLinkedWarning, "f"), "f");
         // Set up Twitch Drops Watchdog
         __classPrivateFieldSet(this, _TwitchDropsBot_twitchDropsWatchdog, new watchdog_1.TwitchDropsWatchdog(__classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f"), __classPrivateFieldGet(this, _TwitchDropsBot_dropCampaignPollingInterval, "f")), "f");
         __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").on('before_update', () => {
@@ -259,7 +259,7 @@ class TwitchDropsBot {
         });
     }
     /**
-     * Starts the bot. This method returns a promise that is never resolved!
+     * Starts the bot.
      */
     start() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -722,15 +722,19 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_dropCampaignPollingInte
         // Get a list of active streams that have drops enabled
         let streams = yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getDropEnabledStreams(__classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropCampaignById).call(this, campaignId)['game']['displayName']);
         // Filter out streams that are not in the allowed channels list, if any
-        const channels = details['allow']['channels'];
-        if (channels != null) {
-            const channelIds = new Set();
-            for (const channel of channels) {
-                channelIds.add(channel['id']);
+        logger_1.default.info('allow: ' + details.allow.isEnabled);
+        if (details.allow.isEnabled) {
+            const channels = details.allow.channels;
+            logger_1.default.info('chann: ' + channels);
+            if (channels != null) {
+                const channelIds = new Set();
+                for (const channel of channels) {
+                    channelIds.add(channel.id);
+                }
+                streams = streams.filter(stream => {
+                    return channelIds.has(stream.broadcaster_id);
+                });
             }
-            streams = streams.filter(stream => {
-                return channelIds.has(stream['broadcaster_id']);
-            });
         }
         return streams;
     });

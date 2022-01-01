@@ -85,7 +85,8 @@ interface CampaignDetails {
         channels: {
             id: string,
             displayName: string
-        }[]
+        }[],
+        isEnabled: boolean
     }
 }
 
@@ -888,15 +889,17 @@ export class TwitchDropsBot {
         let streams = await this.#twitchClient.getDropEnabledStreams(this.#getDropCampaignById(campaignId)['game']['displayName']);
 
         // Filter out streams that are not in the allowed channels list, if any
-        const channels = details['allow']['channels'];
-        if (channels != null) {
-            const channelIds = new Set();
-            for (const channel of channels) {
-                channelIds.add(channel['id']);
+        if (details.allow.isEnabled) {
+            const channels = details.allow.channels;
+            if (channels != null) {
+                const channelIds = new Set();
+                for (const channel of channels) {
+                    channelIds.add(channel.id);
+                }
+                streams = streams.filter(stream => {
+                    return channelIds.has(stream.broadcaster_id);
+                });
             }
-            streams = streams.filter(stream => {
-                return channelIds.has(stream['broadcaster_id']);
-            });
         }
 
         return streams;
