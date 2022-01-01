@@ -166,7 +166,7 @@ logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
 
         // Validate options
         if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-            console.error("You must provide a username and password to use headless login!");
+            logger.error("You must provide a username and password to use headless login!");
             process.exit(1);
         }
 

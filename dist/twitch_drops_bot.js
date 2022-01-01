@@ -722,10 +722,8 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_dropCampaignPollingInte
         // Get a list of active streams that have drops enabled
         let streams = yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getDropEnabledStreams(__classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropCampaignById).call(this, campaignId)['game']['displayName']);
         // Filter out streams that are not in the allowed channels list, if any
-        logger_1.default.info('allow: ' + details.allow.isEnabled);
         if (details.allow.isEnabled) {
             const channels = details.allow.channels;
-            logger_1.default.info('chann: ' + channels);
             if (channels != null) {
                 const channelIds = new Set();
                 for (const channel of channels) {

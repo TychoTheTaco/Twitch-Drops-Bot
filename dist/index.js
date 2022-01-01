@@ -110,7 +110,7 @@ logger_1.default.debug('Using config: ' + JSON.stringify(printableConfig, null, 
     // Start browser and open a new tab.
     const browser = yield puppeteer_extra_1.default.launch({
         headless: config['headless'],
-        executablePath: config['browser'],
+        //executablePath: config['browser'],
         args: config['browser_args']
     });
     const page = yield browser.newPage();
@@ -150,7 +150,7 @@ logger_1.default.debug('Using config: ' + JSON.stringify(printableConfig, null, 
         logger_1.default.info('Logging in...');
         // Validate options
         if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-            console.error("You must provide a username and password to use headless login!");
+            logger_1.default.error("You must provide a username and password to use headless login!");
             process.exit(1);
         }
         // Check if we need to create a new headful browser for the login
@@ -159,7 +159,7 @@ logger_1.default.debug('Using config: ' + JSON.stringify(printableConfig, null, 
         if (needNewBrowser) {
             loginBrowser = yield puppeteer_extra_1.default.launch({
                 headless: false,
-                executablePath: config['browser'],
+                //executablePath: config['browser'],
                 args: config['browser_args']
             });
         }
