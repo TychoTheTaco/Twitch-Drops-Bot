@@ -66,9 +66,13 @@ const options = [
     new options_1.BooleanOption('--headless', false, { defaultValue: true }),
     new options_1.BooleanOption('--headless-login'),
     new options_1.IntegerOption('--interval', { alias: '-i', defaultValue: 15 }),
+    new options_1.IntegerOption('--load-timeout-secs', { alias: '-t', defaultValue: 30 }),
+    new options_1.IntegerOption('--failed-stream-retry', { defaultValue: 3 }),
+    new options_1.IntegerOption('--failed-stream-timeout', { defaultValue: 30 }),
     new options_1.StringListOption('--browser-args', { defaultValue: [] }),
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new options_1.BooleanOption('--watch-unlisted-games'),
+    new options_1.BooleanOption('--hide-video'),
     new options_1.StringOption('--cookies-path'),
     new options_1.StringOption('--log-level'),
     new options_1.BooleanOption('--show-account-not-linked-warning', false, { defaultValue: true, alias: '-sanlw' })
@@ -98,6 +102,10 @@ for (const arg of requiredBrowserArgs) {
 if (config['username']) {
     config['username'] = config['username'].toLowerCase();
 }
+// Print config without password
+const printableConfig = Object.assign({}, config);
+printableConfig['password'] = config['password'] ? 'present' : undefined;
+logger_1.default.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
 (() => __awaiter(void 0, void 0, void 0, function* () {
     // Start browser and open a new tab.
     const browser = yield puppeteer_extra_1.default.launch({
@@ -191,7 +199,16 @@ if (config['username']) {
     // Seems to be the default hard-coded client ID
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
     const twitchClient = new twitch_1.default.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
-    const bot = new twitch_drops_bot_1.TwitchDropsBot(page, twitchClient, { gameIds: config['games'], interval: config['interval'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning'] });
+    const bot = new twitch_drops_bot_1.TwitchDropsBot(page, twitchClient, {
+        gameIds: config['games'],
+        failedStreamBlacklistTimeout: config['failed_stream_timeout'],
+        failedStreamRetryCount: config['failed_stream_retry'],
+        dropCampaignPollingInterval: config['interval'],
+        loadTimeoutSeconds: config['load_timeout_secs'],
+        hideVideo: config['hide_video'],
+        watchUnlistedGames: config['watch_unlisted_games'],
+        showAccountNotLinkedWarning: config['show_account_not_linked_warning']
+    });
     yield bot.start();
 }))().catch(error => {
     logger_1.default.error(error);

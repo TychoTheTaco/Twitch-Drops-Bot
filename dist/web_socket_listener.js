@@ -148,6 +148,12 @@ class WebSocketListener extends events_1.default {
                     }
                 }
             });
+            __classPrivateFieldGet(this, _WebSocketListener_cdp, "f").on('Network.webSocketFrameError', data => {
+                logger_1.default.error('Web socket frame error:', JSON.stringify(data, null, 4));
+            });
+            __classPrivateFieldGet(this, _WebSocketListener_cdp, "f").on('Network.webSocketClosed ', data => {
+                logger_1.default.error('Web socket closed:', JSON.stringify(data, null, 4));
+            });
         });
     }
     detach() {

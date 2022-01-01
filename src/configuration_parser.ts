@@ -8,8 +8,8 @@ import {Option} from "./options";
 
 export class ConfigurationParser {
 
-    #options;
-    #saveIfNotExist;
+    readonly #options;
+    readonly #saveIfNotExist;
 
     constructor(options: Option<any>[], saveIfNotExist: boolean = true) {
         this.#options = options;

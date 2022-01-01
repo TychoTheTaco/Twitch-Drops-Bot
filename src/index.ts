@@ -93,7 +93,7 @@ const requiredBrowserArgs = [
     '--disable-backgrounding-occluded-windows',
     '--disable-renderer-backgrounding',
     '--window-size=1920,1080'
-]
+];
 for (const arg of requiredBrowserArgs) {
     if (!config['browser_args'].includes(arg)) {
         config['browser_args'].push(arg);
@@ -104,6 +104,11 @@ for (const arg of requiredBrowserArgs) {
 if (config['username']) {
     config['username'] = config['username'].toLowerCase();
 }
+
+// Print config without password
+const printableConfig = {...config};
+printableConfig['password'] = config['password'] ? 'present' : undefined;
+logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
 
 (async () => {
 
@@ -220,7 +225,16 @@ if (config['username']) {
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
     const twitchClient = new twitch.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
 
-    const bot = new TwitchDropsBot(page, twitchClient, {gameIds: config['games'], failedStreamTimeout: config['failed_stream_timeout'], failedStreamRetry: config['failed_stream_retry'], interval: config['interval'], loadTimeoutSecs: config['load_timeout_secs'], hideVideo: config['hide_video'], watchUnlistedGames: config['watch_unlisted_games'], showAccountNotLinkedWarning: config['show_account_not_linked_warning']});
+    const bot = new TwitchDropsBot(page, twitchClient, {
+        gameIds: config['games'],
+        failedStreamBlacklistTimeout: config['failed_stream_timeout'],
+        failedStreamRetryCount: config['failed_stream_retry'],
+        dropCampaignPollingInterval: config['interval'],
+        loadTimeoutSeconds: config['load_timeout_secs'],
+        hideVideo: config['hide_video'],
+        watchUnlistedGames: config['watch_unlisted_games'],
+        showAccountNotLinkedWarning: config['show_account_not_linked_warning']
+    });
     await bot.start();
 
 })().catch(error => {

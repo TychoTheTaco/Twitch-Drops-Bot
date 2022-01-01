@@ -29,6 +29,17 @@ class StreamPage {
         _StreamPage_page.set(this, void 0);
         __classPrivateFieldSet(this, _StreamPage_page, page, "f");
     }
+    hideVideo() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Change the "visibility" of videos to "hidden" to lower CPU usage
+            const videoElements = yield __classPrivateFieldGet(this, _StreamPage_page, "f").$$('video');
+            for (let handle of videoElements) {
+                yield handle.evaluate((element) => {
+                    element.style.visibility = 'hidden';
+                });
+            }
+        });
+    }
     waitForLoad() {
         return __awaiter(this, void 0, void 0, function* () {
             // Wait for the viewer count and uptime to be visible

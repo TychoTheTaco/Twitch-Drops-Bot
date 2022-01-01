@@ -12,6 +12,11 @@ const prompt = require('prompt');
 import logger from "./logger";
 import utils from './utils';
 
+interface Stream {
+    url: string,
+    broadcaster_id: string
+}
+
 export class Client {
 
     readonly #clientId: string;
@@ -102,12 +107,12 @@ export class Client {
         try {
             return response['data']['data']['currentUser']['inventory'];
         } catch (error) {
-            logger.error('Error in function getInventory! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+            logger.error('Error in function getInventory! Response: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4));
             throw error;
         }
     }
 
-    async getDropEnabledStreams(gameName: string) {
+    async getDropEnabledStreams(gameName: string): Promise<Stream[]> {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 "operationName": "DirectoryPage_Game",
