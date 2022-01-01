@@ -54,7 +54,7 @@ If you want to update the list of games found in `games.csv`, just run `npm run 
 
 ## Docker
 
-You can also run this bot in a docker container. The latest image can be downloaded [here](https://github.com/TychoTheTaco/Twitch-Drops-Bot/pkgs/container/twitch-drops-bot).
+You can also run this bot in a docker container. Get the latest image with `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest`.
 
 ### Starting the container
 
@@ -64,6 +64,8 @@ time running the bot, a `config.json` file will be created in the current direct
 Windows (Command Prompt): `docker run -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
 Linux: `docker run -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+
+To detach from the docker session without terminating it, use `CTRL-P CTRL-Q`.
 
 ## Raspberry Pi
 
