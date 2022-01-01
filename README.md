@@ -4,10 +4,11 @@ This is a Node.js bot that uses [Puppeteer](https://github.com/puppeteer/puppete
 
 ## Usage
 
-1) Install [Node.js](https://nodejs.org/)
+1) Install [Node.js](https://nodejs.org/) (Requires version 14+)
 2) Install [Google Chrome](https://www.google.com/chrome/)
 3) Install this package: `npm install .`
-4) Start the bot with `node dist/index.js` or `npm run start`
+4) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
+5) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
 
 ### Options
 
