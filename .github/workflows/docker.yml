@@ -36,7 +36,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64/v8,linux/arm32/v7
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/twitch-drops-bot:latest
