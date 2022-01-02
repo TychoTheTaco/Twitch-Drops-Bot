@@ -10,3 +10,6 @@ config*.json
 # Log files
 log.txt
 log-*.txt
+
+# Build Output
+dist

@@ -2,15 +2,42 @@
 
 This is a Node.js bot that uses [Puppeteer](https://github.com/puppeteer/puppeteer) to automatically watch Twitch streams and claim drop rewards.
 
-## Usage
+## Setup
 
 1) Install [Node.js](https://nodejs.org/) (Requires version 14+)
 2) Install [Google Chrome](https://www.google.com/chrome/)
 3) Install this package: `npm install .`
-4) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
-5) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+4) Build the app: `npm run build`
+5) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
+6) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
 
-### Options
+### Docker
+
+You can also run this bot in a docker container. Get the latest image with `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest`.
+
+#### Starting the container
+
+Use one of the following commands to start the container. Make sure you run this command in the same directory as `config.json`, since it will map the current directory to the `/app/data` directory in the container. If this is the first
+time running the bot, a `config.json` file will be created in the current directory.
+
+Windows (Command Prompt): `docker run -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+
+Linux: `docker run -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+
+To detach from the docker session without terminating it, use `CTRL-P CTRL-Q`.
+
+### Raspberry Pi
+
+Make sure to install the latest version of Node.js, look at [this link](https://github.com/nodesource/distributions/blob/master/README.md).
+
+To install Node.js 16 use the following commands:
+
+```sh
+$ sudo curl -sL https://deb.nodesource.com/setup_16.x | bash -
+$ sudo sudo apt-get update && apt-get install -y nodejs
+```
+
+## Options
 
 There are multiple options you can configure. They can be provided as command line arguments or in a config JSON file. Options passed as command line arguments will override items in the config file. If no command line arguments are provided, a default config file will be generated.
 
@@ -51,29 +78,3 @@ Below is a list of all available options.
 ### Update Games List
 
 If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
-
-## Docker
-
-You can also run this bot in a docker container. Get the latest image with `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest`.
-
-### Starting the container
-
-Use one of the following commands to start the container. Make sure you run this command in the same directory as `config.json`, since it will map the current directory to the `/app/data` directory in the container. If this is the first
-time running the bot, a `config.json` file will be created in the current directory. 
-
-Windows (Command Prompt): `docker run -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
-
-Linux: `docker run -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
-
-To detach from the docker session without terminating it, use `CTRL-P CTRL-Q`.
-
-## Raspberry Pi
-
-Make sure to install the latest version of Node.js, look at [this link](https://github.com/nodesource/distributions/blob/master/README.md).
-
-To install Node.js 16 use the following commands:
-
-```sh
-$ sudo curl -sL https://deb.nodesource.com/setup_16.x | bash -
-$ sudo sudo apt-get update && apt-get install -y nodejs
-```
