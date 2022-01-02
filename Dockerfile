@@ -18,11 +18,8 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 # Install dependencies
 RUN npm install
 
-# Install Typescript. Doesn't work without -g flag for some reason
-RUN npm install typescript -g
-
 # Compile the app
-RUN tsc
+RUN npm run compile
 
 WORKDIR /app/data
 

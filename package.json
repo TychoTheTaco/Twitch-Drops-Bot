@@ -4,10 +4,10 @@
   "description": "A Node.js bot for automatically collecting Twitch drops.",
   "main": "dist/index.js",
   "scripts": {
-    "cleanup": "rimraf dist",
-    "compiler": "tsc --pretty",
-    "compiler:watch": "tsc --watch",
-    "build": "npm run cleanup && npm run compiler",
+    "clean": "rimraf dist",
+    "compile": "tsc --pretty",
+    "compile:watch": "tsc --watch",
+    "build": "npm run clean && npm run compile",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/index.js",
     "updateGames": "node dist/update_games.js"
