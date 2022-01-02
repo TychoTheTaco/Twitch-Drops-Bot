@@ -29,9 +29,25 @@ class StreamPage {
         _StreamPage_page.set(this, void 0);
         __classPrivateFieldSet(this, _StreamPage_page, page, "f");
     }
-    hideVideo() {
+    /**
+     * Expand the stream chat if it is not already expanded.
+     */
+    expandChat() {
         return __awaiter(this, void 0, void 0, function* () {
-            // Change the "visibility" of videos to "hidden" to lower CPU usage
+            const rightColumnChatBar = yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector('div.right-column');
+            const dataATarget = yield (rightColumnChatBar === null || rightColumnChatBar === void 0 ? void 0 : rightColumnChatBar.evaluate((element) => {
+                return element.getAttribute('data-a-target');
+            }));
+            if (dataATarget === 'right-column-chat-bar-collapsed') {
+                yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), 'button[data-a-target="right-column__toggle-collapse-btn"]');
+            }
+        });
+    }
+    /**
+     * Change the visibility of all `video` elements to lower CPU usage.
+     */
+    hideVideoElements() {
+        return __awaiter(this, void 0, void 0, function* () {
             const videoElements = yield __classPrivateFieldGet(this, _StreamPage_page, "f").$$('video');
             for (let handle of videoElements) {
                 yield handle.evaluate((element) => {
@@ -40,6 +56,10 @@ class StreamPage {
             }
         });
     }
+    /**
+     * Wait for this page to be fully loaded. This page is considered "fully loaded" when the viewer count and uptime
+     * elements are visible.
+     */
     waitForLoad() {
         return __awaiter(this, void 0, void 0, function* () {
             // Wait for the viewer count and uptime to be visible
@@ -47,11 +67,17 @@ class StreamPage {
             yield __classPrivateFieldGet(this, _StreamPage_page, "f").waitForSelector('span.live-time');
         });
     }
+    /**
+     * Click accept on any mature content warnings.
+     */
     acceptMatureContent() {
         return __awaiter(this, void 0, void 0, function* () {
             yield (0, utils_1.click)(__classPrivateFieldGet(this, _StreamPage_page, "f"), '[data-a-target="player-overlay-mature-accept"]');
         });
     }
+    /**
+     * Set the stream quality to the lowest available quality.
+     */
     setLowestStreamQuality() {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {

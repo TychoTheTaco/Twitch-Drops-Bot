@@ -16,7 +16,7 @@ export async function asyncPrompt(schema: any) {
     });
 }
 
-export async function saveScreenshotAndHtml(page: Page, pathPrefix: string){
+export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
     const time = new Date().getTime();
     const screenshotPath = pathPrefix + '-screenshot-' + time + '.png';
     const htmlPath = pathPrefix + '-page-' + time + '.html';

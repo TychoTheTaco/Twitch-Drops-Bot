@@ -729,13 +729,14 @@ export class TwitchDropsBot {
         // This does not affect the drops, so if the user requests lets hide the videos
         if (this.#hideVideo) {
             try {
-                await streamPage.hideVideo();
+                await streamPage.hideVideoElements();
                 logger.info('Set stream visibility to hidden');
             } catch (error) {
                 logger.error('Failed to set stream visibility to hidden!');
                 throw error;
             }
         }
+
         const requiredMinutesWatched = targetDrop['requiredMinutesWatched'];
 
         this.#createProgressBar();
@@ -761,7 +762,7 @@ export class TwitchDropsBot {
             const claimCommunityPointsButton = await this.#page.$(claimCommunityPointsSelector);
             if (claimCommunityPointsButton) {
                 try {
-                    await claimCommunityPointsButton.click();
+                    await utils.click(this.#page, 'div[data-test-selector="community-points-summary"] div.GTGMR button');
                     logger.debug('Claimed community points!');
                 } catch (error) {
                     logger.error('Failed to claim community points!');

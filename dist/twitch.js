@@ -269,26 +269,6 @@ function login(browser, username, password, headless = false) {
             yield page.click('[data-a-target="passport-login-button"]');
         }
         if (headless) {
-            /*const emailVerification = async () => {
-                logger.info('Checking for email verification...');
-                await page.waitForXPath('//!*[contains(text(), "please enter the 6-digit code we sent")]');
-                logger.info('Email verification found.');
-    
-                // Prompt user for code
-                prompt.start();
-                const result: any = await utils.asyncPrompt(['code']);
-                const code = result['code'];
-                prompt.stop();
-    
-                // Enter code
-                const first_input = await page.waitForXPath('(//input)[1]');
-                if (first_input == null) {
-                    logger.error('first_input was null!');
-                    throw new Error('first_input was null!')
-                }
-                await first_input.click();
-                await page.keyboard.type(code);
-            };*/
             while (true) {
                 // TODO: This loop and try/catch statements could be replaced with Promise.any(), but it seems that Node.js 14 does not support it.
                 // Check for email verification code

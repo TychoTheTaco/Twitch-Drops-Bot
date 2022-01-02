@@ -110,7 +110,7 @@ logger_1.default.debug('Using config: ' + JSON.stringify(printableConfig, null, 
     // Start browser and open a new tab.
     const browser = yield puppeteer_extra_1.default.launch({
         headless: config['headless'],
-        //executablePath: config['browser'],
+        executablePath: config['browser'],
         args: config['browser_args']
     });
     const page = yield browser.newPage();
@@ -159,7 +159,7 @@ logger_1.default.debug('Using config: ' + JSON.stringify(printableConfig, null, 
         if (needNewBrowser) {
             loginBrowser = yield puppeteer_extra_1.default.launch({
                 headless: false,
-                //executablePath: config['browser'],
+                executablePath: config['browser'],
                 args: config['browser_args']
             });
         }

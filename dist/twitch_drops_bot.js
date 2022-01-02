@@ -1,4 +1,23 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -33,7 +52,7 @@ const TimeoutError = require("puppeteer").errors.TimeoutError;
 const web_socket_listener_1 = __importDefault(require("./web_socket_listener"));
 const watchdog_1 = require("./watchdog");
 const stream_1 = require("./pages/stream");
-const utils_1 = __importDefault(require("./utils"));
+const utils_1 = __importStar(require("./utils"));
 const logger_1 = __importDefault(require("./logger"));
 class NoStreamsError extends Error {
 }
@@ -140,10 +159,11 @@ class TwitchDropsBot {
         // Set up Twitch Drops Watchdog
         __classPrivateFieldSet(this, _TwitchDropsBot_twitchDropsWatchdog, new watchdog_1.TwitchDropsWatchdog(__classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f"), __classPrivateFieldGet(this, _TwitchDropsBot_dropCampaignPollingInterval, "f")), "f");
         __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").on('before_update', () => {
-            logger_1.default.log(__classPrivateFieldGet(this, _TwitchDropsBot_progressBar, "f") === null ? 'info' : 'debug', 'Updating drop campaigns...');
+            __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this);
+            logger_1.default.info('Updating drop campaigns...');
         });
         __classPrivateFieldGet(this, _TwitchDropsBot_twitchDropsWatchdog, "f").on('update', (campaigns) => __awaiter(this, void 0, void 0, function* () {
-            logger_1.default.log(__classPrivateFieldGet(this, _TwitchDropsBot_progressBar, "f") === null ? 'info' : 'debug', 'Found ' + campaigns.length + ' campaigns.');
+            logger_1.default.info('Found ' + campaigns.length + ' campaigns.');
             while (__classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").length > 0) {
                 __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").pop();
             }
@@ -164,7 +184,6 @@ class TwitchDropsBot {
                     // Make sure Twitch account is linked
                     if (!campaign['self']['isAccountConnected']) {
                         if (__classPrivateFieldGet(this, _TwitchDropsBot_showAccountNotLinkedWarning, "f")) {
-                            __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this);
                             logger_1.default.warn('Twitch account not linked for drop campaign: ' + __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropCampaignFullName).call(this, dropCampaignId));
                         }
                         return;
@@ -172,7 +191,7 @@ class TwitchDropsBot {
                     __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").insert(dropCampaignId);
                 }
             });
-            logger_1.default.log(__classPrivateFieldGet(this, _TwitchDropsBot_progressBar, "f") === null ? 'info' : 'debug', 'Found ' + __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").length + ' pending campaigns.');
+            logger_1.default.info('Found ' + __classPrivateFieldGet(this, _TwitchDropsBot_pendingDropCampaignIds, "f").length + ' pending campaigns.');
             // Check if we are currently working on a drop campaign
             if (__classPrivateFieldGet(this, _TwitchDropsBot_currentDropCampaignId, "f") !== null) {
                 // Check if there is a higher priority stream we should be watching
@@ -197,7 +216,6 @@ class TwitchDropsBot {
                             // Make sure there are active streams before switching
                             const details = yield __classPrivateFieldGet(this, _TwitchDropsBot_twitchClient, "f").getDropCampaignDetails(firstCampaignId);
                             if ((yield __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getActiveStreams).call(this, firstCampaignId, details)).length > 0) {
-                                __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_stopProgressBar).call(this);
                                 logger_1.default.info('Higher priority campaign found: ' + __classPrivateFieldGet(this, _TwitchDropsBot_instances, "m", _TwitchDropsBot_getDropCampaignFullName).call(this, firstCampaignId) + ' id: ' + firstCampaignId + ' time: ' + new Date().getTime());
                                 __classPrivateFieldSet(this, _TwitchDropsBot_pendingHighPriority, true, "f");
                                 break;
@@ -584,7 +602,7 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_dropCampaignPollingInte
         // This does not affect the drops, so if the user requests lets hide the videos
         if (__classPrivateFieldGet(this, _TwitchDropsBot_hideVideo, "f")) {
             try {
-                yield streamPage.hideVideo();
+                yield streamPage.hideVideoElements();
                 logger_1.default.info('Set stream visibility to hidden');
             }
             catch (error) {
@@ -610,17 +628,19 @@ _TwitchDropsBot_gameIds = new WeakMap(), _TwitchDropsBot_dropCampaignPollingInte
             const claimCommunityPointsSelector = 'div[data-test-selector="community-points-summary"] div.GTGMR button';
             const claimCommunityPointsButton = yield __classPrivateFieldGet(this, _TwitchDropsBot_page, "f").$(claimCommunityPointsSelector);
             if (claimCommunityPointsButton) {
+                // Expand the chat if it was not expanded by default
+                //await streamPage.expandChat();
                 try {
-                    yield claimCommunityPointsButton.click();
+                    yield (0, utils_1.click)(__classPrivateFieldGet(this, _TwitchDropsBot_page, "f"), 'div[data-test-selector="community-points-summary"] div.GTGMR button');
+                    //await claimCommunityPointsButton.click();
                     logger_1.default.debug('Claimed community points!');
                 }
                 catch (error) {
-                    logger_1.default.error('Failed to claim community points!');
                     logger_1.default.error(error);
+                    logger_1.default.error('Failed to claim community points!');
                 }
             }
             // Check if we have made progress towards the current drop
-            logger_1.default.debug(`${__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f").id} | ${new Date().getTime()} - ${__classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']]} = ${new Date().getTime() - __classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']]}`);
             if (new Date().getTime() - __classPrivateFieldGet(this, _TwitchDropsBot_lastProgressTime, "f")[__classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id']] >= maxNoProgressTime) {
                 // Maybe we haven't got any updates from the web socket, lets check our inventory
                 const currentDropId = __classPrivateFieldGet(this, _TwitchDropsBot_currentDrop, "f")['id'];
