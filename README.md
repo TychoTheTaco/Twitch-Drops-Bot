@@ -55,25 +55,76 @@ A sample config file looks like this:
 
 Below is a list of all available options.
 
-| Argument | Config | Description | Default |
-| --- | --- | --- | --- |
-| <code>&#8209;&#8209;config&nbsp;\<path\></code> | | Path to your configuration file.| `config.json` |
-| <code>&#8209;&#8209;browser&nbsp;\<path\></code> | `browser` | Path to your browser executable. Only Chrome is currently supported. Although Puppeteer includes a version of Chromium, it does not support the video format required to watch Twitch streams, so a separate Chrome installation is required. | System dependent |
-| <code>&#8209;&#8209;games&nbsp;\<ids\></code> | `games` | A list of IDs of the games that the bot should automatically watch. See `games.csv` for a list of game IDs. This item is optional. If empty or omitted, the bot will try to watch all games. | `[]` |
-| <code>&#8209;&#8209;username&nbsp;\<string\></code> | `username` | Your Twitch username. It is only used to automatically fill out the login page. This is required if `headless-login` is `true`, otherwise it is optional. | |
-| <code>&#8209;&#8209;password&nbsp;\<string\></code> | `password` | Your Twitch password. It is only used to automatically fill out the login page. This is required if `headless-login` is `true`, otherwise it is optional. | |
-| <code>&#8209;&#8209;headless-login</code> | `headless_login` | Login to Twitch in headless mode. If this is enabled, you must also provide a username and password. This is useful for logging in remotely. | `false` |
-| <code>&#8209;&#8209;headless&nbsp;\<boolean\></code> | `headless` | Toggle headless mode. If false, this will display the browser at all times. Useful for debugging. | `true` |
-| <code>&#8209;&#8209;interval&nbsp;\<minutes\></code> | `interval` | The number of minutes to wait between checking for new drop campaigns.| `15` |
-| <code>&#8209;&#8209;browser&#8209;args&nbsp;\<args\></code> | `browser_args` | Extra arguments to pass to the browser instance. | `[]` |
-| <code>&#8209;&#8209;watch&#8209;unlisted&#8209;games</code> | `watch_unlisted_games` | If this is set to `true`, the app will watch streams of games that are not listed in the config after listed games have completed. | `false` |
-| <code>&#8209;&#8209;cookies&#8209;path</code> | `cookies_path` | The path to a file containing Twitch login cookies. If the file does not exist, one will be created after logging in. | <code>cookies&#8209;\<username>.json</code> |
-| <code>&#8209;&#8209;log&#8209;level</code> | `log_level` | The log level to display in the console. All log levels are still logged to the log file. | <code>info</code> |
-| <code>&#8209;&#8209;show&#8209;account&#8209;not&#8209;linked&#8209;warning</code> | `show_account_not_linked_warning` | Show a warning if your Twitch account is not linked to a Drop Campaign. | <code>true</code> |
-| <code>&#8209;&#8209;load&#8209;timeout&#8209;secs</code> | `load_timeout_secs` | Increasing the timeout can help with low-end devices (such as: Raspberry Pi). | <code>30</code>
-| <code>&#8209;&#8209;failed&#8209;stream&#8209;retry</code> | `failed_stream_retry` | The number of failures a stream can have before being blacklisted. | <code>3</code>
-| <code>&#8209;&#8209;failed&#8209;stream&#8209;timeout</code> | `failed_stream_timeout` | The number of minutes to wait before removing a stream from blacklist. | <code>30</code>
-| <code>&#8209;&#8209;hide&#8209;video</code> | `hide_video` | Setting the visibility of a video to "hidden" will lower the CPU usage. | <code>false</code>
+`--config <path>` The path to your configuration file.
+
+- Alias: `-c` 
+- Default: `config.json`
+
+`--browser <path>` | `browser` The path to your browser executable. Only Google Chrome is currently supported. Although Puppeteer includes a version of Chromium, it does not support the video format required to watch Twitch streams, so a separate Google Chrome installation is required.
+
+- Alias: `-b`
+- Default: Operating system dependent
+
+`‑‑games <ids>` | `games` A list of IDs of the games that the bot should automatically watch. See `games.csv` for a list of game IDs. If empty or omitted, the bot will try to watch all games. If provided as a command line argument, this should be a comma-separated list of IDs. If provided in the JSON config, this should be an array of strings.
+
+- Alias: `-g`
+
+`‑‑username <string>` | `username` Your Twitch username. It is only used to automatically fill out the login page. This is required if `headless-login` is `true`, otherwise it is optional.
+
+- Alias: `-u`
+
+`‑‑password <string>` | `password` Your Twitch password. It is only used to automatically fill out the login page. This is required if `headless-login` is `true`, otherwise it is optional.
+
+- Alias: `-p`
+
+`‑‑headless-login` | `headless_login` Login to Twitch in headless mode. If this is enabled, you must also provide a username and password. This is useful for logging in remotely.
+
+- Default: `false`
+
+`‑‑headless <boolean>` | `headless` Toggle headless mode. If `false`, this will display the browser at all times. Useful for debugging.
+
+- Default: `true`
+
+`‑‑interval <minutes>` | `interval` The number of minutes to wait between checking for new drop campaigns.
+
+- Alias: `-i`
+- Default: `15`
+
+`‑‑browser‑args <args>` | `browser_args` Extra arguments to pass to the browser instance. If provided as a command line argument, this should be a comma-separated list of args. If provided in the JSON config, this should be an array of strings.
+
+`‑‑watch‑unlisted‑games` | `watch_unlisted_games` When `true`, the app will watch streams of games that are not listed in the config if the listed games' campaigns are completed or no streams are active.
+
+- Default: `false`
+
+`‑‑cookies‑path <path>` | `cookies_path` The path to a file containing Twitch login cookies. If the file does not exist, one will be created after logging in.
+
+- Default: `cookies‑<username>.json`
+
+`‑‑log‑level <level>` | `log_level` The log level to display in the console. All log levels are still logged to the log file. Using a level lower than `info` may cause the progress bar to get messed up.
+
+- Default: `info`
+
+`‑‑show‑account‑not‑linked‑warning` | `show_account_not_linked_warning` Show a warning if your Twitch account is not linked to a Drop Campaign.
+
+- Alias: `-sanlw`
+- Default: `true`
+
+`‑‑load‑timeout‑secs <seconds>` | `load_timeout_secs` The number of seconds to wait for page loading. Increasing the timeout can help with low-end devices (such as: Raspberry Pi).
+
+- Alias: `-t`
+- Default: `30`
+
+`‑‑failed‑stream‑retry <count>` | `failed_stream_retry` The number of failures a stream can have before being (temporarily) blacklisted.
+
+- Default: `3`
+
+`‑‑failed‑stream‑timeout <minutes>` | `failed_stream_timeout` The number of minutes to wait before removing a stream from the blacklist.
+
+- Default: `30`
+
+`‑‑hide‑video` | `hide_video` Change the visibility of all `video` elements to `hidden` to lower the CPU usage.
+
+- Default: `false`
 
 ### Update Games List
 
