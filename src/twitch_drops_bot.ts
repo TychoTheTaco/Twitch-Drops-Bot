@@ -502,7 +502,7 @@ export class TwitchDropsBot {
                 streams = streams.filter(stream => {
                     return !failedStreamUrls.has(stream.url);
                 });
-                logger.info('Found ' + streams.length + ' potential streams');
+                logger.info('Found ' + streams.length + ' good streams');
 
                 for (const x of Object.keys(failedStreamUrlCounts)) {
                     logger.debug('failed: ' + failedStreamUrlCounts[x] + ' ' + x);
@@ -835,12 +835,12 @@ export class TwitchDropsBot {
                 continue;
             }
 
-            // Check if this drop has expired
+            // Check if this drop has ended
             if (new Date() > new Date(Date.parse(drop['endAt']))) {
                 continue;
             }
 
-            // Check if this has started
+            // Check if this drop has started
             if (new Date() < new Date(Date.parse(drop['startAt']))) {
                 continue;
             }
