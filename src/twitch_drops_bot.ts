@@ -270,32 +270,53 @@ export class TwitchDropsBot {
                         break;
                     }
 
-                    const firstDrop = await this.#getFirstUnclaimedDrop(firstCampaignId);
-                    if (firstDrop !== null) {
-
-                        // Check if this drop is ready to be claimed
-                        let claimed = false;
-                        const inventoryDrop = await this.#twitchClient.getInventoryDrop(firstDrop['id'], firstCampaignId);
-                        if (inventoryDrop != null) {
-                            if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
-                                await this.#claimDropReward(inventoryDrop);
-                                claimed = true;
-                            }
+                    // Find the first drop that we haven't claimed yet
+                    let firstUnclaimedDrop = null;
+                    try {
+                        firstUnclaimedDrop = await this.#getFirstUnclaimedDrop(firstCampaignId);
+                        if (firstUnclaimedDrop === null) {
+                            continue;
                         }
-
-                        if (!claimed) {
-
-                            // Make sure there are active streams before switching
-                            const details = await this.#twitchClient.getDropCampaignDetails(firstCampaignId);
-                            if ((await this.#getActiveStreams(firstCampaignId, details)).length > 0) {
-                                logger.info('Higher priority campaign found: ' + this.#getDropCampaignFullName(firstCampaignId) + ' id: ' + firstCampaignId + ' time: ' + new Date().getTime());
-                                this.#pendingHighPriority = true;
-                                break;
-                            }
-
-                        }
-
+                    } catch (error) {
+                        logger.error('Failed to get first unclaimed drop!');
+                        logger.debug(error);
+                        continue;
                     }
+
+                    // Claim the drop if it is ready to be claimed
+                    let inventoryDrop = null;
+                    try {
+                        inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop['id'], firstCampaignId);
+                        if (inventoryDrop === null) {
+                            continue;
+                        }
+                    } catch (error) {
+                        logger.error('Error getting inventory drop');
+                        logger.debug(error);
+                    }
+                    if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
+                        try {
+                            await this.#claimDropReward(inventoryDrop);
+                        } catch (error) {
+                            logger.error('Error claiming drop');
+                            logger.debug(error);
+                        }
+                        continue;
+                    }
+
+                    // Make sure there are active streams before switching
+                    try {
+                        const details = await this.#twitchClient.getDropCampaignDetails(firstCampaignId);
+                        if ((await this.#getActiveStreams(firstCampaignId, details)).length > 0) {
+                            logger.info('Higher priority campaign found: ' + this.#getDropCampaignFullName(firstCampaignId) + ' id: ' + firstCampaignId + ' time: ' + new Date().getTime());
+                            this.#pendingHighPriority = true;
+                            break;
+                        }
+                    } catch (error) {
+                        logger.error('Failed to check stream count');
+                        logger.debug(error);
+                    }
+
                 }
             }
 
@@ -522,7 +543,7 @@ export class TwitchDropsBot {
                 const streamUrl = streams[0]['url'];
                 logger.info('Watching stream: ' + streamUrl);
                 try {
-                    await this.#watchStreamUntilCampaignCompleted(streamUrl, dropCampaignId, drop);
+                    await this.#watchStreamUntilCampaignCompleted(streamUrl, drop);
                 } catch (error) {
                     if (error instanceof NoProgressError) {
                         logger.warn(error.message);
@@ -671,7 +692,7 @@ export class TwitchDropsBot {
         });
     }
 
-    async #watchStreamUntilCampaignCompleted(streamUrl: string, campaignId: string, targetDrop: Drop) {
+    async #watchStreamUntilCampaignCompleted(streamUrl: string, targetDrop: Drop) {
         this.#targetDrop = targetDrop;
         this.#currentDrop = targetDrop;
         logger.debug('target: ' + targetDrop['id']);
