@@ -25,6 +25,9 @@ export class TwitchDropsWatchdog extends EventEmitter {
                 this.emit('before_update');
                 this.#client.getDropCampaigns().then((campaigns) => {
                     this.emit('update', campaigns);
+                }).catch((error) => {
+                    this.emit('error', error);
+                }).finally(() => {
                     this.#timeoutId = setTimeout(run, 1000 * 60 * this.#interval);
                 });
             };

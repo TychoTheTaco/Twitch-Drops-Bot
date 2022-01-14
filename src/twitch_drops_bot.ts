@@ -212,6 +212,12 @@ export class TwitchDropsBot {
             this.#stopProgressBar();
             logger.info('Updating drop campaigns...');
         });
+        this.#twitchDropsWatchdog.on('error', (error) => {
+            this.#stopProgressBar()
+            logger.error('Error checking twitch drops!');
+            logger.error(error);
+            this.#startProgressBar()
+        })
         this.#twitchDropsWatchdog.on('update', async (campaigns: Campaign[]) => {
 
             logger.info('Found ' + campaigns.length + ' campaigns.');

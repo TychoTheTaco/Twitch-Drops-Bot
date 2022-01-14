@@ -13,6 +13,7 @@ import puppeteer from 'puppeteer-extra';
 
 // Add stealth plugin
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+
 puppeteer.use(StealthPlugin());
 
 function onBrowserOrPageClosed() {
@@ -39,7 +40,7 @@ function areCookiesValid(cookies: any) {
     return isOauthTokenFound;
 }
 
-function updateGames(campaigns: []) {
+function updateGames(campaigns: any[]) {
     logger.info('Parsing games...');
     const gamesPath = './games.csv'
     const oldGames = fs
@@ -205,7 +206,7 @@ if (config['username']) {
         }
     }
 
-    if (!oauthToken || !channelLogin){
+    if (!oauthToken || !channelLogin) {
         logger.error('Invalid cookies!');
         process.exit(1);
     }

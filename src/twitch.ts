@@ -1,11 +1,15 @@
 'use strict';
 
-require('dnscache')({ enable: true });
+require('dnscache')({enable: true});
 
 import fs from 'fs';
 
+// `inspect` is used instead of `JSON.stringify` because it can handle circular structures, such as `AxiosResponse` objects.
+import {inspect} from 'util';
+
 import axios from 'axios';
 import {errors, Browser} from 'puppeteer';
+
 const {TimeoutError} = errors;
 const prompt = require('prompt');
 
@@ -55,9 +59,13 @@ export class Client {
             }
         );
         try {
-            return response['data']['data']['currentUser']['dropCampaigns'];
+            const campaigns = response['data']['data']['currentUser']['dropCampaigns'];
+            if (!Array.isArray(campaigns)) {
+                throw new TypeError('Drop campaigns is not an array!');
+            }
+            return campaigns;
         } catch (error) {
-            logger.error('Error in function getDropCampaigns! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+            logger.debug('Error in function getDropCampaigns! Response: ' + inspect(response, {depth: null}));
             throw error;
         }
     }
@@ -84,7 +92,7 @@ export class Client {
         try {
             return response['data']['data']['user']['dropCampaign'];
         } catch (error) {
-            logger.error('Error in function getDropCampaignDetails! Response: ' + response.status + ' ' + JSON.stringify(response, null, 4));
+            logger.debug('Error in function getDropCampaignDetails! Response: ' + inspect(response, {depth: null}));
             throw error;
         }
     }
@@ -107,7 +115,7 @@ export class Client {
         try {
             return response['data']['data']['currentUser']['inventory'];
         } catch (error) {
-            logger.error('Error in function getInventory! Response: ' + response.status + ' ' + JSON.stringify(response['data'], null, 4));
+            logger.debug('Error in function getInventory! Response: ' + inspect(response, {depth: null}));
             throw error;
         }
     }
