@@ -20,7 +20,7 @@ RUN npm run compile
 
 WORKDIR /app/data
 
-CMD ["node", "--unhandled-rejections=strict", "/app/dist/index.js", \
+ENTRYPOINT ["node", "--unhandled-rejections=strict", "/app/dist/index.js", \
      "--config", \
      "config.json", \
      "--browser", "chromium", \
