@@ -73,7 +73,8 @@ const options = [
     new BooleanOption('--hide-video'),
     new StringOption('--cookies-path'),
     new StringOption('--log-level'),
-    new BooleanOption('--show-account-not-linked-warning', false, {defaultValue: true, alias: '-sanlw'})
+    new BooleanOption('--show-account-not-linked-warning', false, {defaultValue: true, alias: '-sanlw'}),
+    new StringListOption("--ignored-games")
 ];
 
 // Parse arguments
@@ -233,7 +234,8 @@ logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
         loadTimeoutSeconds: config['load_timeout_secs'],
         hideVideo: config['hide_video'],
         watchUnlistedGames: config['watch_unlisted_games'],
-        showAccountNotLinkedWarning: config['show_account_not_linked_warning']
+        showAccountNotLinkedWarning: config['show_account_not_linked_warning'],
+        ignoredGameIds: config['ignored_games']
     });
     await bot.start();
 

@@ -126,6 +126,8 @@ Below is a list of all available options.
 
 - Default: `false`
 
+`‑‑ignored-games` | `ignored_games` A list of IDs of games that the bot should ignore. This is useful when `watch_unlisted_games` is `true`, but you want to ignore some games.
+
 ### Update Games List
 
 If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
