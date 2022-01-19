@@ -58,6 +58,7 @@ class WebSocketListener extends EventEmitter {
 
                 case 'points-earned':
                 case 'reward-redeemed':
+                case 'claim-claimed':
                     return true;
             }
             return false;
