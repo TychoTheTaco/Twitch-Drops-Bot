@@ -328,21 +328,20 @@ export class TwitchDropsBot {
                     let inventoryDrop = null;
                     try {
                         inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop['id'], firstCampaignId);
-                        if (inventoryDrop === null) {
-                            continue;
-                        }
                     } catch (error) {
                         logger.error('Error getting inventory drop');
                         logger.debug(error);
                     }
-                    if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
-                        try {
-                            await this.#claimDropReward(inventoryDrop);
-                        } catch (error) {
-                            logger.error('Error claiming drop');
-                            logger.debug(error);
+                    if (inventoryDrop !== null){
+                        if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
+                            try {
+                                await this.#claimDropReward(inventoryDrop);
+                            } catch (error) {
+                                logger.error('Error claiming drop');
+                                logger.debug(error);
+                            }
+                            continue;
                         }
-                        continue;
                     }
 
                     // Make sure there are active streams before switching
