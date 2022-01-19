@@ -21,11 +21,78 @@ interface Stream {
     broadcaster_id: string
 }
 
+/*
+NOTE: The below interfaces do not always have all fields present! Some Twitch API calls don't return all the fields.
+I could mark them all optional, but that would lead to a lot of unnecessary null checking throughout the code.
+I could make a separate interface for each API call but that would get messy very quickly and lead to a lot of duplicate information
+*/
+
+export interface Game {
+    id: string,
+    displayName: string
+}
+
+export interface DropCampaign {
+    id: string,
+    status: string,
+    game: Game,
+    self: {
+        isAccountConnected: boolean
+    },
+    endAt: string,
+    name: string,
+    timeBasedDrops: TimeBasedDrop[],
+    allow: {
+        channels: {
+            id: string,
+            displayName: string
+        }[],
+        isEnabled: boolean
+    }
+}
+
+export interface TimeBasedDrop {
+    id: string
+    benefitEdges: {
+        benefit: {
+            id: string,
+            name: string
+        }
+    }[],
+    startAt: string,
+    endAt: string,
+    requiredMinutesWatched: number,
+    name: string,
+    preconditionDrops: {
+        id: string
+    }[],
+    self: {
+        currentMinutesWatched: number,
+        dropInstanceID: string,
+        isClaimed: boolean
+    },
+    campaign: DropCampaign
+}
+
+export interface UserDropReward {
+    id: string,
+    game: Game,
+    lastAwardedAt: string,
+    name: string,
+    totalCount: number
+}
+
+export interface Inventory {
+    dropCampaignsInProgress: DropCampaign[],
+    gameEventDrops: UserDropReward[]
+}
+
 export class Client {
 
     readonly #clientId: string;
     readonly #oauthToken: string;
     readonly #channelLogin: string;
+
     readonly #defaultHeaders;
 
     constructor(clientId: string, oauthToken: string, channelLogin: string) {
@@ -41,9 +108,8 @@ export class Client {
 
     /**
      * Get a list of drop campaigns. This can include expired, active, and future campaigns.
-     * @returns {Promise<*>}
      */
-    async getDropCampaigns() {
+    async getDropCampaigns(): Promise<DropCampaign[]> {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 'operationName': 'ViewerDropsDashboard',
@@ -70,7 +136,7 @@ export class Client {
         }
     }
 
-    async getDropCampaignDetails(dropId: string) {
+    async getDropCampaignDetails(dropId: string): Promise<DropCampaign> {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 'operationName': 'DropCampaignDetails',
@@ -97,7 +163,7 @@ export class Client {
         }
     }
 
-    async getInventory() {
+    async getInventory(): Promise<Inventory> {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 'operationName': 'Inventory',
@@ -118,6 +184,52 @@ export class Client {
             logger.debug('Error in function getInventory! Response: ' + inspect(response, {depth: null}));
             throw error;
         }
+    }
+
+    async getActiveStreams(gameName: string): Promise<Stream[]> {
+        const response = await axios.post('https://gql.twitch.tv/gql',
+            {
+                "operationName": "DirectoryPage_Game",
+                "variables": {
+                    "name": gameName.toLowerCase(),
+                    "options": {
+                        "includeRestricted": [
+                            "SUB_ONLY_LIVE"
+                        ],
+                        "sort": "VIEWER_COUNT",
+                        "recommendationsContext": {
+                            "platform": "web"
+                        },
+                        "requestID": "JIRA-VXP-2397", // TODO: what is this for???
+                        "tags": []
+                    },
+                    "sortTypeIsRecency": false,
+                    "limit": 30
+                },
+                "extensions": {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "d5c5df7ab9ae65c3ea0f225738c08a36a4a76e4c6c31db7f8c4b8dc064227f9e"
+                    }
+                }
+            },
+            {
+                headers: this.#defaultHeaders
+            }
+        );
+        const streams = response['data']['data']['game']['streams'];
+        if (streams === null) {
+            return [];
+        }
+
+        const result = [];
+        for (const stream of streams['edges']) {
+            result.push({
+                'url': 'https://www.twitch.tv/' + stream['node']['broadcaster']['login'],
+                'broadcaster_id': stream['node']['broadcaster']['id']
+            });
+        }
+        return result;
     }
 
     async getDropEnabledStreams(gameName: string): Promise<Stream[]> {
@@ -221,20 +333,20 @@ export class Client {
 
     async getDropCampaignsInProgress() {
         const inventory = await this.getInventory();
-        const campaigns = inventory['dropCampaignsInProgress'];
+        const campaigns = inventory.dropCampaignsInProgress;
         if (campaigns === null) {
             return [];
         }
         return campaigns;
     }
 
-    async getInventoryDrop(dropId: string, campaignId?: string) {
+    async getInventoryDrop(dropId: string, campaignId?: string): Promise<TimeBasedDrop | null> {
         const campaigns = await this.getDropCampaignsInProgress();
         for (const campaign of campaigns) {
-            if (!campaignId || campaign['id'] === campaignId) {
-                const drops = campaign['timeBasedDrops'];
+            if (!campaignId || campaign.id === campaignId) {
+                const drops = campaign.timeBasedDrops;
                 for (const drop of drops) {
-                    if (drop['id'] === dropId) {
+                    if (drop.id === dropId) {
                         return drop;
                     }
                 }

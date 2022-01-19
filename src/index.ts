@@ -106,11 +106,6 @@ if (config['username']) {
     config['username'] = config['username'].toLowerCase();
 }
 
-// Print config without password
-const printableConfig = {...config};
-printableConfig['password'] = config['password'] ? 'present' : undefined;
-logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
-
 (async () => {
 
     // Start browser and open a new tab.
