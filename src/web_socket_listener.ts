@@ -79,7 +79,8 @@ class WebSocketListener extends EventEmitter {
         'polls': this.#ignoreTopicHandler,
         'channel-ad-poll-update-events': this.#ignoreTopicHandler,
         'channel-bounty-board-events.cta': this.#ignoreTopicHandler,
-        'crowd-chant-channel-v1': this.#ignoreTopicHandler
+        'crowd-chant-channel-v1': this.#ignoreTopicHandler,
+        'radio-events-v1': this.#ignoreTopicHandler
     };
 
     async attach(page: Page) {
