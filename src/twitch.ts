@@ -16,7 +16,7 @@ const prompt = require('prompt');
 import logger from "./logger";
 import utils from './utils';
 
-interface Stream {
+export interface Stream {
     url: string,
     broadcaster_id: string
 }
@@ -85,6 +85,10 @@ export interface UserDropReward {
 export interface Inventory {
     dropCampaignsInProgress: DropCampaign[],
     gameEventDrops: UserDropReward[]
+}
+
+export enum Tag {
+    DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
 }
 
 export class Client {
@@ -186,7 +190,12 @@ export class Client {
         }
     }
 
-    async getActiveStreams(gameName: string): Promise<Stream[]> {
+    /**
+     * Get a list of active streams.
+     * @param gameName
+     * @param options
+     */
+    async getActiveStreams(gameName: string, options?: { tags?: string[] }): Promise<Stream[]> {
         const response = await axios.post('https://gql.twitch.tv/gql',
             {
                 "operationName": "DirectoryPage_Game",
@@ -201,55 +210,7 @@ export class Client {
                             "platform": "web"
                         },
                         "requestID": "JIRA-VXP-2397", // TODO: what is this for???
-                        "tags": []
-                    },
-                    "sortTypeIsRecency": false,
-                    "limit": 30
-                },
-                "extensions": {
-                    "persistedQuery": {
-                        "version": 1,
-                        "sha256Hash": "d5c5df7ab9ae65c3ea0f225738c08a36a4a76e4c6c31db7f8c4b8dc064227f9e"
-                    }
-                }
-            },
-            {
-                headers: this.#defaultHeaders
-            }
-        );
-        const streams = response['data']['data']['game']['streams'];
-        if (streams === null) {
-            return [];
-        }
-
-        const result = [];
-        for (const stream of streams['edges']) {
-            result.push({
-                'url': 'https://www.twitch.tv/' + stream['node']['broadcaster']['login'],
-                'broadcaster_id': stream['node']['broadcaster']['id']
-            });
-        }
-        return result;
-    }
-
-    async getDropEnabledStreams(gameName: string): Promise<Stream[]> {
-        const response = await axios.post('https://gql.twitch.tv/gql',
-            {
-                "operationName": "DirectoryPage_Game",
-                "variables": {
-                    "name": gameName.toLowerCase(),
-                    "options": {
-                        "includeRestricted": [
-                            "SUB_ONLY_LIVE"
-                        ],
-                        "sort": "VIEWER_COUNT",
-                        "recommendationsContext": {
-                            "platform": "web"
-                        },
-                        "requestID": "JIRA-VXP-2397", // TODO: what is this for???
-                        "tags": [
-                            "c2542d6d-cd10-4532-919b-3d19f30a768b"  // "Drops enabled"
-                        ]
+                        "tags": options?.tags ?? []
                     },
                     "sortTypeIsRecency": false,
                     "limit": 30
@@ -357,6 +318,7 @@ export class Client {
 
 }
 
+// todo: move this somewhere else, maybe part of twitch drops bot?
 export async function login(browser: Browser, username?: string, password?: string, headless: boolean = false) {
     const page = await browser.newPage();
 

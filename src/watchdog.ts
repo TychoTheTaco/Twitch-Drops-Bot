@@ -1,7 +1,7 @@
 'use strict';
 
 import {EventEmitter} from 'events';
-import {Client} from "./twitch";
+import {Client, DropCampaign} from "./twitch";
 
 export class TwitchDropsWatchdog extends EventEmitter {
 
@@ -23,7 +23,7 @@ export class TwitchDropsWatchdog extends EventEmitter {
             this.#isRunning = true;
             const run = () => {
                 this.emit('before_update');
-                this.#client.getDropCampaigns().then((campaigns) => {
+                this.#client.getDropCampaigns().then((campaigns: DropCampaign[]) => {
                     this.emit('update', campaigns);
                 }).catch((error) => {
                     this.emit('error', error);
