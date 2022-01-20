@@ -146,6 +146,15 @@ export class TwitchDropsBot {
      */
     readonly #showAccountNotLinkedWarning: boolean = true;
 
+    /**
+     * When true, the bot will make progress towards Drop Campaigns even if the campaign is expected to end before
+     * we can finish watching to claim the Drop. For example: A Drop Campaign will end in 30 minutes. We have watched
+     * 15 / 60 minutes for one of the Drops. Normally, we will not be able to finish and claim the Drop so there is no
+     * point in trying. However, sometimes Drop Campaigns get extended which means we would have had enough time.
+     * @private
+     */
+    readonly #attemptImpossibleDropCampaigns: boolean = true;
+
     // Twitch API client to use.
     readonly #twitchClient: Client;
 
@@ -215,7 +224,21 @@ export class TwitchDropsBot {
     #isDropReadyToClaim: boolean = false;
     #isStreamDown: boolean = false;
 
-    constructor(page: Page, client: Client, options?: { gameIds?: string[], failedStreamBlacklistTimeout?: number, failedStreamRetryCount?: number, dropCampaignPollingInterval?: number, loadTimeoutSeconds?: number, hideVideo?: boolean, watchUnlistedGames?: boolean, showAccountNotLinkedWarning?: boolean, ignoredGameIds?: string[] }) {
+    constructor(
+        page: Page,
+        client: Client,
+        options?: {
+            gameIds?: string[],
+            failedStreamBlacklistTimeout?: number,
+            failedStreamRetryCount?: number,
+            dropCampaignPollingInterval?: number,
+            loadTimeoutSeconds?: number,
+            hideVideo?: boolean,
+            watchUnlistedGames?: boolean,
+            showAccountNotLinkedWarning?: boolean,
+            ignoredGameIds?: string[],
+            attemptImpossibleDropCampaigns?: boolean
+        }) {
         this.#page = page;
         this.#twitchClient = client;
 
@@ -235,6 +258,7 @@ export class TwitchDropsBot {
         options?.ignoredGameIds?.forEach((id => {
             this.#ignoredGameIds.push(id);
         }));
+        this.#attemptImpossibleDropCampaigns = options?.attemptImpossibleDropCampaigns ?? this.#attemptImpossibleDropCampaigns;
 
         // Set up Twitch Drops Watchdog
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#dropCampaignPollingInterval);
@@ -332,7 +356,7 @@ export class TwitchDropsBot {
                         logger.error('Error getting inventory drop');
                         logger.debug(error);
                     }
-                    if (inventoryDrop !== null){
+                    if (inventoryDrop !== null) {
                         if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
                             try {
                                 await this.#claimDropReward(inventoryDrop);
@@ -496,7 +520,7 @@ export class TwitchDropsBot {
             try {
                 await this.#processDropCampaign(this.#currentDropCampaignId);
                 //completedCampaignIds.add(currentDropCampaignId);
-                logger.info('campaign completed');
+                //logger.info('campaign completed');
             } catch (error) {
                 if (error instanceof NoStreamsError) {
                     logger.info('No streams!');
@@ -533,12 +557,25 @@ export class TwitchDropsBot {
             }
             logger.debug('working on drop ' + drop['id']);
 
+            let currentMinutesWatched = 0;
+
             // Check if this drop is ready to be claimed
             const inventoryDrop = await this.#twitchClient.getInventoryDrop(drop['id'], dropCampaignId);
             if (inventoryDrop != null) {
-                if (inventoryDrop['self']['currentMinutesWatched'] >= inventoryDrop['requiredMinutesWatched']) {
+                currentMinutesWatched = inventoryDrop['self']['currentMinutesWatched'];
+                if (currentMinutesWatched >= inventoryDrop['requiredMinutesWatched']) {
                     await this.#claimDropReward(inventoryDrop);
                     continue;
+                }
+            }
+
+            // Check if we have enough time to watch and claim this drop
+            if (!this.#attemptImpossibleDropCampaigns) {
+                const remainingWatchTimeMinutes = drop.requiredMinutesWatched - currentMinutesWatched;
+                const remainingDropActiveTimeMinutes = (new Date(Date.parse(drop.endAt)).getTime() - new Date().getTime()) / 1000 / 60;
+                if (remainingDropActiveTimeMinutes < remainingWatchTimeMinutes) {
+                    logger.warn('impossible drop! remaining campaign time (minutes): ' + remainingDropActiveTimeMinutes + ' required watch time (minutes): ' + remainingWatchTimeMinutes);
+                    break;
                 }
             }
 
