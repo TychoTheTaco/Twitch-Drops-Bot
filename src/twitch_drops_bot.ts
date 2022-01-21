@@ -115,7 +115,7 @@ class DropProgressComponent extends Component {
                 this.#lastMinutesWatched[dropId] = this.#currentMinutesWatched[dropId];
 
                 if (dropId !== this.#currentDrop?.id) {
-                    logger.info('Drop progress does not match expected drop: ' + this.#currentDrop?.id + ' vs ' + dropId);
+                    logger.info('made progress towards a different drop! expected: ' + this.#currentDrop?.id + ' vs actual: ' + dropId);
 
                     // If we made progress for a different drop, switch to it
                     const inventoryDrop = await twitchClient.getInventoryDrop(dropId);
@@ -131,6 +131,8 @@ class DropProgressComponent extends Component {
                         this.#lastMinutesWatched[this.#currentDrop?.id] = this.#currentDrop?.self.currentMinutesWatched;
                         this.#lastProgressTime[this.#currentDrop.id] = new Date().getTime();
                     }
+
+                    this.emit('drop-data-changed');
 
                 }
             }
@@ -599,9 +601,7 @@ export class TwitchDropsBot {
 
                 if (this.#watchStreamsWhenNoDropCampaignsActive) {
 
-                    // start new thread to check campaigns every 5 min?
-
-                    // TODO: watch stream without tracking drop progress
+                    // todo: start new thread to check campaigns every 5 min
 
                     // Choose a stream to watch
                     let stream = null;
@@ -768,7 +768,11 @@ export class TwitchDropsBot {
                 const dropProgressComponent = new DropProgressComponent(drop);
                 dropProgressComponent.on('drop-claimed', drop => {
                     this.#onDropRewardClaimed(drop);
-                })
+                });
+                dropProgressComponent.on('drop-data-changed', () => {
+                    this.#total = dropProgressComponent.requiredMinutesWatched;
+                    this.#progressBar.setTotal(this.#total);
+                });
 
                 const components: Component[] = [
                     dropProgressComponent,
