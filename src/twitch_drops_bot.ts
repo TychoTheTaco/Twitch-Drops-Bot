@@ -16,8 +16,14 @@ import {ElementHandle, Page} from "puppeteer";
 import {Client, TimeBasedDrop, DropCampaign, Tag, Stream} from "./twitch";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors";
 
-function getDropName(drop: TimeBasedDrop) {
+type Class<T> = { new(...args: any[]): T };
+
+function getDropName(drop: TimeBasedDrop): string {
     return drop.benefitEdges[0].benefit.name;
+}
+
+function ansiEscape(code: string): string {
+    return '\x1B[' + code;
 }
 
 export class TwitchDropsBot {
@@ -223,7 +229,7 @@ export class TwitchDropsBot {
         // Set up Twitch Drops Watchdog
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#dropCampaignPollingInterval);
         this.#twitchDropsWatchdog.on('before_update', () => {
-            logger.info('Updating drop campaigns...');
+            logger.debug('Updating drop campaigns...');
         });
         this.#twitchDropsWatchdog.on('error', (error) => {
             logger.error('Error checking twitch drops!');
@@ -416,7 +422,7 @@ export class TwitchDropsBot {
 
                     // Watch stream
                     try {
-                        await this.#watchStream(stream.url, components);
+                        await this.#watchStreamWrapper(stream.url, components);
                     } catch (error) {
                         logger.error(error);
                         await this.#page.goto("about:blank");
@@ -578,7 +584,7 @@ export class TwitchDropsBot {
                 const streamUrl = streams[0]['url'];
                 logger.info('Watching stream: ' + streamUrl);
                 try {
-                    await this.#watchStream(streamUrl, components);
+                    await this.#watchStreamWrapper(streamUrl, components);
                 } catch (error) {
                     if (error instanceof NoProgressError) {
                         logger.warn(error.message);
@@ -627,7 +633,7 @@ export class TwitchDropsBot {
     }
 
     #onDropRewardClaimed(drop: TimeBasedDrop) {
-        logger.info(TwitchDropsBot.#ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + TwitchDropsBot.#ansiEscape("39m"));
+        logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
@@ -666,16 +672,12 @@ export class TwitchDropsBot {
         }
     }
 
-    static #ansiEscape(code: string) {
-        return '\x1B[' + code;
-    }
-
     #startProgressBar(t = this.#total, p = this.#payload) {
         this.#isFirstOutput = true;
         this.#total = t;
         this.#payload = p;
         if (this.#progressBar !== null) {
-            process.stdout.write("\n\n" + TwitchDropsBot.#ansiEscape("2A"));
+            process.stdout.write("\n\n" + ansiEscape("2A"));
             this.#progressBar.start(t, this.#currentProgress, p);
         }
     }
@@ -691,7 +693,7 @@ export class TwitchDropsBot {
     #stopProgressBar(clear: boolean = false) {
         if (this.#progressBar !== null) {
             this.#progressBar.stop();
-            process.stdout.write(TwitchDropsBot.#ansiEscape("1B") + TwitchDropsBot.#ansiEscape("2K") + TwitchDropsBot.#ansiEscape("1A"));
+            process.stdout.write(ansiEscape("1B") + ansiEscape("2K") + ansiEscape("1A"));
         }
         if (clear) {
             this.#progressBar = null;
@@ -702,6 +704,17 @@ export class TwitchDropsBot {
     }
 
     #progressBarHeight: number = 2;
+
+    async #watchStreamWrapper(streamUrl: string, components: Component[]) {
+        const startWatchTime = new Date().getTime();
+        try {
+            await this.#watchStream(streamUrl, components);
+        } catch (error) {
+            throw error;
+        } finally {
+            logger.info(ansiEscape("36m") + "Watched stream for " + Math.floor((new Date().getTime() - startWatchTime) / 1000 / 60) + " minutes" + ansiEscape("39m"));
+        }
+    }
 
     async #watchStream(streamUrl: string, components: Component[]) {
 
@@ -775,7 +788,7 @@ export class TwitchDropsBot {
             }
         }
 
-        const getComponent = (c: any, components: Component[]) => {
+        const getComponent = <T extends Component>(c: Class<T>): T | null => {
             for (const component of components) {
                 if (component instanceof c) {
                     return component;
@@ -791,11 +804,11 @@ export class TwitchDropsBot {
                 clearOnComplete: true,
                 stream: process.stdout,
                 format: (options: any, params: any, payload: any) => {
-                    let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + TwitchDropsBot.#ansiEscape('0K') + '\n';
+                    let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
 
                     for (const component of components) {
                         if (component instanceof DropProgressComponent) {
-                            result += `${payload['drop_name']} ${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + TwitchDropsBot.#ansiEscape('0K') + '\n';
+                            result += `${payload['drop_name']} ${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
                             break
                         }
                     }
@@ -804,7 +817,7 @@ export class TwitchDropsBot {
                         return result;
                     }
 
-                    return TwitchDropsBot.#ansiEscape(`${this.#progressBarHeight}A`) + result;
+                    return ansiEscape(`${this.#progressBarHeight}A`) + result;
                 }
             },
             cliProgress.Presets.shades_classic
@@ -814,7 +827,7 @@ export class TwitchDropsBot {
         });
 
         this.#viewerCount = await streamPage.getViewersCount();
-        const dropProgressComponent = getComponent(DropProgressComponent, components);
+        const dropProgressComponent = getComponent(DropProgressComponent);
         if (dropProgressComponent !== null) {
             // @ts-ignore
             this.#startProgressBar(dropProgressComponent.requiredMinutesWatched, {
