@@ -492,7 +492,7 @@ export class TwitchDropsBot {
             // Check if this drop is ready to be claimed
             const inventoryDrop = await this.#twitchClient.getInventoryDrop(drop.id, dropCampaignId);
             if (inventoryDrop != null) {
-                if (inventoryDrop.self.currentMinutesWatched >= inventoryDrop['requiredMinutesWatched']) {
+                if (inventoryDrop.self.currentMinutesWatched >= inventoryDrop.requiredMinutesWatched) {
                     await this.#claimDropReward(inventoryDrop);
                     continue;
                 }
