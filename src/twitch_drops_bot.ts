@@ -858,195 +858,35 @@ export class TwitchDropsBot {
         }
     }
 
-    /*async #watchStreamUntilCampaignCompleted(streamUrl: string, targetDrop: TimeBasedDrop) {
-        this.#targetDrop = targetDrop;
-        this.#currentDrop = targetDrop;
-        logger.debug('target: ' + targetDrop.id);
-
-        // Reset variables
-        this.#viewerCount = 0;
-        this.#currentMinutesWatched = {};
-        this.#currentMinutesWatched[targetDrop.id] = 0;
-        this.#lastMinutesWatched = {};
-        this.#lastMinutesWatched[targetDrop.id] = -1;
-        this.#lastProgressTime = {};
-        this.#lastProgressTime[targetDrop.id] = new Date().getTime();
-        this.#isDropReadyToClaim = false;
-        this.#isStreamDown = false;
-
-        // Get initial drop progress
-        const inventoryDrop = await this.#twitchClient.getInventoryDrop(targetDrop.id);
-        if (inventoryDrop) {
-            this.#currentMinutesWatched[targetDrop.id] = inventoryDrop.self.currentMinutesWatched;
-            this.#lastMinutesWatched[targetDrop.id] = this.#currentMinutesWatched[targetDrop.id];
-            logger.debug('Initial drop progress: ' + this.#currentMinutesWatched[targetDrop.id] + ' minutes');
-        } else {
-            logger.debug('Initial drop progress: none');
-        }
-
-        // Create a "Chrome Devtools Protocol" session to listen to websocket events
-        await this.#webSocketListener.attach(this.#page)
-
-        await this.#page.goto(streamUrl);
-
-        // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
-        logger.info('Waiting for page to load...');
-        const element = (await this.#page.$x('//div[@data-a-player-state]'))[0]
-        await this.#waitUntilElementRendered(this.#page, element);
-
-        const streamPage = new StreamPage(this.#page);
-        try {
-            await streamPage.waitForLoad();
-        } catch (error) {
-            if (error instanceof TimeoutError) {
-                throw new StreamLoadFailedError();
-            }
-        }
-
-        try {
-            // Click "Accept mature content" button
-            await streamPage.acceptMatureContent();
-            logger.info('Accepted mature content');
-        } catch (error) {
-            // Ignore errors, the button is probably not there
-        }
-
-        try {
-            await streamPage.setLowestStreamQuality();
-            logger.info('Set stream to lowest quality');
-        } catch (error) {
-            logger.error('Failed to set stream to lowest quality!');
-            throw error;
-        }
-
-        // This does not affect the drops, so if the user requests lets hide the videos
-        if (this.#hideVideo) {
-            try {
-                await streamPage.hideVideoElements();
-                logger.info('Set stream visibility to hidden');
-            } catch (error) {
-                logger.error('Failed to set stream visibility to hidden!');
-                throw error;
-            }
-        }
-
-        const requiredMinutesWatched = targetDrop.requiredMinutesWatched;
-
-        this.#createProgressBar();
-        this.#viewerCount = await streamPage.getViewersCount();
-        this.#startProgressBar(requiredMinutesWatched, {'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), drop_name: TwitchDropsBot.#getDropName(targetDrop), stream_url: streamUrl});
-
-        // The maximum amount of time to allow no progress
-        const maxNoProgressTime = 1000 * 60 * 5;
-
-        while (true) {
-
-            if (this.#isStreamDown) {
-                this.#isStreamDown = false;
-                this.#stopProgressBar(true);
-                await this.#page.goto("about:blank");
-                throw new StreamDownError('Stream went down!');
-            }
-
-            this.#updateProgressBar(this.#currentMinutesWatched[this.#currentDrop['id']], {
-                'viewers': this.#viewerCount,
-                'uptime': await streamPage.getUptime(),
-                drop_name: TwitchDropsBot.#getDropName(this.#currentDrop),
-                stream_url: streamUrl
-            });
-
-            // Check if there are community points that we can claim
-            const claimCommunityPointsSelector = 'div[data-test-selector="community-points-summary"] div.GTGMR button';
-            const claimCommunityPointsButton = await this.#page.$(claimCommunityPointsSelector);
-            if (claimCommunityPointsButton) {
-                try {
-                    await utils.click(this.#page, 'div[data-test-selector="community-points-summary"] div.GTGMR button');
-                    logger.debug('Claimed community points!');
-                } catch (error) {
-                    logger.error('Failed to claim community points!');
-                    logger.error(error);
-                }
-            }
-
-            // Check if we have made progress towards the current drop
-            if (new Date().getTime() - this.#lastProgressTime[this.#currentDrop['id']] >= maxNoProgressTime) {
-
-                // Maybe we haven't got any updates from the web socket, lets check our inventory
-                const currentDropId = this.#currentDrop['id'];
-                const inventoryDrop = await this.#twitchClient.getInventoryDrop(currentDropId);
-                if (inventoryDrop) {
-                    this.#currentMinutesWatched[currentDropId] = inventoryDrop.self.currentMinutesWatched;
-                    if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
-                        this.#lastProgressTime[currentDropId] = new Date().getTime();
-                        this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
-                        logger.debug('No progress from web socket! using inventory progress: ' + this.#currentMinutesWatched[currentDropId] + ' minutes');
-                    } else {
-                        this.#stopProgressBar(true);
-                        await this.#page.goto("about:blank");
-                        throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
-                    }
-                } else {
-                    this.#stopProgressBar(true);
-                    await this.#page.goto("about:blank");
-                    throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
-                }
-
-            }
-
-            // Check if there is a higher priority stream we should be watching
-            if (this.#pendingHighPriority) {
-                this.#pendingHighPriority = false;
-                this.#stopProgressBar(true);
-                logger.info('Switching to higher priority stream');
-                throw new HighPriorityError();
-            }
-
-            if (this.#isDropReadyToClaim) {
-                this.#isDropReadyToClaim = false;
-                this.#stopProgressBar(true);
-
-                const inventoryDrop = await this.#twitchClient.getInventoryDrop(this.#currentDrop.id);
-
-                if (inventoryDrop === null) {
-                    return;  // This should never happen
-                }
-
-                // Claim the drop
-                await this.#claimDropReward(inventoryDrop);
-
-                // After the reward was claimed set streamUrl to "about:blank".
-                await this.#page.goto("about:blank");
-
-                // TODO: dont return, check for more drops
-
-                return;
-            }
-
-            await this.#page.waitForTimeout(1000);
-        }
-    }*/
-
     async #getFirstUnclaimedDrop(campaignId: string): Promise<TimeBasedDrop | null> {
+        logger.debug(`getFirstUnclaimedDrop(${campaignId})`);
+
         // Get all drops for this campaign
         const details = await this.#twitchClient.getDropCampaignDetails(campaignId);
 
         for (const drop of details.timeBasedDrops) { // TODO: Not all campaigns have time based drops
 
+            logger.debug('drop id: ' + drop.id);
+
             // Check if we already claimed this drop
             if (await this.#isDropClaimed(drop)) {
+                logger.debug('already claimed');
                 continue;
             }
 
             // Check if this drop has ended
             if (new Date() > new Date(Date.parse(drop['endAt']))) {
+                logger.debug('drop ended');
                 continue;
             }
 
             // Check if this drop has started
             if (new Date() < new Date(Date.parse(drop['startAt']))) {
+                logger.debug('drop not started yet')
                 continue;
             }
 
+            logger.debug('returning: ' + drop.id)
             return drop;
         }
 
@@ -1054,6 +894,8 @@ export class TwitchDropsBot {
     }
 
     async #isDropClaimed(drop: TimeBasedDrop) {
+        logger.debug('isDropClaimed: ' + drop.id);
+
         const inventory = await this.#twitchClient.getInventory();
 
         // Check campaigns in progress
@@ -1062,11 +904,14 @@ export class TwitchDropsBot {
             for (const campaign of dropCampaignsInProgress) {
                 for (const d of campaign.timeBasedDrops) {
                     if (d.id === drop.id) {
+                        logger.debug('return: ' + d.self.isClaimed);
                         return d.self.isClaimed;
                     }
                 }
             }
         }
+
+        logger.debug('not in progress');
 
         // Check claimed drops
         const gameEventDrops = inventory.gameEventDrops;
@@ -1079,11 +924,15 @@ export class TwitchDropsBot {
                     // In the first case, the drop won't show up here either so we can just return false. In the second case
                     // I assume that if we received a drop reward of the same type after this campaign started, that it has
                     // been claimed.
+                    logger.debug('compare date: ' + d.lastAwardedAt + ' VS ' + drop.startAt);
                     return Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
                 }
             }
         }
 
+        logger.debug('inventory: ' + JSON.stringify(inventory, null, 4));
+
+        logger.debug('return false');
         return false;
     }
 

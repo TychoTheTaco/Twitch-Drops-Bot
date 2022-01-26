@@ -4,10 +4,7 @@ require('dnscache')({enable: true});
 
 import fs from 'fs';
 
-// `inspect` is used instead of `JSON.stringify` because it can handle circular structures, such as `AxiosResponse` objects.
-import {inspect} from 'util';
-
-import axios from 'axios';
+import axios, {AxiosResponse} from 'axios';
 import {errors, Browser} from 'puppeteer';
 
 const {TimeoutError} = errors;
@@ -129,13 +126,9 @@ export class Client {
             }
         );
         try {
-            const campaigns = response['data']['data']['currentUser']['dropCampaigns'];
-            if (!Array.isArray(campaigns)) {
-                throw new TypeError('Drop campaigns is not an array!');
-            }
-            return campaigns;
+            return response['data']['data']['currentUser']['dropCampaigns'];
         } catch (error) {
-            logger.debug('Error in function getDropCampaigns! Response: ' + inspect(response, {depth: null}));
+            logger.debug('Error in function getDropCampaigns! Response: ' + JSON.stringify(response.data, null, 4));
             throw error;
         }
     }
@@ -162,7 +155,7 @@ export class Client {
         try {
             return response['data']['data']['user']['dropCampaign'];
         } catch (error) {
-            logger.debug('Error in function getDropCampaignDetails! Response: ' + inspect(response, {depth: null}));
+            logger.debug('Error in function getDropCampaignDetails! Response: ' + JSON.stringify(response.data, null, 4));
             throw error;
         }
     }
@@ -185,7 +178,7 @@ export class Client {
         try {
             return response['data']['data']['currentUser']['inventory'];
         } catch (error) {
-            logger.debug('Error in function getInventory! Response: ' + inspect(response, {depth: null}));
+            logger.debug('Error in function getInventory! Response: ' + JSON.stringify(response.data, null, 4));
             throw error;
         }
     }
@@ -226,6 +219,7 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
+
         const streams = response['data']['data']['game']['streams'];
         if (streams === null) {
             return [];
