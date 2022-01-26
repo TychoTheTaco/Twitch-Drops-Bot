@@ -88,6 +88,12 @@ export enum Tag {
     DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
 }
 
+function printErrors(response: AxiosResponse) {
+    if ('errors' in response.data){
+        logger.error('API ERRORS: ' + JSON.stringify(response.data['errors'], null, 4));
+    }
+}
+
 export class Client {
 
     readonly #clientId: string;
@@ -125,6 +131,7 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
+        printErrors(response);
         try {
             return response['data']['data']['currentUser']['dropCampaigns'];
         } catch (error) {
@@ -152,6 +159,7 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
+        printErrors(response);
         try {
             return response['data']['data']['user']['dropCampaign'];
         } catch (error) {
@@ -175,6 +183,7 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
+        printErrors(response);
         try {
             return response['data']['data']['currentUser']['inventory'];
         } catch (error) {
@@ -219,6 +228,7 @@ export class Client {
                 headers: this.#defaultHeaders
             }
         );
+        printErrors(response);
 
         const streams = response['data']['data']['game']['streams'];
         if (streams === null) {
