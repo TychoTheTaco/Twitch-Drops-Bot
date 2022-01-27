@@ -10,7 +10,7 @@ import {StreamPage} from "./pages/stream";
 import utils from './utils';
 import logger from "./logger";
 import {ElementHandle, Page} from "puppeteer";
-import {Client} from "./twitch";
+import {Client, TimeBasedDrop, DropCampaign, Tag} from "./twitch";
 
 class NoStreamsError extends Error {
 
@@ -30,64 +30,6 @@ class StreamLoadFailedError extends Error {
 
 class StreamDownError extends Error {
 
-}
-
-interface Game {
-    id: string,
-    displayName: string
-}
-
-interface Campaign {
-    id: string,
-    status: string,
-    game: Game,
-    self: {
-        isAccountConnected: boolean
-    },
-    endAt: string,
-    name: string
-}
-
-interface Drop {
-    id: string
-    self: {
-        currentMinutesWatched: number
-    },
-    benefitEdges: {
-        benefit: {
-            id: string,
-            name: string
-        }
-    }[],
-    startAt: string,
-    requiredMinutesWatched: number
-}
-
-interface InventoryDrop {
-    id: string
-    self: {
-        currentMinutesWatched: number,
-        dropInstanceID: string
-    }
-}
-
-interface CampaignDetails {
-    id: string,
-    status: string,
-    game: Game,
-    self: {
-        isAccountConnected: boolean
-    },
-    endAt: string,
-    name: string,
-    timeBasedDrops: Drop[],
-    allow: {
-        channels: {
-            id: string,
-            displayName: string
-        }[],
-        isEnabled: boolean
-    }
 }
 
 export class TwitchDropsBot {
@@ -201,21 +143,21 @@ export class TwitchDropsBot {
 
     #currentDropCampaignId: string | null = null;
 
-    #dropCampaignMap: { [key: string]: Campaign } = {};
+    #dropCampaignMap: { [key: string]: DropCampaign } = {};
 
     #pendingHighPriority: boolean = false;
 
     /**
      * The drop that we are currently making progress towards.
      */
-    #currentDrop: Drop | null = null;
+    #currentDrop: TimeBasedDrop | null = null;
 
     /**
      * The drop that we are trying to make progress towards. Sometimes when watching a stream, we make progress towards
      * a different drop than we had intended. This can happen when a game has multiple drop campaigns and we try to
      * process one, but a different one is currently active.
      */
-    #targetDrop: Drop | null = null;
+    #targetDrop: TimeBasedDrop | null = null;
 
     #viewerCount: number = 0;
     #currentMinutesWatched: { [key: string]: number } = {};
@@ -272,7 +214,7 @@ export class TwitchDropsBot {
             logger.error(error);
             this.#startProgressBar()
         })
-        this.#twitchDropsWatchdog.on('update', async (campaigns: Campaign[]) => {
+        this.#twitchDropsWatchdog.on('update', async (campaigns: DropCampaign[]) => {
 
             logger.info('Found ' + campaigns.length + ' campaigns.');
 
@@ -552,7 +494,7 @@ export class TwitchDropsBot {
 
             const drop = await this.#getFirstUnclaimedDrop(dropCampaignId);
             if (drop === null) {
-                logger.debug('no more drops');
+                logger.info('no active drops');
                 break;
             }
             logger.debug('working on drop ' + drop['id']);
@@ -668,7 +610,7 @@ export class TwitchDropsBot {
         }
     }
 
-    async #claimDropReward(drop: InventoryDrop) {
+    async #claimDropReward(drop: TimeBasedDrop) {
         logger.info('Claiming drop!');
         await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
     }
@@ -769,7 +711,7 @@ export class TwitchDropsBot {
         });
     }
 
-    async #watchStreamUntilCampaignCompleted(streamUrl: string, targetDrop: Drop) {
+    async #watchStreamUntilCampaignCompleted(streamUrl: string, targetDrop: TimeBasedDrop) {
         this.#targetDrop = targetDrop;
         this.#currentDrop = targetDrop;
         logger.debug('target: ' + targetDrop['id']);
@@ -913,6 +855,10 @@ export class TwitchDropsBot {
 
                 const inventoryDrop = await this.#twitchClient.getInventoryDrop(this.#currentDrop['id']);
 
+                if (inventoryDrop === null) {
+                    throw new Error("inventory drop was null when trying to claim it!")
+                }
+
                 // Claim the drop
                 await this.#claimDropReward(inventoryDrop);
 
@@ -955,7 +901,7 @@ export class TwitchDropsBot {
         return null;
     }
 
-    async #isDropClaimed(drop: Drop) {
+    async #isDropClaimed(drop: TimeBasedDrop) {
         const inventory = await this.#twitchClient.getInventory();
 
         // Check campaigns in progress
@@ -989,9 +935,9 @@ export class TwitchDropsBot {
         return false;
     }
 
-    async #getActiveStreams(campaignId: string, details: CampaignDetails) {
+    async #getActiveStreams(campaignId: string, details: DropCampaign) {
         // Get a list of active streams that have drops enabled
-        let streams = await this.#twitchClient.getDropEnabledStreams(this.#getDropCampaignById(campaignId)['game']['displayName']);
+        let streams = await this.#twitchClient.getActiveStreams(this.#getDropCampaignById(campaignId).game.displayName, {tags: [Tag.DROPS_ENABLED]});
 
         // Filter out streams that are not in the allowed channels list, if any
         if (details.allow.isEnabled) {
@@ -1019,7 +965,7 @@ export class TwitchDropsBot {
         return this.#dropCampaignMap[campaignId];
     }
 
-    #getDropName(drop: Drop) {
+    #getDropName(drop: TimeBasedDrop) {
         return drop['benefitEdges'][0]['benefit']['name'];
     }
 }
