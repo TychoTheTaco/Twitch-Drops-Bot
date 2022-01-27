@@ -65,7 +65,7 @@ Below is a list of all available options.
 - Alias: `-b`
 - Default: Operating system dependent
 
-`‑‑games <ids>` | `games` A list of IDs of the games that the bot should automatically watch. See `games.csv` for a list of game IDs. If empty or omitted, the bot will try to watch all games. If provided as a command line argument, this should be a comma-separated list of IDs. If provided in the JSON config, this should be an array of strings.
+`‑‑games <ids>` | `games` A list of IDs of the games that the bot should automatically watch. See `games.csv` for a list of game IDs. If empty or omitted, the bot will try to watch all games. If provided as a command line argument, this should be a comma-separated list of IDs. If provided in the JSON config, this should be an array of strings. This list is in order of priority! The bot will give priority to games that are at the beginning of the list. For example: Your config file has `"games": ["1", "2", "3"]`. The bot is currently watching a stream for game `2`. The bot periodically checks if there are active campaigns/streams for the other games listed, and finds one for game `1`. Game `1` is listed first in the config, so it has a higher priority and the bot will switch to it. If there are multiple active campaigns for a game, then it will give priority to the one that ends first.
 
 - Alias: `-g`
 
