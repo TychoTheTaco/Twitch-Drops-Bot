@@ -59,6 +59,7 @@ export interface TwitchDropsBotOptions {
     loadTimeoutSeconds?: number,
     hideVideo?: boolean,
     showAccountNotLinkedWarning?: boolean,
+    attemptImpossibleDropCampaigns?: boolean,
     watchStreamsWhenNoDropCampaignsActive?: boolean,
     broadcasterIds?: string[]
 }
