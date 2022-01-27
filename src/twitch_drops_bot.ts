@@ -13,7 +13,7 @@ import {StreamPage} from "./pages/stream";
 import utils from './utils';
 import logger from "./logger";
 import {ElementHandle, Page} from "puppeteer";
-import {Client, TimeBasedDrop, DropCampaign, Tag, Stream} from "./twitch";
+import {Client, TimeBasedDrop, DropCampaign, Tag} from "./twitch";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors";
 
 type Class<T> = { new(...args: any[]): T };
@@ -26,10 +26,47 @@ function ansiEscape(code: string): string {
     return '\x1B[' + code;
 }
 
+class TimedSet<T> extends Set<T> {
+
+    readonly #timeout: number;
+
+    constructor(timeout: number) {
+        super();
+        this.#timeout = timeout;
+    }
+
+    add(value: T): this {
+        logger.info('add: ' + value);
+        const isValueInSet: boolean = this.has(value);
+        const result = super.add(value);
+        if (!isValueInSet) {
+            setTimeout(() => {
+                logger.info('remove: ' + value);
+                this.delete(value);
+            }, this.#timeout);
+        }
+        return result;
+    }
+}
+
+export interface TwitchDropsBotOptions {
+    gameIds?: string[],
+    watchUnlistedGames?: boolean,
+    ignoredGameIds?: string[],
+    dropCampaignPollingInterval?: number,
+    failedStreamRetryCount?: number,
+    failedStreamBlacklistTimeout?: number,
+    loadTimeoutSeconds?: number,
+    hideVideo?: boolean,
+    showAccountNotLinkedWarning?: boolean,
+    watchStreamsWhenNoDropCampaignsActive?: boolean,
+    broadcasterIds?: string[]
+}
+
 export class TwitchDropsBot {
 
     /**
-     * A list of game IDs to watch and claim drops for.
+     * A list of game IDs to watch and claim drops for. This list is in order of priority.
      * @private
      */
     readonly #gameIds: string[] = [];
@@ -59,6 +96,9 @@ export class TwitchDropsBot {
     // or after #failedStreamBlacklistTimeout minutes.
     readonly #failedStreamRetryCount: number = 3;
     readonly #failedStreamBlacklistTimeout: number = 30;
+
+    // TODO: make a separate permanent blacklist?
+    readonly #streamUrlTemporaryBlacklist: TimedSet<string>;
 
     /**
      * The maximum number of seconds to wait for pages to load.
@@ -90,10 +130,10 @@ export class TwitchDropsBot {
     readonly #watchStreamsWhenNoDropCampaignsActive: boolean = false;
 
     /**
-     * A list of broadcasters that the bot should watch when it is idle.
+     * A list of broadcasters that the bot should watch when it is idle. This list is in order of priority.
      * @private
      */
-    readonly #idleBroadcasters: string[] = [];
+    readonly #broadcasterIds: string[] = [];
 
     // Twitch API client to use.
     readonly #twitchClient: Client;
@@ -162,7 +202,7 @@ export class TwitchDropsBot {
      */
     readonly sleepTimeMilliseconds: number = 1000 * 60 * 5;
 
-    constructor(page: Page, client: Client, options?: { gameIds?: string[], failedStreamBlacklistTimeout?: number, failedStreamRetryCount?: number, dropCampaignPollingInterval?: number, loadTimeoutSeconds?: number, hideVideo?: boolean, watchUnlistedGames?: boolean, showAccountNotLinkedWarning?: boolean, ignoredGameIds?: string[] }) {
+    constructor(page: Page, client: Client, options?: TwitchDropsBotOptions) {
         this.#page = page;
         this.#twitchClient = client;
 
@@ -202,6 +242,11 @@ export class TwitchDropsBot {
         options?.ignoredGameIds?.forEach((id => {
             this.#ignoredGameIds.push(id);
         }));
+        options?.broadcasterIds?.forEach((id => {
+            this.#broadcasterIds.push(id);
+        }));
+        this.#watchStreamsWhenNoDropCampaignsActive = options?.watchStreamsWhenNoDropCampaignsActive ?? this.#watchStreamsWhenNoDropCampaignsActive;
+        this.#streamUrlTemporaryBlacklist = new TimedSet<string>(this.#failedStreamBlacklistTimeout);
 
         // Set up Twitch Drops Watchdog
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#dropCampaignPollingInterval);
@@ -343,18 +388,29 @@ export class TwitchDropsBot {
         return null;
     }
 
-    async #getNextIdleStream(): Promise<Stream | null> {
-        // Check if any of the idle broadcasters are online
-
-        // Check provided game ID list
-        for (const gameId of this.#gameIds) {
-            const streams = await this.#twitchClient.getActiveStreams(gameId);
-            if (streams.length > 0) {
-                return streams[0];
+    async #getNextIdleStreamUrl(): Promise<string | null> {
+        // Check if any of the preferred broadcasters are online
+        for (const broadcasterId of this.#broadcasterIds) {
+            if (await this.#twitchClient.isStreamOnline(broadcasterId)) {
+                return "https://www.twitch.tv/" + broadcasterId;
             }
         }
 
-        // Check pending drop campaigns
+        // Check provided game ID list
+        for (const gameId of this.#gameIds) {
+            /*const streams = await this.#twitchClient.getActiveStreams(gameId);
+            if (streams.length > 0) {
+                return streams[0];
+            }*/
+        }
+
+        // Check pending Drop Campaigns' games
+        for (const dropCampaignId of this.#pendingDropCampaignIds) {
+            const streams = await this.#twitchClient.getActiveStreams(this.#dropCampaignMap[dropCampaignId].game.displayName);
+            if (streams.length > 0) {
+                return streams[0].url;
+            }
+        }
 
         return null;
     }
@@ -380,30 +436,117 @@ export class TwitchDropsBot {
 
                 if (this.#watchStreamsWhenNoDropCampaignsActive) {
 
-                    // todo: start new thread to check campaigns every 5 min
+                    logger.info("No drop campaigns active, watching a stream instead.")
 
                     // Choose a stream to watch
-                    let stream = null;
+                    let streamUrl = null;
                     try {
-                        stream = await this.#getNextIdleStream();
+                        streamUrl = await this.#getNextIdleStreamUrl();
                     } catch (error) {
                         logger.error(error);
                     }
-                    if (stream === null) {
-                        // todo: panic!
+                    if (streamUrl === null) {
+                        logger.warn("No idle streams available!");
+
+                        setTimeout(() => {
+                            logger.debug('notify all!');
+                            this.#pendingDropCampaignIdsNotifier.notifyAll();
+                        }, this.sleepTimeMilliseconds);
+                        logger.debug('waiting for waitNotify');
+                        await this.#pendingDropCampaignIdsNotifier.wait();
+                        logger.debug('done');
+
                         continue;
                     }
+                    logger.info("stream: " + streamUrl)
 
                     const components: Component[] = [
                         new CommunityPointsComponent()
                     ];
 
+                    let timeout: any = null;
+                    const a = async () => {
+
+                        logger.info("checking a");
+
+                        for (const dropCampaignId of this.#pendingDropCampaignIds) {
+
+                            const campaign = this.#dropCampaignMap[dropCampaignId];
+                            const firstCampaignId = campaign.id;
+
+                            // Check if this drop campaign is active
+                            if (campaign.status !== 'ACTIVE') {
+                                continue;
+                            }
+
+                            // Find the first drop that we haven't claimed yet
+                            let firstUnclaimedDrop = null;
+                            try {
+                                firstUnclaimedDrop = await this.#getFirstUnclaimedDrop(firstCampaignId);
+                                if (firstUnclaimedDrop === null) {
+                                    continue;
+                                }
+                            } catch (error) {
+                                logger.error('Failed to get first unclaimed drop!');
+                                logger.debug(error);
+                                continue;
+                            }
+
+                            // Claim the drop if it is ready to be claimed
+                            let inventoryDrop = null;
+                            try {
+                                inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop.id, firstCampaignId);
+                            } catch (error) {
+                                logger.error('Error getting inventory drop');
+                                logger.debug(error);
+                                continue;
+                            }
+                            if (inventoryDrop !== null) {
+                                if (inventoryDrop.self.currentMinutesWatched >= inventoryDrop.requiredMinutesWatched) {
+                                    try {
+                                        await this.#claimDropReward(inventoryDrop);
+                                    } catch (error) {
+                                        logger.error('Error claiming drop');
+                                        logger.debug(error);
+                                    }
+                                    continue;
+                                }
+                            }
+
+                            // Make sure there are active streams before switching
+                            try {
+                                const details = await this.#twitchClient.getDropCampaignDetails(firstCampaignId);
+                                if ((await this.#getActiveStreams(firstCampaignId, details)).length > 0) {
+                                    logger.info('Higher priority campaign found: ' + this.#getDropCampaignFullName(firstCampaignId) + ' id: ' + firstCampaignId + ' time: ' + new Date().getTime());
+                                    this.#pendingHighPriority = true;
+                                    break;
+                                }
+                            } catch (error) {
+                                logger.error('Failed to check stream count');
+                                logger.debug(error);
+                            }
+
+                        }
+
+                        logger.info("done a");
+                        timeout = setTimeout(a, 1000 * 60 * 6);
+                    }
+                    a();
+
                     // Watch stream
                     try {
-                        await this.#watchStreamWrapper(stream.url, components);
+                        await this.#watchStreamWrapper(streamUrl, components);
                     } catch (error) {
-                        logger.error(error);
+                        if (error instanceof HighPriorityError) {
+                            // Ignore
+                        } else if (error instanceof StreamDownError) {
+                            this.#streamUrlTemporaryBlacklist.add(streamUrl);
+                        } else {
+                            logger.error(error);
+                        }
                         await this.#page.goto("about:blank");
+                    } finally {
+                        clearTimeout(timeout);
                     }
 
                 } else {
@@ -500,9 +643,6 @@ export class TwitchDropsBot {
 
             // A mapping of stream URLs to an integer representing the number of times the stream failed while we were trying to watch it
             const failedStreamUrlCounts: { [key: string]: number } = {};
-            const failedStreamUrlExpireTime: { [key: string]: number } = {};
-
-            const failedStreamUrls = new Set();
 
             while (true) {
 
@@ -510,20 +650,9 @@ export class TwitchDropsBot {
                 let streams = await this.#getActiveStreams(dropCampaignId, details);
                 logger.info('Found ' + streams.length + ' active streams');
 
-                // Remove streams from the blacklist if they have been there long enough
-                for (const x of streams) {
-                    const streamUrl = x.url;
-                    if (failedStreamUrls.has(streamUrl)) {
-                        if (new Date().getTime() >= failedStreamUrlExpireTime[streamUrl]) {
-                            failedStreamUrls.delete(streamUrl);
-                            failedStreamUrlCounts[streamUrl] = 0;
-                        }
-                    }
-                }
-
                 // Filter out streams that failed too many times
                 streams = streams.filter(stream => {
-                    return !failedStreamUrls.has(stream.url);
+                    return !this.#streamUrlTemporaryBlacklist.has(stream.url);
                 });
                 logger.info('Found ' + streams.length + ' good streams');
 
@@ -546,7 +675,7 @@ export class TwitchDropsBot {
                 ]
 
                 // Watch first stream
-                const streamUrl = streams[0]['url'];
+                const streamUrl = streams[0].url;
                 logger.info('Watching stream: ' + streamUrl);
                 try {
                     await this.#watchStreamWrapper(streamUrl, components);
@@ -564,9 +693,8 @@ export class TwitchDropsBot {
                         This is needed because getActiveStreams() can return streams that are down if they went down
                         very recently.
                          */
-                        failedStreamUrls.add(streamUrl);
-                        // Schedule removal from block list!
-                        failedStreamUrlExpireTime[streamUrl] = new Date().getTime() + 1000 * 60 * this.#failedStreamBlacklistTimeout;
+                        this.#streamUrlTemporaryBlacklist.add(streamUrl);
+                        failedStreamUrlCounts[streamUrl] = 0;
                     } else {
                         logger.error(error);
                         if (process.env.SAVE_ERROR_SCREENSHOTS?.toLowerCase() === 'true') {
@@ -583,13 +711,10 @@ export class TwitchDropsBot {
                     // Move on if this stream failed too many times
                     if (failedStreamUrlCounts[streamUrl] >= this.#failedStreamRetryCount) {
                         logger.error('Stream failed too many times. Giving up for ' + this.#failedStreamBlacklistTimeout + ' minutes...');
-                        failedStreamUrls.add(streamUrl);
-                        // Schedule removal from block list!
-                        failedStreamUrlExpireTime[streamUrl] = new Date().getTime() + 1000 * 60 * this.#failedStreamBlacklistTimeout;
+                        this.#streamUrlTemporaryBlacklist.add(streamUrl);
+                        failedStreamUrlCounts[streamUrl] = 0;
                     }
                     continue;
-                } finally {
-                    await this.#webSocketListener.detach();
                 }
 
                 break;
@@ -678,6 +803,9 @@ export class TwitchDropsBot {
             throw error;
         } finally {
             logger.info(ansiEscape("36m") + "Watched stream for " + Math.floor((new Date().getTime() - startWatchTime) / 1000 / 60) + " minutes" + ansiEscape("39m"));
+            if (this.#webSocketListener !== null) {
+                await this.#webSocketListener.detach();
+            }
         }
     }
 
@@ -814,7 +942,7 @@ export class TwitchDropsBot {
                     this.#isStreamDown = false;
                     this.#stopProgressBar(true);
                     await this.#page.goto("about:blank");
-                    throw new StreamDownError('Stream went down!');
+                    throw new StreamDownError();
                 }
 
                 // Check if there is a higher priority stream we should be watching

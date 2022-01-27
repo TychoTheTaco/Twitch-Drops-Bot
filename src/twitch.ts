@@ -123,7 +123,7 @@ export class Client {
         // successful. Despite this, it is still better to throw an exception if there are any errors since this class
         // only sends POST requests with a single operation.
         if ("errors" in response.data) {
-            throw new Error("API ERROR: " + JSON.stringify(response.data["errors"], null, 4));
+            throw new Error("API ERROR: " + JSON.stringify(response.data, null, 4));
         }
 
         // Return the response data
@@ -253,6 +253,26 @@ export class Client {
                 }
             }
         });
+    }
+
+    /**
+     * Check if a stream is online.
+     * @param broadcasterId
+     */
+    async isStreamOnline(broadcasterId: string) {
+        const data = await this.#post({
+            "operationName": "ChannelShell",
+            "variables": {
+                "login": broadcasterId
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "580ab410bcd0c1ad194224957ae2241e5d252b2c5173d8e0cce9d32d5bb14efe"
+                }
+            }
+        });
+        return data["data"]["userOrError"]["stream"] !== null;
     }
 
     async getDropCampaignsInProgress() {
