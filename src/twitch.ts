@@ -255,6 +255,27 @@ export class Client {
         });
     }
 
+    /**
+     * Check if a stream is online.
+     * @param broadcasterId
+     */
+    async isStreamOnline(broadcasterId: string) {
+        const data = await this.#post({
+            "operationName": "ChannelShell",
+            "variables": {
+                "login": broadcasterId
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "580ab410bcd0c1ad194224957ae2241e5d252b2c5173d8e0cce9d32d5bb14efe"
+                }
+            }
+        });
+        return data["data"]["userOrError"]["stream"] !== null;
+    }
+
+
     async getInventoryDrop(dropId: string, campaignId?: string): Promise<TimeBasedDrop | null> {
         const inventory = await this.getInventory();
         const campaigns = inventory.dropCampaignsInProgress;

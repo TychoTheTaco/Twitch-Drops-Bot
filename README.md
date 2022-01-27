@@ -132,6 +132,12 @@ Below is a list of all available options.
 
 - Default: `true`
 
+`‑‑watch-streams-when-no-drop-campaigns-active` | `watch_streams_when_no_drop_campaigns_active` When true, the bot will watch streams when there are no Drop Campaigns active, or if there are no streams online for any pending Drop Campaigns. This is useful if you still want to claim community points.
+
+- Default: `false`
+
+`‑-broadcasters` | `broadcasters` A list of broadcasters (streamers) usernames that the bot should watch when it is idle (no Drop Campaigns active). This list is in order of priority.
+
 ### Update Games List
 
 If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
