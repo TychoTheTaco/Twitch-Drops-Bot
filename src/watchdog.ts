@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-import {EventEmitter} from 'events';
+import {EventEmitter} from "events";
 import {Client, DropCampaign} from "./twitch";
 
 export class TwitchDropsWatchdog extends EventEmitter {
 
-    #client: Client;
-    readonly #interval: number;
+    readonly #client: Client;
+    readonly #pollingIntervalMinutes: number;
 
     #isRunning: boolean = false;
     #timeoutId: NodeJS.Timeout = setTimeout(() => {
@@ -15,7 +15,7 @@ export class TwitchDropsWatchdog extends EventEmitter {
     constructor(client: Client, interval: number = 15) {
         super();
         this.#client = client;
-        this.#interval = interval;
+        this.#pollingIntervalMinutes = interval;
     }
 
     start() {
@@ -28,7 +28,7 @@ export class TwitchDropsWatchdog extends EventEmitter {
                 }).catch((error) => {
                     this.emit('error', error);
                 }).finally(() => {
-                    this.#timeoutId = setTimeout(run, 1000 * 60 * this.#interval);
+                    this.#timeoutId = setTimeout(run, 1000 * 60 * this.#pollingIntervalMinutes);
                 });
             };
             run();

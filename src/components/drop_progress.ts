@@ -14,47 +14,52 @@ export default class DropProgressComponent extends Component {
      * process one, but a different one is currently active.
      * @private
      */
-    #targetDrop: TimeBasedDrop;
+    readonly #targetDrop: TimeBasedDrop | null = null;
+
+    readonly #requireProgress: boolean = true;
+
+    readonly #exitOnClaim: boolean = true;
 
     /**
      * The drop that we are currently making progress towards.
      * @private
      */
-    #currentDrop: TimeBasedDrop;  // TODO: It is possible to make progress towards 2 or more drops at the same time!
+    #currentDrop: TimeBasedDrop | null = null;  // TODO: It is possible to make progress towards 2 or more drops at the same time!
 
     // Reset variables
-    #currentMinutesWatched: any = {};
-    #lastMinutesWatched: any = {};
-    #lastProgressTime: any = {};
+    readonly #currentMinutesWatched: { [key: string]: number } = {};
+    readonly #lastMinutesWatched: { [key: string]: number } = {};
+    readonly #lastProgressTime: { [key: string]: number } = {};
     #isDropReadyToClaim = false;
 
-    constructor(targetDrop: TimeBasedDrop) {
+    constructor(options?: { targetDrop?: TimeBasedDrop, requireProgress?: boolean, exitOnClaim?: boolean }) {
         super();
-        this.#targetDrop = targetDrop;
+        this.#targetDrop = options?.targetDrop ?? this.#targetDrop;
+        this.#requireProgress = options?.requireProgress ?? this.#requireProgress;
+        this.#exitOnClaim = options?.exitOnClaim ?? this.#exitOnClaim;
 
-        this.#currentDrop = targetDrop;
-        logger.debug('target: ' + targetDrop.id);
+        this.#currentDrop = this.#targetDrop ?? this.#currentDrop;
+        logger.debug('target: ' + this.#targetDrop?.id);
 
-        // Reset variables
-        this.#currentMinutesWatched = {};
-        this.#currentMinutesWatched[targetDrop.id] = 0;
-        this.#lastMinutesWatched = {};
-        this.#lastMinutesWatched[targetDrop.id] = -1;
-        this.#lastProgressTime = {};
-        this.#lastProgressTime[targetDrop.id] = new Date().getTime();
-        this.#isDropReadyToClaim = false;
+        if (this.#targetDrop !== null) {
+            this.#currentMinutesWatched[this.#targetDrop.id] = 0;
+            this.#lastMinutesWatched[this.#targetDrop.id] = -1;
+            this.#lastProgressTime[this.#targetDrop.id] = new Date().getTime();
+        }
     }
 
     async onStart(twitchClient: Client, webSocketListener: WebSocketListener): Promise<void> {
 
         // Get initial drop progress
-        const inventoryDrop = await twitchClient.getInventoryDrop(this.#targetDrop.id);
-        if (inventoryDrop) {
-            this.#currentMinutesWatched[this.#targetDrop.id] = inventoryDrop.self.currentMinutesWatched;
-            this.#lastMinutesWatched[this.#targetDrop.id] = this.#currentMinutesWatched[this.#targetDrop.id];
-            logger.debug('Initial drop progress: ' + this.#currentMinutesWatched[this.#targetDrop.id] + ' minutes');
-        } else {
-            logger.debug('Initial drop progress: none');
+        if (this.#targetDrop !== null) {
+            const inventoryDrop = await twitchClient.getInventoryDrop(this.#targetDrop.id);
+            if (inventoryDrop) {
+                this.#currentMinutesWatched[this.#targetDrop.id] = inventoryDrop.self.currentMinutesWatched;
+                this.#lastMinutesWatched[this.#targetDrop.id] = this.#currentMinutesWatched[this.#targetDrop.id];
+                logger.debug('Initial drop progress: ' + this.#currentMinutesWatched[this.#targetDrop.id] + ' minutes');
+            } else {
+                logger.debug('Initial drop progress: none');
+            }
         }
 
         webSocketListener.on('drop-progress', async data => {
@@ -111,57 +116,64 @@ export default class DropProgressComponent extends Component {
         // The maximum amount of time to allow no progress
         const maxNoProgressTime = 1000 * 60 * 5;
 
-        // Check if we have made progress towards the current drop
-        if (new Date().getTime() - this.#lastProgressTime[this.#currentDrop['id']] >= maxNoProgressTime) {
+        if (this.#currentDrop !== null) {
 
-            // Maybe we haven't got any updates from the web socket, lets check our inventory
-            const currentDropId = this.#currentDrop['id'];
-            const inventoryDrop = await twitchClient.getInventoryDrop(currentDropId);
-            if (inventoryDrop) {
-                this.#currentMinutesWatched[currentDropId] = inventoryDrop.self.currentMinutesWatched;
-                if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
-                    this.#lastProgressTime[currentDropId] = new Date().getTime();
-                    this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
-                    logger.debug('No progress from web socket! using inventory progress: ' + this.#currentMinutesWatched[currentDropId] + ' minutes');
-                } else {
-                    throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+            // Check if we have made progress towards the current drop
+            if (this.#requireProgress) {
+                if (new Date().getTime() - this.#lastProgressTime[this.#currentDrop['id']] >= maxNoProgressTime) {
+
+                    // Maybe we haven't got any updates from the web socket, lets check our inventory
+                    const currentDropId = this.#currentDrop['id'];
+                    const inventoryDrop = await twitchClient.getInventoryDrop(currentDropId);
+                    if (inventoryDrop) {
+                        this.#currentMinutesWatched[currentDropId] = inventoryDrop.self.currentMinutesWatched;
+                        if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
+                            this.#lastProgressTime[currentDropId] = new Date().getTime();
+                            this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
+                            logger.debug('No progress from web socket! using inventory progress: ' + this.#currentMinutesWatched[currentDropId] + ' minutes');
+                        } else {
+                            throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+                        }
+                    } else {
+                        throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+                    }
+
                 }
-            } else {
-                throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
             }
 
-        }
+            if (this.#isDropReadyToClaim) {
+                this.#isDropReadyToClaim = false;
 
-        if (this.#isDropReadyToClaim) {
-            this.#isDropReadyToClaim = false;
+                const inventoryDrop = await twitchClient.getInventoryDrop(this.#currentDrop.id);
 
-            const inventoryDrop = await twitchClient.getInventoryDrop(this.#currentDrop.id);
+                if (inventoryDrop === null) {
+                    throw new Error("inventory drop was null when trying to claim it!")
+                }
 
-            if (inventoryDrop === null) {
-                throw new Error("inventory drop was null when trying to claim it!")
+                // Claim the drop
+                await twitchClient.claimDropReward(inventoryDrop.self.dropInstanceID);
+                this.emit('drop-claimed', inventoryDrop);
+
+                // TODO: dont return, check for more drops
+                if (this.#exitOnClaim) {
+                    return true;
+                }
             }
 
-            // Claim the drop
-            await twitchClient.claimDropReward(inventoryDrop.self.dropInstanceID);
-            this.emit('drop-claimed', inventoryDrop);
-
-            // TODO: dont return, check for more drops
-
-            return true;
         }
 
         return false;
     }
 
-    get currentDrop(): TimeBasedDrop {
+    get currentDrop(): TimeBasedDrop | null {
         return this.#currentDrop;
     }
 
-    get currentMinutesWatched(): any {
+    get currentMinutesWatched(): number | null {
+        if (this.#currentDrop === null) {
+            return null;
+        }
         return this.#currentMinutesWatched[this.#currentDrop.id];
     }
 
-    get requiredMinutesWatched() {
-        return this.#currentDrop.requiredMinutesWatched;
-    }
 }

@@ -40,6 +40,31 @@ export async function click(page: Page, selector: string) {
     }, selector);
 }
 
+export class TimedSet<T> extends Set<T> {
+
+    readonly #timeout: number;
+
+    /**
+     * A {@link Set} that automatically removes items after {@link timeout} milliseconds.
+     * @param timeout
+     */
+    constructor(timeout: number) {
+        super();
+        this.#timeout = timeout;
+    }
+
+    add(value: T): this {
+        const isValueInSet = this.has(value);
+        const result = super.add(value);
+        if (!isValueInSet) {
+            setTimeout(() => {
+                this.delete(value);
+            }, this.#timeout);
+        }
+        return result;
+    }
+}
+
 export default {
     asyncPrompt,
     saveScreenshotAndHtml,

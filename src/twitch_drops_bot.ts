@@ -10,7 +10,7 @@ import CommunityPointsComponent from "./components/community_points";
 import WebSocketListener from "./web_socket_listener";
 import {TwitchDropsWatchdog} from "./watchdog";
 import {StreamPage} from "./pages/stream";
-import utils from './utils';
+import utils, {TimedSet} from './utils';
 import logger from "./logger";
 import {ElementHandle, Page} from "puppeteer";
 import {Client, TimeBasedDrop, DropCampaign, Tag} from "./twitch";
@@ -24,29 +24,6 @@ function getDropName(drop: TimeBasedDrop): string {
 
 function ansiEscape(code: string): string {
     return '\x1B[' + code;
-}
-
-class TimedSet<T> extends Set<T> {
-
-    readonly #timeout: number;
-
-    constructor(timeout: number) {
-        super();
-        this.#timeout = timeout;
-    }
-
-    add(value: T): this {
-        logger.info('add: ' + value);
-        const isValueInSet: boolean = this.has(value);
-        const result = super.add(value);
-        if (!isValueInSet) {
-            setTimeout(() => {
-                logger.info('remove: ' + value);
-                this.delete(value);
-            }, this.#timeout);
-        }
-        return result;
-    }
 }
 
 export interface TwitchDropsBotOptions {
@@ -152,7 +129,13 @@ export class TwitchDropsBot {
 
     #twitchDropsWatchdog: TwitchDropsWatchdog;
 
-    #pendingDropCampaignIds = new SortedArray((a: string, b: string) => {
+    /**
+     * A priority queue of Drop Campaign IDs that the bot is trying to make progress towards. Drop Campaigns are
+     * prioritized based on the order of the games specified in {@link #gameIds}. If there are multiple Drop Campaigns
+     * active for the same game, the Drop Campaign that ends first will be given priority.
+     * @private
+     */
+    readonly #pendingDropCampaignIds = new SortedArray((a: string, b: string) => {
 
         if (a === b) {
             return 0;
@@ -162,15 +145,15 @@ export class TwitchDropsBot {
         const campaignB = this.#getDropCampaignById(b);
 
         // Sort campaigns based on order of game IDs specified in config
-        const indexA = this.#gameIds.indexOf(campaignA['game']['id']);
-        const indexB = this.#gameIds.indexOf(campaignB['game']['id']);
+        const indexA = this.#gameIds.indexOf(campaignA.game.id);
+        const indexB = this.#gameIds.indexOf(campaignB.game.id);
         if (indexA === -1 && indexB !== -1) {
             return 1;
         } else if (indexA !== -1 && indexB === -1) {
             return -1;
         } else if (indexA === indexB) {  // Both games have the same priority. Give priority to the one that ends first.
-            const endTimeA = Date.parse(campaignA['endAt']);
-            const endTimeB = Date.parse(campaignB['endAt']);
+            const endTimeA = Date.parse(campaignA.endAt);
+            const endTimeB = Date.parse(campaignB.endAt);
             if (endTimeA === endTimeB) {
                 return a < b ? -1 : 1;
             }
@@ -180,17 +163,17 @@ export class TwitchDropsBot {
     });
     #pendingDropCampaignIdsNotifier = new WaitNotify();
 
+    /**
+     * A mapping of Drop Campaign IDs to Drop Campaigns. This "database" stores the latest information on each Drop Campaign.
+     * @private
+     */
+    #dropCampaignMap: { [key: string]: DropCampaign } = {};
+
     #progressBar: any = null;
     #payload: any = null;
-    #total: any = null;
-    #currentProgress: any = null;
     #isFirstOutput: boolean = true;
 
-    #webSocketListener = new WebSocketListener();
-
     #currentDropCampaignId: string | null = null;
-
-    #dropCampaignMap: { [key: string]: DropCampaign } = {};
 
     #pendingHighPriority: boolean = false;
 
@@ -256,7 +239,7 @@ export class TwitchDropsBot {
             this.#broadcasterIds.push(id);
         }));
         this.#watchStreamsWhenNoDropCampaignsActive = options?.watchStreamsWhenNoDropCampaignsActive ?? this.#watchStreamsWhenNoDropCampaignsActive;
-        this.#streamUrlTemporaryBlacklist = new TimedSet<string>(this.#failedStreamBlacklistTimeout);
+        this.#streamUrlTemporaryBlacklist = new TimedSet<string>(1000 * 60 * this.#failedStreamBlacklistTimeout);
 
         // Set up Twitch Drops Watchdog
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#dropCampaignPollingInterval);
@@ -445,7 +428,7 @@ export class TwitchDropsBot {
 
                 if (this.#watchStreamsWhenNoDropCampaignsActive) {
 
-                    logger.info("No drop campaigns active, watching a stream instead.")
+                    logger.info("No drop campaigns active, watching a stream instead.");
 
                     // Choose a stream to watch
                     let streamUrl = null;
@@ -455,7 +438,7 @@ export class TwitchDropsBot {
                         logger.error(error);
                     }
                     if (streamUrl === null) {
-                        logger.warn("No idle streams available!");
+                        logger.warn("No idle streams available! sleeping for a bit...");
 
                         setTimeout(() => {
                             logger.debug('notify all!');
@@ -469,14 +452,21 @@ export class TwitchDropsBot {
                     }
                     logger.info("stream: " + streamUrl)
 
+                    const dropProgressComponent = new DropProgressComponent({requireProgress: false, exitOnClaim: false});
+                    dropProgressComponent.on('drop-claimed', drop => {
+                        this.#onDropRewardClaimed(drop);
+                    });
+                    dropProgressComponent.on('drop-data-changed', () => {
+                        this.#progressBar.setTotal(dropProgressComponent.currentDrop?.requiredMinutesWatched);
+                    });
+
                     const components: Component[] = [
+                        dropProgressComponent,
                         new CommunityPointsComponent()
                     ];
 
                     let timeout: any = null;
                     const a = async () => {
-
-                        logger.info("checking a");
 
                         for (const dropCampaignId of this.#pendingDropCampaignIds) {
 
@@ -537,8 +527,7 @@ export class TwitchDropsBot {
 
                         }
 
-                        logger.info("done a");
-                        timeout = setTimeout(a, 1000 * 60 * 6);
+                        timeout = setTimeout(a, 1000 * 60 * 5);
                     }
                     a();
 
@@ -549,6 +538,7 @@ export class TwitchDropsBot {
                         if (error instanceof HighPriorityError) {
                             // Ignore
                         } else if (error instanceof StreamDownError) {
+                            logger.info("stream went down");
                             this.#streamUrlTemporaryBlacklist.add(streamUrl);
                         } else {
                             logger.error(error);
@@ -682,13 +672,12 @@ export class TwitchDropsBot {
                     throw new NoStreamsError();
                 }
 
-                const dropProgressComponent = new DropProgressComponent(drop);
+                const dropProgressComponent = new DropProgressComponent({targetDrop: drop});
                 dropProgressComponent.on('drop-claimed', drop => {
                     this.#onDropRewardClaimed(drop);
                 });
                 dropProgressComponent.on('drop-data-changed', () => {
-                    this.#total = dropProgressComponent.requiredMinutesWatched;
-                    this.#progressBar.setTotal(this.#total);
+                    this.#progressBar.setTotal(dropProgressComponent.currentDrop?.requiredMinutesWatched);
                 });
 
                 const components: Component[] = [
@@ -784,21 +773,19 @@ export class TwitchDropsBot {
         }
     }
 
-    #startProgressBar(t = this.#total, p = this.#payload) {
+    #startProgressBar(p = this.#payload) {
         this.#isFirstOutput = true;
-        this.#total = t;
         this.#payload = p;
         if (this.#progressBar !== null) {
             process.stdout.write("\n\n" + ansiEscape("2A"));
-            this.#progressBar.start(t, this.#currentProgress, p);
+            this.#progressBar.start(1, 0, p);
         }
     }
 
-    #updateProgressBar(c = this.#currentProgress, p = this.#payload) {
-        this.#currentProgress = c;
+    #updateProgressBar(p = this.#payload) {
         this.#payload = p;
         if (this.#progressBar !== null) {
-            this.#progressBar.update(c, p);
+            this.#progressBar.update(0, p);
         }
     }
 
@@ -810,8 +797,6 @@ export class TwitchDropsBot {
         if (clear) {
             this.#progressBar = null;
             this.#payload = null;
-            this.#total = null;
-            this.#currentProgress = null;
         }
     }
 
@@ -821,190 +806,183 @@ export class TwitchDropsBot {
         const startWatchTime = new Date().getTime();
         try {
             await this.#watchStream(streamUrl, components);
-        } catch (error) {
-            throw error;
         } finally {
             logger.info(ansiEscape("36m") + "Watched stream for " + Math.floor((new Date().getTime() - startWatchTime) / 1000 / 60) + " minutes" + ansiEscape("39m"));
-            if (this.#webSocketListener !== null) {
-                await this.#webSocketListener.detach();
-            }
         }
     }
 
     async #watchStream(streamUrl: string, components: Component[]) {
 
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
-        this.#webSocketListener = new WebSocketListener();
-        await this.#webSocketListener.attach(this.#page)
+        const webSocketListener = new WebSocketListener();
 
         // Set up web socket listener
-        this.#webSocketListener.on('viewcount', count => {
+        webSocketListener.on('viewcount', count => {
             this.#viewerCount = count;
         });
-        this.#webSocketListener.on('stream-down', message => {
+        webSocketListener.on('stream-down', message => {
             this.#isStreamDown = true;
         });
 
-        // call onstart
-        for (const component of components) {
-            await component.onStart(this.#twitchClient, this.#webSocketListener);
-        }
-
-        // Go to the stream URL
-        await this.#page.goto(streamUrl);
-
-        // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
-        logger.info('Waiting for page to load...');
-        const element = (await this.#page.$x('//div[@data-a-player-state]'))[0]
-        await this.#waitUntilElementRendered(this.#page, element);
-
-        const streamPage = new StreamPage(this.#page);
+        // Wrap everything in a try/finally block so that we can detach the web socket listener at the end
         try {
-            await streamPage.waitForLoad();
-        } catch (error) {
-            if (error instanceof TimeoutError) {
-                throw new StreamLoadFailedError();
+            await webSocketListener.attach(this.#page);
+
+            // call onstart
+            for (const component of components) {
+                await component.onStart(this.#twitchClient, webSocketListener);
             }
-            throw error;
-        }
 
-        try {
-            // Click "Accept mature content" button
-            await streamPage.acceptMatureContent();
-            logger.info('Accepted mature content');
-        } catch (error) {
-            // Ignore errors, the button is probably not there
-        }
+            // Go to the stream URL
+            await this.#page.goto(streamUrl);
 
-        try {
-            await streamPage.setLowestStreamQuality();
-            logger.info('Set stream to lowest quality');
-        } catch (error) {
-            logger.error('Failed to set stream to lowest quality!');
-            throw error;
-        }
+            // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
+            logger.info('Waiting for page to load...');
+            const element = (await this.#page.$x('//div[@data-a-player-state]'))[0]
+            await this.#waitUntilElementRendered(this.#page, element);
 
-        // This does not affect the drops, so if the user requests lets hide the videos
-        if (this.#hideVideo) {
+            const streamPage = new StreamPage(this.#page);
             try {
-                await streamPage.hideVideoElements();
-                logger.info('Set stream visibility to hidden');
+                await streamPage.waitForLoad();
             } catch (error) {
-                logger.error('Failed to set stream visibility to hidden!');
+                if (error instanceof TimeoutError) {
+                    throw new StreamLoadFailedError();
+                }
                 throw error;
             }
-        }
 
-        this.#progressBarHeight = 1;
-        for (const component of components) {
-            if (component instanceof DropProgressComponent) {
-                this.#progressBarHeight = 2;
-                break
+            try {
+                // Click "Accept mature content" button
+                await streamPage.acceptMatureContent();
+                logger.info('Accepted mature content');
+            } catch (error) {
+                // Ignore errors, the button is probably not there
             }
-        }
 
-        const getComponent = <T extends Component>(c: Class<T>): T | null => {
-            for (const component of components) {
-                if (component instanceof c) {
-                    return component;
+            try {
+                await streamPage.setLowestStreamQuality();
+                logger.info('Set stream to lowest quality');
+            } catch (error) {
+                logger.error('Failed to set stream to lowest quality!');
+                throw error;
+            }
+
+            // This does not affect the drops, so if the user requests lets hide the videos
+            if (this.#hideVideo) {
+                try {
+                    await streamPage.hideVideoElements();
+                    logger.info('Set stream visibility to hidden');
+                } catch (error) {
+                    logger.error('Failed to set stream visibility to hidden!');
+                    throw error;
                 }
             }
-            return null;
-        }
 
-        // Create progress bar
-        this.#progressBar = new cliProgress.SingleBar(
-            {
-                barsize: 20,
-                clearOnComplete: true,
-                stream: process.stdout,
-                format: (options: any, params: any, payload: any) => {
-                    let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
+            this.#progressBarHeight = 1;
+            for (const component of components) {
+                if (component instanceof DropProgressComponent && component.currentDrop !== null) {
+                    this.#progressBarHeight = 2;
+                    break
+                }
+            }
 
-                    for (const component of components) {
-                        if (component instanceof DropProgressComponent) {
-                            result += `${payload['drop_name']} ${BarFormat(params.progress, options)} ${params.value} / ${params.total} minutes` + ansiEscape('0K') + '\n';
-                            break
+            const getComponent = <T extends Component>(c: Class<T>): T | null => {
+                for (const component of components) {
+                    if (component instanceof c) {
+                        return component;
+                    }
+                }
+                return null;
+            }
+
+            // Create progress bar
+            this.#progressBar = new cliProgress.SingleBar(
+                {
+                    barsize: 20,
+                    clearOnComplete: true,
+                    stream: process.stdout,
+                    format: (options: any, params: any, payload: any) => {
+                        let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
+
+                        for (const component of components) {
+                            if (component instanceof DropProgressComponent && component.currentDrop !== null) {
+                                const drop = component.currentDrop;
+                                this.#progressBar.setTotal(drop.requiredMinutesWatched);
+                                result += `${getDropName(drop)} ${BarFormat((component.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${component.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
+                                break
+                            }
+                        }
+
+                        if (this.#isFirstOutput) {
+                            return result;
+                        }
+
+                        return ansiEscape(`${this.#progressBarHeight}A`) + result;
+                    }
+                },
+                cliProgress.Presets.shades_classic
+            );
+            this.#progressBar.on('redraw-post', () => {
+                this.#isFirstOutput = false;
+            });
+
+            this.#viewerCount = await streamPage.getViewersCount();
+            const dropProgressComponent = getComponent(DropProgressComponent);
+            this.#startProgressBar({'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), stream_url: streamUrl});
+
+            // Wrap everything in a try/finally block so that we can stop the progress bar at the end
+            try {
+
+                let wasWorkingOnDrop = false;
+
+                // Main loop
+                while (true) {
+
+                    let isWorkingOnDrop = false;
+                    if (dropProgressComponent !== null){
+                        if (dropProgressComponent.currentDrop !== null){
+                            isWorkingOnDrop = true;
                         }
                     }
 
-                    if (this.#isFirstOutput) {
-                        return result;
+                    if (isWorkingOnDrop !== wasWorkingOnDrop){
+                        wasWorkingOnDrop = isWorkingOnDrop;
                     }
 
-                    return ansiEscape(`${this.#progressBarHeight}A`) + result;
-                }
-            },
-            cliProgress.Presets.shades_classic
-        );
-        this.#progressBar.on('redraw-post', () => {
-            this.#isFirstOutput = false;
-        });
-
-        this.#viewerCount = await streamPage.getViewersCount();
-        const dropProgressComponent = getComponent(DropProgressComponent);
-        if (dropProgressComponent !== null) {
-            // @ts-ignore
-            this.#startProgressBar(dropProgressComponent.requiredMinutesWatched, {
-                'viewers': this.#viewerCount,
-                'uptime': await streamPage.getUptime(),
-                // @ts-ignore
-                drop_name: getDropName(dropProgressComponent.currentDrop),
-                stream_url: streamUrl
-            });
-        } else {
-            this.#startProgressBar(100, {'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), stream_url: streamUrl});
-        }
-
-        try {
-            // Main loop
-            while (true) {
-
-                if (this.#isStreamDown) {
-                    this.#isStreamDown = false;
-                    this.#stopProgressBar(true);
-                    await this.#page.goto("about:blank");
-                    throw new StreamDownError();
-                }
-
-                // Check if there is a higher priority stream we should be watching
-                if (this.#pendingHighPriority) {
-                    this.#pendingHighPriority = false;
-                    this.#stopProgressBar(true);
-                    logger.info('Switching to higher priority stream');
-                    throw new HighPriorityError();
-                }
-
-                for (const component of components) {
-                    if (await component.onUpdate(this.#page, this.#twitchClient)) {
-                        return;
+                    if (this.#isStreamDown) {
+                        this.#isStreamDown = false;
+                        this.#stopProgressBar(true);
+                        await this.#page.goto("about:blank");
+                        throw new StreamDownError();
                     }
-                }
 
-                if (dropProgressComponent !== null) {
-                    // @ts-ignore
-                    this.#updateProgressBar(dropProgressComponent.currentMinutesWatched, {
-                        'viewers': this.#viewerCount,
-                        'uptime': await streamPage.getUptime(),
-                        // @ts-ignore
-                        drop_name: getDropName(dropProgressComponent.currentDrop),
-                        stream_url: streamUrl
-                    });
-                } else {
-                    this.#updateProgressBar(0, {
+                    // Check if there is a higher priority stream we should be watching
+                    if (this.#pendingHighPriority) {
+                        this.#pendingHighPriority = false;
+                        this.#stopProgressBar(true);
+                        logger.info('Switching to higher priority stream');
+                        throw new HighPriorityError();
+                    }
+
+                    for (const component of components) {
+                        if (await component.onUpdate(this.#page, this.#twitchClient)) {
+                            return;
+                        }
+                    }
+
+                    this.#updateProgressBar({
                         'viewers': this.#viewerCount,
                         'uptime': await streamPage.getUptime(),
                         stream_url: streamUrl
                     });
-                }
 
-                await this.#page.waitForTimeout(1000);
+                    await this.#page.waitForTimeout(1000);
+                }
+            } finally {
+                this.#stopProgressBar(true);
             }
-        } catch (error) {
-            throw error;
         } finally {
-            logger.debug('stopped bar');
-            this.#stopProgressBar(true);
+            await webSocketListener.detach();
         }
     }
 
@@ -1080,7 +1058,7 @@ export class TwitchDropsBot {
             }
         }
 
-        logger.debug('inventory: ' + JSON.stringify(inventory, null, 4));
+        logger.debug('inventory: ' + JSON.stringify(inventory));
 
         logger.debug('return false');
         return false;
