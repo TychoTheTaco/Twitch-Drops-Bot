@@ -453,12 +453,6 @@ export class TwitchDropsBot {
                     logger.info("stream: " + streamUrl)
 
                     const dropProgressComponent = new DropProgressComponent({requireProgress: false, exitOnClaim: false});
-                    dropProgressComponent.on('drop-claimed', drop => {
-                        this.#onDropRewardClaimed(drop);
-                    });
-                    dropProgressComponent.on('drop-data-changed', () => {
-                        this.#progressBar.setTotal(dropProgressComponent.currentDrop?.requiredMinutesWatched);
-                    });
 
                     const components: Component[] = [
                         dropProgressComponent,
@@ -673,12 +667,6 @@ export class TwitchDropsBot {
                 }
 
                 const dropProgressComponent = new DropProgressComponent({targetDrop: drop});
-                dropProgressComponent.on('drop-claimed', drop => {
-                    this.#onDropRewardClaimed(drop);
-                });
-                dropProgressComponent.on('drop-data-changed', () => {
-                    this.#progressBar.setTotal(dropProgressComponent.currentDrop?.requiredMinutesWatched);
-                });
 
                 const components: Component[] = [
                     dropProgressComponent,
@@ -777,7 +765,10 @@ export class TwitchDropsBot {
         this.#isFirstOutput = true;
         this.#payload = p;
         if (this.#progressBar !== null) {
-            process.stdout.write("\n\n" + ansiEscape("2A"));
+            for (let i = 0; i < this.#progressBarHeight; ++i){
+                process.stdout.write('\n');
+            }
+            process.stdout.write(ansiEscape(`${this.#progressBarHeight}A`));
             this.#progressBar.start(1, 0, p);
         }
     }
@@ -792,7 +783,7 @@ export class TwitchDropsBot {
     #stopProgressBar(clear: boolean = false) {
         if (this.#progressBar !== null) {
             this.#progressBar.stop();
-            process.stdout.write(ansiEscape("1B") + ansiEscape("2K") + ansiEscape("1A"));
+            process.stdout.write(ansiEscape(`${this.#progressBarHeight - 1}B`) + ansiEscape("2K") + ansiEscape(`${this.#progressBarHeight - 1}A`));
         }
         if (clear) {
             this.#progressBar = null;
@@ -803,6 +794,28 @@ export class TwitchDropsBot {
     #progressBarHeight: number = 2;
 
     async #watchStreamWrapper(streamUrl: string, components: Component[]) {
+
+        const getComponent = <T extends Component>(c: Class<T>): T | null => {
+            for (const component of components) {
+                if (component instanceof c) {
+                    return component;
+                }
+            }
+            return null;
+        }
+
+        // Set up components
+        const dropProgressComponent = getComponent(DropProgressComponent);
+        if (dropProgressComponent !== null){
+            dropProgressComponent.on('drop-claimed', drop => {
+                this.#onDropRewardClaimed(drop);
+            });
+            dropProgressComponent.on('drop-data-changed', () => {
+                this.#stopProgressBar();
+                this.#startProgressBar();
+            });
+        }
+
         const startWatchTime = new Date().getTime();
         try {
             await this.#watchStream(streamUrl, components);
@@ -878,14 +891,6 @@ export class TwitchDropsBot {
                 }
             }
 
-            this.#progressBarHeight = 1;
-            for (const component of components) {
-                if (component instanceof DropProgressComponent && component.currentDrop !== null) {
-                    this.#progressBarHeight = 2;
-                    break
-                }
-            }
-
             const getComponent = <T extends Component>(c: Class<T>): T | null => {
                 for (const component of components) {
                     if (component instanceof c) {
@@ -904,13 +909,13 @@ export class TwitchDropsBot {
                     format: (options: any, params: any, payload: any) => {
                         let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
 
-                        for (const component of components) {
-                            if (component instanceof DropProgressComponent && component.currentDrop !== null) {
-                                const drop = component.currentDrop;
-                                this.#progressBar.setTotal(drop.requiredMinutesWatched);
-                                result += `${getDropName(drop)} ${BarFormat((component.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${component.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
-                                break
-                            }
+                        const dropProgressComponent = getComponent(DropProgressComponent);
+                        if (dropProgressComponent !== null && dropProgressComponent.currentDrop !== null){
+                            const drop = dropProgressComponent.currentDrop;
+                            this.#progressBar.setTotal(drop.requiredMinutesWatched);
+                            result += `${getDropName(drop)} ${BarFormat((dropProgressComponent.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${dropProgressComponent.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
+                        } else {
+                            result += `\n`;
                         }
 
                         if (this.#isFirstOutput) {
@@ -933,21 +938,8 @@ export class TwitchDropsBot {
             // Wrap everything in a try/finally block so that we can stop the progress bar at the end
             try {
 
-                let wasWorkingOnDrop = false;
-
                 // Main loop
                 while (true) {
-
-                    let isWorkingOnDrop = false;
-                    if (dropProgressComponent !== null){
-                        if (dropProgressComponent.currentDrop !== null){
-                            isWorkingOnDrop = true;
-                        }
-                    }
-
-                    if (isWorkingOnDrop !== wasWorkingOnDrop){
-                        wasWorkingOnDrop = isWorkingOnDrop;
-                    }
 
                     if (this.#isStreamDown) {
                         this.#isStreamDown = false;

@@ -84,7 +84,7 @@ export default class DropProgressComponent extends Component {
                 this.#lastMinutesWatched[dropId] = this.#currentMinutesWatched[dropId];
 
                 if (dropId !== this.#currentDrop?.id) {
-                    logger.info('made progress towards a different drop! expected: ' + this.#currentDrop?.id + ' vs actual: ' + dropId);
+                    logger.debug('made progress towards a different drop! expected: ' + this.#currentDrop?.id + ' vs actual: ' + dropId);
 
                     // If we made progress for a different drop, switch to it
                     const inventoryDrop = await twitchClient.getInventoryDrop(dropId);
