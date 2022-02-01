@@ -915,7 +915,7 @@ export class TwitchDropsBot {
                             this.#progressBar.setTotal(drop.requiredMinutesWatched);
                             result += `${getDropName(drop)} ${BarFormat((dropProgressComponent.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${dropProgressComponent.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
                         } else {
-                            result += `\n`;
+                            result += `- No Drops Active -\n`;
                         }
 
                         if (this.#isFirstOutput) {
