@@ -932,7 +932,6 @@ export class TwitchDropsBot {
             });
 
             this.#viewerCount = await streamPage.getViewersCount();
-            const dropProgressComponent = getComponent(DropProgressComponent);
             this.#startProgressBar({'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), stream_url: streamUrl});
 
             // Wrap everything in a try/finally block so that we can stop the progress bar at the end
@@ -979,34 +978,27 @@ export class TwitchDropsBot {
     }
 
     async #getFirstUnclaimedDrop(campaignId: string): Promise<TimeBasedDrop | null> {
-        logger.debug(`getFirstUnclaimedDrop(${campaignId})`);
 
         // Get all drops for this campaign
         const details = await this.#twitchClient.getDropCampaignDetails(campaignId);
 
         for (const drop of details.timeBasedDrops) { // TODO: Not all campaigns have time based drops
 
-            logger.debug('drop id: ' + drop.id);
-
             // Check if we already claimed this drop
             if (await this.#isDropClaimed(drop)) {
-                logger.debug('already claimed');
                 continue;
             }
 
             // Check if this drop has ended
-            if (new Date() > new Date(Date.parse(drop['endAt']))) {
-                logger.debug('drop ended');
+            if (new Date() > new Date(Date.parse(drop.endAt))) {
                 continue;
             }
 
             // Check if this drop has started
-            if (new Date() < new Date(Date.parse(drop['startAt']))) {
-                logger.debug('drop not started yet')
+            if (new Date() < new Date(Date.parse(drop.startAt))) {
                 continue;
             }
 
-            logger.debug('returning: ' + drop.id)
             return drop;
         }
 
@@ -1014,8 +1006,6 @@ export class TwitchDropsBot {
     }
 
     async #isDropClaimed(drop: TimeBasedDrop) {
-        logger.debug('isDropClaimed: ' + drop.id);
-
         const inventory = await this.#twitchClient.getInventory();
 
         // Check campaigns in progress
@@ -1024,14 +1014,11 @@ export class TwitchDropsBot {
             for (const campaign of dropCampaignsInProgress) {
                 for (const d of campaign.timeBasedDrops) {
                     if (d.id === drop.id) {
-                        logger.debug('return: ' + d.self.isClaimed);
                         return d.self.isClaimed;
                     }
                 }
             }
         }
-
-        logger.debug('not in progress');
 
         // Check claimed drops
         const gameEventDrops = inventory.gameEventDrops;
@@ -1044,15 +1031,11 @@ export class TwitchDropsBot {
                     // In the first case, the drop won't show up here either so we can just return false. In the second case
                     // I assume that if we received a drop reward of the same type after this campaign started, that it has
                     // been claimed.
-                    logger.debug('compare date: ' + d.lastAwardedAt + ' VS ' + drop.startAt);
                     return Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
                 }
             }
         }
 
-        logger.debug('inventory: ' + JSON.stringify(inventory));
-
-        logger.debug('return false');
         return false;
     }
 
@@ -1079,7 +1062,7 @@ export class TwitchDropsBot {
 
     #getDropCampaignFullName(campaignId: string) {
         const campaign = this.#getDropCampaignById(campaignId);
-        return campaign['game']['displayName'] + ' ' + campaign['name'];
+        return campaign.game.displayName + ' ' + campaign.name;
     }
 
     #getDropCampaignById(campaignId: string) {
