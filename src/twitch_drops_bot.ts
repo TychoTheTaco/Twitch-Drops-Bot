@@ -69,14 +69,18 @@ export class TwitchDropsBot {
      */
     readonly #dropCampaignPollingInterval: number = 15;
 
-    // When a stream fails #failedStreamRetryCount times (it went offline, or other reasons), it gets added to a
-    // blacklist so we don't waste our time trying it. It is removed from the blacklist if we switch drop campaigns
-    // or after #failedStreamBlacklistTimeout minutes.
+    /**
+     * The maximum number of times that a stream can fail when we are trying to watch it. If it fails more times, it
+     * will get added to a temporary blacklist.
+     * @private
+     */
     readonly #failedStreamRetryCount: number = 3;
-    readonly #failedStreamBlacklistTimeout: number = 30;
 
-    // TODO: make a separate permanent blacklist?
-    readonly #streamUrlTemporaryBlacklist: TimedSet<string>;
+    /**
+     * The number of minutes that failed streams should remain in the temporary blacklist.
+     * @private
+     */
+    readonly #failedStreamBlacklistTimeout: number = 30;
 
     /**
      * The maximum number of seconds to wait for pages to load.
@@ -178,8 +182,6 @@ export class TwitchDropsBot {
     #pendingHighPriority: boolean = false;
 
     #viewerCount: number = 0;
-    #currentMinutesWatched: { [key: string]: number } = {};
-    #requiredMinutesWatched: { [key: string]: number } = {};
     #isStreamDown: boolean = false;
 
     /**
@@ -193,6 +195,21 @@ export class TwitchDropsBot {
      * @private
      */
     readonly sleepTimeMilliseconds: number = 1000 * 60 * 5;
+
+    /**
+     * A mapping of stream URLs to an integer representing the number of times the stream failed while we were trying to watch it.
+     * If this number reaches {@link #failedStreamRetryCount}, then the stream is added to a temporary blacklist.
+     * @private
+     */
+    readonly #failedStreamUrlCounts: { [key: string]: number } = {};
+
+    // TODO: make a separate permanent blacklist?
+    /**
+     * Streams that failed too many times (determined by {@link #failedStreamRetryCount}) are temporarily added to this
+     * blacklist and automatically removed after {@link #failedStreamBlacklistTimeout} minutes.
+     * @private
+     */
+    readonly #streamUrlTemporaryBlacklist: TimedSet<string>;
 
     constructor(page: Page, client: Client, options?: TwitchDropsBotOptions) {
         this.#page = page;
@@ -383,7 +400,11 @@ export class TwitchDropsBot {
         // Check if any of the preferred broadcasters are online
         for (const broadcasterId of this.#broadcasterIds) {
             if (await this.#twitchClient.isStreamOnline(broadcasterId)) {
-                return "https://www.twitch.tv/" + broadcasterId;
+                const streamUrl = "https://www.twitch.tv/" + broadcasterId;
+                if (this.#streamUrlTemporaryBlacklist.has(streamUrl)) {
+                    continue;
+                }
+                return streamUrl;
             }
         }
 
@@ -399,7 +420,11 @@ export class TwitchDropsBot {
         for (const dropCampaignId of this.#pendingDropCampaignIds) {
             const streams = await this.#twitchClient.getActiveStreams(this.#dropCampaignMap[dropCampaignId].game.displayName);
             if (streams.length > 0) {
-                return streams[0].url;
+                const streamUrl = streams[0].url;
+                if (this.#streamUrlTemporaryBlacklist.has(streamUrl)) {
+                    continue;
+                }
+                return streamUrl;
             }
         }
 
@@ -528,15 +553,6 @@ export class TwitchDropsBot {
                     try {
                         await this.#watchStreamWrapper(streamUrl, components);
                     } catch (error) {
-                        if (error instanceof HighPriorityError) {
-                            // Ignore
-                        } else if (error instanceof StreamDownError) {
-                            logger.info("stream went down");
-                            this.#streamUrlTemporaryBlacklist.add(streamUrl);
-                        } else {
-                            logger.error("Error watching stream!");
-                            logger.debug(error);
-                        }
                         await this.#page.goto("about:blank");
                     } finally {
                         clearTimeout(timeout);
@@ -648,8 +664,10 @@ export class TwitchDropsBot {
                 }
             }
 
-            // A mapping of stream URLs to an integer representing the number of times the stream failed while we were trying to watch it
-            const failedStreamUrlCounts: { [key: string]: number } = {};
+            // Reset failed stream counts
+            for (const streamUrl of Object.getOwnPropertyNames(this.#failedStreamUrlCounts)){
+                delete this.#failedStreamUrlCounts[streamUrl];
+            }
 
             while (true) {
 
@@ -684,36 +702,6 @@ export class TwitchDropsBot {
                         logger.warn(error.message);
                     } else if (error instanceof HighPriorityError) {
                         throw error;
-                    } else if (error instanceof StreamLoadFailedError) {
-                        logger.warn('Stream failed to load!');
-                    } else if (error instanceof StreamDownError) {
-                        logger.info('Stream went down');
-                        /*
-                        If the stream goes down, add it to the failed stream urls immediately so we don't try it again.
-                        This is needed because getActiveStreams() can return streams that are down if they went down
-                        very recently.
-                         */
-                        this.#streamUrlTemporaryBlacklist.add(streamUrl);
-                        failedStreamUrlCounts[streamUrl] = 0;
-                    } else {
-                        logger.error("Error watching stream");
-                        logger.debug(error);
-                        if (process.env.SAVE_ERROR_SCREENSHOTS?.toLowerCase() === 'true') {
-                            await utils.saveScreenshotAndHtml(this.#page, 'error');
-                        }
-                    }
-
-                    // Increment failure counter
-                    if (!(streamUrl in failedStreamUrlCounts)) {
-                        failedStreamUrlCounts[streamUrl] = 0;
-                    }
-                    failedStreamUrlCounts[streamUrl]++;
-
-                    // Move on if this stream failed too many times
-                    if (failedStreamUrlCounts[streamUrl] >= this.#failedStreamRetryCount) {
-                        logger.error('Stream failed too many times. Giving up for ' + this.#failedStreamBlacklistTimeout + ' minutes...');
-                        this.#streamUrlTemporaryBlacklist.add(streamUrl);
-                        failedStreamUrlCounts[streamUrl] = 0;
                     }
                     continue;
                 }
@@ -767,7 +755,7 @@ export class TwitchDropsBot {
         this.#isFirstOutput = true;
         this.#payload = p;
         if (this.#progressBar !== null) {
-            for (let i = 0; i < this.#progressBarHeight; ++i){
+            for (let i = 0; i < this.#progressBarHeight; ++i) {
                 process.stdout.write('\n');
             }
             process.stdout.write(ansiEscape(`${this.#progressBarHeight}A`));
@@ -808,7 +796,7 @@ export class TwitchDropsBot {
 
         // Set up components
         const dropProgressComponent = getComponent(DropProgressComponent);
-        if (dropProgressComponent !== null){
+        if (dropProgressComponent !== null) {
             dropProgressComponent.on('drop-claimed', drop => {
                 this.#onDropRewardClaimed(drop);
             });
@@ -821,6 +809,37 @@ export class TwitchDropsBot {
         const startWatchTime = new Date().getTime();
         try {
             await this.#watchStream(streamUrl, components);
+        } catch (error) {
+            if (error instanceof StreamLoadFailedError) {
+                logger.warn('Stream failed to load!');
+            } else if (error instanceof StreamDownError) {
+                logger.info('Stream went down');
+                // If the stream goes down, add it to the failed stream urls immediately so we don't try it again.
+                // This is needed because getActiveStreams() can return streams that are down if they went down
+                // very recently.
+                this.#streamUrlTemporaryBlacklist.add(streamUrl);
+                this.#failedStreamUrlCounts[streamUrl] = 0;
+            } else {
+                logger.error("Error watching stream");
+                logger.debug(error);
+                if (process.env.SAVE_ERROR_SCREENSHOTS?.toLowerCase() === 'true') {
+                    await utils.saveScreenshotAndHtml(this.#page, 'error');
+                }
+            }
+
+            // Increment failure counter
+            if (!(streamUrl in this.#failedStreamUrlCounts)) {
+                this.#failedStreamUrlCounts[streamUrl] = 0;
+            }
+            this.#failedStreamUrlCounts[streamUrl]++;
+            if (this.#failedStreamUrlCounts[streamUrl] >= this.#failedStreamRetryCount) {
+                logger.error('Stream failed too many times. Giving up for ' + this.#failedStreamBlacklistTimeout + ' minutes...');
+                this.#streamUrlTemporaryBlacklist.add(streamUrl);
+                this.#failedStreamUrlCounts[streamUrl] = 0;
+            }
+
+            // Re-throw the error
+            throw error;
         } finally {
             logger.info(ansiEscape("36m") + "Watched stream for " + Math.floor((new Date().getTime() - startWatchTime) / 1000 / 60) + " minutes" + ansiEscape("39m"));
         }
@@ -914,7 +933,7 @@ export class TwitchDropsBot {
                         let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
 
                         const dropProgressComponent = getComponent(DropProgressComponent);
-                        if (dropProgressComponent !== null && dropProgressComponent.currentDrop !== null){
+                        if (dropProgressComponent !== null && dropProgressComponent.currentDrop !== null) {
                             const drop = dropProgressComponent.currentDrop;
                             this.#progressBar.setTotal(drop.requiredMinutesWatched);
                             result += `${getDropName(drop)} ${BarFormat((dropProgressComponent.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${dropProgressComponent.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
