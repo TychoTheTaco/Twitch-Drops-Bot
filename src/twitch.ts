@@ -123,7 +123,22 @@ export class Client {
         // successful. Despite this, it is still better to throw an exception if there are any errors since this class
         // only sends POST requests with a single operation.
         if ("errors" in response.data) {
-            throw new Error("API ERROR: " + JSON.stringify(response.data, null, 4));
+
+            // Throw the first error in the response
+            for (const error of response.data["errors"]) {
+                if ("message" in error) {
+
+                    const messages = ["service timeout", "service error"];
+
+                    // For some errors, we don't need to include the response data since it is not helpful
+                    const message = error["message"];
+                    if (messages.includes(message)) {
+                        throw new Error("API error: " + message + " " + error);
+                    }
+                }
+            }
+
+            throw new Error("API error: " + JSON.stringify(response.data, null, 4));
         }
 
         // Return the response data

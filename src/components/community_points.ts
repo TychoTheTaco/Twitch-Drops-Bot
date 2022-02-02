@@ -18,7 +18,7 @@ export default class CommunityPointsComponent extends Component {
         if (claimCommunityPointsButton) {
             try {
                 await utils.click(page, 'div[data-test-selector="community-points-summary"] div.GTGMR button');
-                logger.debug('Claimed community points!');
+                logger.info('Claimed community points!');
             } catch (error) {
                 logger.error('Failed to claim community points!');
                 logger.error(error);

@@ -248,7 +248,7 @@ export class TwitchDropsBot {
         });
         this.#twitchDropsWatchdog.on('error', (error) => {
             logger.error('Error checking twitch drops!');
-            logger.error(error);
+            logger.debug(error);
         })
         this.#twitchDropsWatchdog.on('update', async (campaigns: DropCampaign[]) => {
 
@@ -317,7 +317,6 @@ export class TwitchDropsBot {
                     try {
                         inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop.id, firstCampaignId);
                     } catch (error) {
-                        logger.error('Error getting inventory drop');
                         logger.debug(error);
                     }
                     if (inventoryDrop !== null) {
@@ -435,7 +434,8 @@ export class TwitchDropsBot {
                     try {
                         streamUrl = await this.#getNextIdleStreamUrl();
                     } catch (error) {
-                        logger.error(error);
+                        logger.error("Error getting next idle stream!");
+                        logger.debug(error);
                     }
                     if (streamUrl === null) {
                         logger.warn("No idle streams available! sleeping for a bit...");
@@ -490,7 +490,6 @@ export class TwitchDropsBot {
                             try {
                                 inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop.id, firstCampaignId);
                             } catch (error) {
-                                logger.error('Error getting inventory drop');
                                 logger.debug(error);
                                 continue;
                             }
@@ -535,7 +534,8 @@ export class TwitchDropsBot {
                             logger.info("stream went down");
                             this.#streamUrlTemporaryBlacklist.add(streamUrl);
                         } else {
-                            logger.error(error);
+                            logger.error("Error watching stream!");
+                            logger.debug(error);
                         }
                         await this.#page.goto("about:blank");
                     } finally {
@@ -579,7 +579,8 @@ export class TwitchDropsBot {
                     } else if (error instanceof HighPriorityError) {
                         // Ignore
                     } else {
-                        logger.error(error);
+                        logger.error("Error processing campaign");
+                        logger.debug(error);
                     }
                 } finally {
                     this.#currentDropCampaignId = null;
@@ -695,7 +696,8 @@ export class TwitchDropsBot {
                         this.#streamUrlTemporaryBlacklist.add(streamUrl);
                         failedStreamUrlCounts[streamUrl] = 0;
                     } else {
-                        logger.error(error);
+                        logger.error("Error watching stream");
+                        logger.debug(error);
                         if (process.env.SAVE_ERROR_SCREENSHOTS?.toLowerCase() === 'true') {
                             await utils.saveScreenshotAndHtml(this.#page, 'error');
                         }
@@ -839,7 +841,9 @@ export class TwitchDropsBot {
 
         // Wrap everything in a try/finally block so that we can detach the web socket listener at the end
         try {
+            logger.debug('attach...');
             await webSocketListener.attach(this.#page);
+            logger.debug('done');
 
             // call onstart
             for (const component of components) {
