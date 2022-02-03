@@ -264,8 +264,7 @@ export class TwitchDropsBot {
             logger.debug('Updating drop campaigns...');
         });
         this.#twitchDropsWatchdog.on('error', (error) => {
-            logger.error('Error checking twitch drops!');
-            logger.debug(error);
+            logger.debug("Error checking twitch drops: " + error);
         })
         this.#twitchDropsWatchdog.on('update', async (campaigns: DropCampaign[]) => {
 
@@ -324,8 +323,7 @@ export class TwitchDropsBot {
                             continue;
                         }
                     } catch (error) {
-                        logger.error('Failed to get first unclaimed drop!');
-                        logger.debug(error);
+                        logger.debug("Failed to get first unclaimed drop: " + error);
                         continue;
                     }
 
@@ -334,7 +332,7 @@ export class TwitchDropsBot {
                     try {
                         inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop.id, firstCampaignId);
                     } catch (error) {
-                        logger.debug(error);
+                        logger.debug("Failed to get inventory drop: " + error);
                     }
                     if (inventoryDrop !== null) {
                         if (inventoryDrop.self.currentMinutesWatched >= inventoryDrop.requiredMinutesWatched) {
@@ -357,8 +355,7 @@ export class TwitchDropsBot {
                             break;
                         }
                     } catch (error) {
-                        logger.error('Failed to check stream count');
-                        logger.debug(error);
+                        logger.debug("Failed to check stream count: " + error);
                     }
 
                 }
@@ -505,8 +502,7 @@ export class TwitchDropsBot {
                                     continue;
                                 }
                             } catch (error) {
-                                logger.error('Failed to get first unclaimed drop!');
-                                logger.debug(error);
+                                logger.debug("Failed to get first unclaimed drop: " + error);
                                 continue;
                             }
 
@@ -515,7 +511,7 @@ export class TwitchDropsBot {
                             try {
                                 inventoryDrop = await this.#twitchClient.getInventoryDrop(firstUnclaimedDrop.id, firstCampaignId);
                             } catch (error) {
-                                logger.debug(error);
+                                logger.debug("Error checking inventory drop: " + error);
                                 continue;
                             }
                             if (inventoryDrop !== null) {
@@ -539,8 +535,7 @@ export class TwitchDropsBot {
                                     break;
                                 }
                             } catch (error) {
-                                logger.error('Failed to check stream count');
-                                logger.debug(error);
+                                logger.debug("Failed to check stream count: " + error);
                             }
 
                         }

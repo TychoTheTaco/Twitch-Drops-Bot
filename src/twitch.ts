@@ -133,7 +133,7 @@ export class Client {
                     // For some errors, we don't need to include the response data since it is not helpful
                     const message = error["message"];
                     if (messages.includes(message)) {
-                        throw new Error("API error: " + message + " " + error);
+                        throw new Error("API error: " + message + " " + JSON.stringify(error, null, 4));
                     }
                 }
             }
