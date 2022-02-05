@@ -1,7 +1,7 @@
 import {Page} from "puppeteer";
 
 import Component from "./component";
-import {Client, TimeBasedDrop} from "../twitch";
+import {Client, TimeBasedDrop, getInventoryDrop} from "../twitch";
 import logger from "../logger";
 import WebSocketListener from "../web_socket_listener";
 import {NoProgressError} from "../errors";
@@ -52,7 +52,8 @@ export default class DropProgressComponent extends Component {
 
         // Get initial drop progress
         if (this.#targetDrop !== null) {
-            const inventoryDrop = await twitchClient.getInventoryDrop(this.#targetDrop.id);
+            const inventory = await twitchClient.getInventory();
+            const inventoryDrop = getInventoryDrop(this.#targetDrop.id, inventory);
             if (inventoryDrop) {
                 this.#currentMinutesWatched[this.#targetDrop.id] = inventoryDrop.self.currentMinutesWatched;
                 this.#lastMinutesWatched[this.#targetDrop.id] = this.#currentMinutesWatched[this.#targetDrop.id];
@@ -87,7 +88,8 @@ export default class DropProgressComponent extends Component {
                     logger.debug('made progress towards a different drop! expected: ' + this.#currentDrop?.id + ' vs actual: ' + dropId);
 
                     // If we made progress for a different drop, switch to it
-                    const inventoryDrop = await twitchClient.getInventoryDrop(dropId);
+                    const inventory = await twitchClient.getInventory();
+                    const inventoryDrop = getInventoryDrop(dropId, inventory);
 
                     if (inventoryDrop === null) {
                         throw new Error('Made progress towards a drop but did not find it in inventory!');
@@ -124,7 +126,8 @@ export default class DropProgressComponent extends Component {
 
                     // Maybe we haven't got any updates from the web socket, lets check our inventory
                     const currentDropId = this.#currentDrop['id'];
-                    const inventoryDrop = await twitchClient.getInventoryDrop(currentDropId);
+                    const inventory = await twitchClient.getInventory();
+                    const inventoryDrop = getInventoryDrop(currentDropId, inventory);
                     if (inventoryDrop) {
                         this.#currentMinutesWatched[currentDropId] = inventoryDrop.self.currentMinutesWatched;
                         if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
@@ -144,7 +147,8 @@ export default class DropProgressComponent extends Component {
             if (this.#isDropReadyToClaim) {
                 this.#isDropReadyToClaim = false;
 
-                const inventoryDrop = await twitchClient.getInventoryDrop(this.#currentDrop.id);
+                const inventory = await twitchClient.getInventory();
+                const inventoryDrop = getInventoryDrop(this.#currentDrop.id, inventory);
 
                 if (inventoryDrop === null) {
                     throw new Error("inventory drop was null when trying to claim it!")

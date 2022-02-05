@@ -21,7 +21,7 @@ export interface Stream {
 /*
 NOTE: The below interfaces do not always have all fields present! Some Twitch API calls don't return all the fields.
 I could mark them all optional, but that would lead to a lot of unnecessary null checking throughout the code.
-I could make a separate interface for each API call but that would get messy very quickly and lead to a lot of duplicate information
+I could make a separate interface for each API call but that would get messy very quickly and lead to a lot of duplicate information.
 */
 
 export interface Game {
@@ -290,26 +290,99 @@ export class Client {
         return data["data"]["userOrError"]["stream"] !== null;
     }
 
+}
 
-    async getInventoryDrop(dropId: string, campaignId?: string): Promise<TimeBasedDrop | null> {
-        const inventory = await this.getInventory();
-        const campaigns = inventory.dropCampaignsInProgress;
-        if (campaigns === null) {
-            return null;
-        }
-        for (const campaign of campaigns) {
-            if (!campaignId || campaign.id === campaignId) {
-                const drops = campaign.timeBasedDrops;
-                for (const drop of drops) {
-                    if (drop.id === dropId) {
-                        return drop;
-                    }
+/**
+ * Check if the specified Drop has been claimed already.
+ * @param drop
+ * @param inventory
+ */
+export function isDropClaimed(drop: TimeBasedDrop, inventory: Inventory): boolean {
+
+    // Check campaigns in progress
+    const dropCampaignsInProgress = inventory.dropCampaignsInProgress;
+    if (dropCampaignsInProgress != null) {
+        for (const campaign of dropCampaignsInProgress) {
+            for (const d of campaign.timeBasedDrops) {
+                if (d.id === drop.id) {
+                    return d.self.isClaimed;
                 }
             }
         }
-        return null;
     }
 
+    // Check claimed drops
+    const gameEventDrops = inventory.gameEventDrops;
+    if (gameEventDrops != null) {
+        for (const d of gameEventDrops) {
+            if (d.id === drop.benefitEdges[0].benefit.id) {
+                // I haven't found a way to confirm that this specific drop was claimed, but if we get to this point it
+                // means one of two things: (1) We haven't made any progress towards the campaign so it does not show up
+                // in the "dropCampaignsInProgress" section. (2) We have already claimed everything from this campaign.
+                // In the first case, the drop won't show up here either so we can just return false. In the second case
+                // I assume that if we received a drop reward of the same type after this campaign started, that it has
+                // been claimed.
+                return Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Get the {@link TimeBasedDrop} object with the specified Drop ID from the given {@link Inventory}.
+ * @param dropId
+ * @param inventory
+ * @param campaignId
+ */
+export function getInventoryDrop(dropId: string, inventory: Inventory, campaignId?: string): TimeBasedDrop | null {
+    const campaigns = inventory.dropCampaignsInProgress;
+    if (campaigns === null) {
+        return null;
+    }
+    for (const campaign of campaigns) {
+        if (!campaignId || campaign.id === campaignId) {
+            const drops = campaign.timeBasedDrops;
+            for (const drop of drops) {
+                if (drop.id === dropId) {
+                    return drop;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Get the first unclaimed {@link TimeBasedDrop} from the specified {@link DropCampaign}.
+ * @param campaignId
+ * @param dropCampaignDetails
+ * @param inventory
+ */
+export function getFirstUnclaimedDrop(campaignId: string, dropCampaignDetails: DropCampaign, inventory: Inventory): TimeBasedDrop | null {
+    // TODO: Not all campaigns have time based drops
+    for (const drop of dropCampaignDetails.timeBasedDrops) {
+
+        // Check if we already claimed this drop
+        if (isDropClaimed(drop, inventory)) {
+            continue;
+        }
+
+        // Check if this drop has ended
+        if (new Date() > new Date(Date.parse(drop.endAt))) {
+            continue;
+        }
+
+        // Check if this drop has started
+        if (new Date() < new Date(Date.parse(drop.startAt))) {
+            continue;
+        }
+
+        return drop;
+    }
+
+    return null;
 }
 
 // todo: move this somewhere else, maybe part of twitch drops bot?
