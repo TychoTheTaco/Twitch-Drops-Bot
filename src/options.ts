@@ -102,11 +102,10 @@ export class BooleanOption extends Option<boolean> {
 export class IntegerOption extends Option<number> {
 
     constructor(name: string, optional?: { defaultValue?: (() => number) | number; alias?: string; argparseOptions?: { [key: string]: any } }) {
-        if (optional) {
-            optional.defaultValue ??= 0;
-            if (optional.argparseOptions) {
-                optional.argparseOptions['type'] = 'int';
-            }
+        optional ??= {};
+        optional.defaultValue ??= 0;
+        if (optional.argparseOptions) {
+            optional.argparseOptions['type'] = 'int';
         }
         super(name, optional);
     }
@@ -120,9 +119,8 @@ export class IntegerOption extends Option<number> {
 export class StringListOption extends Option<string[]> {
 
     constructor(name: string, optional?: { defaultValue?: (() => string[]) | string[]; alias?: string; argparseOptions?: { [key: string]: any } }) {
-        if (optional) {
-            optional.defaultValue ??= [];
-        }
+        optional ??= {};
+        optional.defaultValue ??= [];
         super(name, optional);
     }
 
