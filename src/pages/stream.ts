@@ -3,6 +3,7 @@
 import {Page} from "puppeteer";
 
 import {click} from '../utils';
+import logger from "../logger";
 
 export class StreamPage {
 
@@ -77,6 +78,22 @@ export class StreamPage {
         const settingsButtonSelector = '[data-a-target="player-settings-button"]';
         await this.#page.waitForSelector(settingsButtonSelector);
         await click(this.#page, settingsButtonSelector);
+    }
+
+    async expandChatColumn() {
+        // Check if the chat column is currently expanded or collapsed
+        const rightColumnDiv = await this.#page.waitForSelector("div.right-column");
+        const dataATargetAttributeValue = await rightColumnDiv?.evaluate((element: any) => {
+            return element.getAttribute("data-a-target");
+        });
+        if (dataATargetAttributeValue === "right-column-chat-bar") {
+            // The chat bar is already expanded, so we don't have to do anything
+        } else if (dataATargetAttributeValue === "right-column-chat-bar-collapsed") {
+            // Expand the chat column
+            await click(this.#page, "button[data-a-target='right-column__toggle-collapse-btn']");
+        } else {
+            logger.debug("Unknown chat column state: " + dataATargetAttributeValue);
+        }
     }
 
 }
