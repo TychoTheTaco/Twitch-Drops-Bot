@@ -515,18 +515,13 @@ export class TwitchDropsBot {
                     let timeout: any = null;
                     const a = async () => {
 
-                        logger.debug('call a');
-
                         if (await this.#hasPendingHigherPriorityStream()) {
                             this.#pendingHighPriority = true;
                         }
 
-                        logger.debug('done a');
                         timeout = setTimeout(a, 1000 * 60 * 5);
                     }
-                    logger.debug('before a');
                     timeout = setTimeout(a, 0);
-                    logger.debug('after a');
 
                     // Watch stream
                     try {
@@ -535,7 +530,6 @@ export class TwitchDropsBot {
                         await this.#page.goto("about:blank");
                     } finally {
                         clearTimeout(timeout);
-                        logger.debug('clear timeout');
                     }
 
                 } else {
@@ -844,9 +838,7 @@ export class TwitchDropsBot {
 
         // Wrap everything in a try/finally block so that we can detach the web socket listener at the end
         try {
-            logger.debug('attach...');
             await webSocketListener.attach(this.#page);
-            logger.debug('done');
 
             // call onstart
             for (const component of components) {
