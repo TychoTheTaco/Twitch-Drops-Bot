@@ -50,13 +50,23 @@ const options = [
         defaultValue: () => {
             switch (process.platform) {
                 case "win32":
-                    return path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
+                    const pathNative = path.join("C:", "Program Files", "Google", "Chrome", "Application", "chrome.exe");
+                    const path32bit = path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
+                    if (fs.existsSync(pathNative)){
+                        return pathNative;
+                    } else if (fs.existsSync(path32bit)){
+                        return path32bit;
+                    }
+                    return pathNative;
 
                 case "linux":
                     return path.join("google-chrome");
 
+                case "darwin":  // macOS
+                    return path.join("/", "Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome");
+
                 default:
-                    return '';
+                    return "";
             }
         }
     }),

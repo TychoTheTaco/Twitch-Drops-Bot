@@ -70,7 +70,7 @@ export class ConfigurationParser {
         // Save config file if it didn't exist
         if (this.#saveIfNotExist){
             if (!configFileExists) {
-                fs.writeFileSync(args['config'], JSON.stringify(config));
+                fs.writeFileSync(args['config'], JSON.stringify(config, null, 4));
                 logger.info('Config saved to ' + args['config']);
             }
         }
