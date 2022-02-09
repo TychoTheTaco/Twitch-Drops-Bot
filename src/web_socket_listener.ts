@@ -133,10 +133,10 @@ class WebSocketListener extends EventEmitter {
             }
         });
         this.#cdp.on('Network.webSocketFrameError', data => {
-            logger.error('Web socket frame error:', JSON.stringify(data, null, 4));
+            logger.error('Web socket frame error:' + JSON.stringify(data, null, 4));
         });
         this.#cdp.on('Network.webSocketClosed ', data => {
-            logger.error('Web socket closed:', JSON.stringify(data, null, 4));
+            logger.error('Web socket closed:' + JSON.stringify(data, null, 4));
         });
     }
 

@@ -67,7 +67,7 @@ const options = [
     new IntegerOption('--load-timeout-secs', {alias: '-t', defaultValue: 30}),
     new IntegerOption('--failed-stream-retry', {defaultValue: 3}),
     new IntegerOption('--failed-stream-timeout', {defaultValue: 30}),
-    new StringListOption('--browser-args', {defaultValue: []}),
+    new StringListOption('--browser-args'),
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new BooleanOption('--watch-unlisted-games'),
     new BooleanOption('--hide-video'),
