@@ -957,8 +957,8 @@ export class TwitchDropsBot {
                     // Check if the URL changed since we started watching. This can happen when a broadcaster ends their stream via a Raid.
                     const currentUrl = this.#page.url();
                     if (currentUrl !== streamUrl) {
-                        logger.warn("url mismatch: " + currentUrl + " vs " + streamUrl);
-                        throw new Error("url mismatch");
+                        logger.debug("url mismatch: " + currentUrl + " vs " + streamUrl);
+                        throw new StreamDownError("url mismatch");
                     }
 
                     for (const component of components) {
