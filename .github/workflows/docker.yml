@@ -38,5 +38,5 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
           push: true
-          tags: |
-            ghcr.io/${{ env.OWNER_LC }}/twitch-drops-bot:latest
+          tags: ghcr.io/${{ env.OWNER_LC }}/twitch-drops-bot:latest
+          build-args: GIT_COMMIT_HASH=${{ github.sha }}

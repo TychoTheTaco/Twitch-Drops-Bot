@@ -100,6 +100,9 @@ if (config['log_level']) {
     logger.level = config['log_level'];
 }
 
+// todo: Check application version
+logger.debug(`git commit hash: ${process.env.GIT_COMMIT_HASH}`);
+
 // Add required browser args
 const requiredBrowserArgs = [
     '--mute-audio',

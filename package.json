@@ -10,7 +10,10 @@
     "build": "npm run clean && npm run compile",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/index.js",
-    "updateGames": "node dist/update_games.js"
+    "updateGames": "node dist/update_games.js",
+    "docker:run": "npm run docker:run-linux",
+    "docker:run-linux": "docker run --rm -i -t -v ${PWD}:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot",
+    "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot"
   },
   "keywords": [],
   "author": "",
