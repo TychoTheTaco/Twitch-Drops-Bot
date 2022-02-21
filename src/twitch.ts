@@ -419,7 +419,7 @@ export async function login(browser: Browser, username?: string, password?: stri
         await page.click('[data-a-target="passport-login-button"]');
     }
 
-    const waitForCookies = async () => {
+    const waitForCookies = async (timeout?: number) => {
         // Maximum amount of time we should wait for the required cookies to be created. If they haven't been created within this time limit, consider the login a failure.
         const MAX_WAIT_FOR_COOKIES_SECONDS = timeout ?? 30;
 
@@ -427,7 +427,7 @@ export async function login(browser: Browser, username?: string, password?: stri
         const startTime = new Date().getTime();
         while (true) {
 
-            if (new Date().getTime() - startTime >= 1000 * MAX_WAIT_FOR_COOKIES_SECONDS) {
+            if (timeout !== 0 && new Date().getTime() - startTime >= 1000 * MAX_WAIT_FOR_COOKIES_SECONDS) {
                 throw new Error("Timed out while waiting for cookies to be created!");
             }
 
@@ -529,7 +529,7 @@ export async function login(browser: Browser, username?: string, password?: stri
 
         // Wait for redirect to main Twitch page. If this times out then there is probably a different type of verification that we haven't checked for.
         try {
-            await waitForCookies();
+            await waitForCookies(timeout);
         } catch (error) {
             if (error instanceof TimeoutError) {
                 const time = new Date().getTime();
@@ -547,7 +547,7 @@ export async function login(browser: Browser, username?: string, password?: stri
         }
 
     } else {
-        await waitForCookies();
+        await waitForCookies(0);
     }
 
     const cookies = await page.cookies();
