@@ -198,7 +198,7 @@ logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
             });
         }
 
-        cookies = await twitch.login(loginBrowser, config['username'], config['password'], config['headless_login']);
+        cookies = await twitch.login(loginBrowser, config['username'], config['password'], config['headless_login'], config['load_timeout_secs']);
         await page.setCookie(...cookies);
 
         if (needNewBrowser) {

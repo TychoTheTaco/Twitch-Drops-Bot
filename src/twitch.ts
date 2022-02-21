@@ -9,6 +9,7 @@ import {errors, Browser} from "puppeteer";
 
 const {TimeoutError} = errors;
 const prompt = require("prompt");
+prompt.start();  // Initialize prompt (this should only be called once!)
 
 import logger from "./logger";
 import utils from "./utils";
@@ -385,9 +386,12 @@ export function getFirstUnclaimedDrop(campaignId: string, dropCampaignDetails: D
     return null;
 }
 
-// todo: move this somewhere else, maybe part of twitch drops bot?
-export async function login(browser: Browser, username?: string, password?: string, headless: boolean = false) {
+// todo: move this somewhere else, maybe part of twitch drops bot? use http api to login?
+export async function login(browser: Browser, username?: string, password?: string, headless: boolean = false, timeout?: number) {
     const page = await browser.newPage();
+    if (timeout) {
+        page.setDefaultTimeout(1000 * timeout);
+    }
 
     // Throw an error if the page is closed for any reason
     const onPageClosed = () => {
@@ -415,10 +419,45 @@ export async function login(browser: Browser, username?: string, password?: stri
         await page.click('[data-a-target="passport-login-button"]');
     }
 
-    if (headless) {
+    const waitForCookies = async () => {
+        // Maximum amount of time we should wait for the required cookies to be created. If they haven't been created within this time limit, consider the login a failure.
+        const MAX_WAIT_FOR_COOKIES_SECONDS = timeout ?? 30;
+
+        // Wait until the required cookies have been created
+        const startTime = new Date().getTime();
         while (true) {
 
-            // TODO: This loop and try/catch statements could be replaced with Promise.any(), but it seems that Node.js 14 does not support it.
+            if (new Date().getTime() - startTime >= 1000 * MAX_WAIT_FOR_COOKIES_SECONDS) {
+                throw new Error("Timed out while waiting for cookies to be created!");
+            }
+
+            const requiredCookies = new Set(["auth-token", "persistent", "login"]);
+            const cookies = await page.cookies();
+            let allExists = true;
+            for (const requiredCookie of requiredCookies) {
+                let exists = false;
+                for (const cookie of cookies) {
+                    if (cookie["name"] === requiredCookie) {
+                        exists = true;
+                        break
+                    }
+                }
+                if (!exists) {
+                    allExists = false;
+                    break;
+                }
+            }
+            if (allExists) {
+                break;
+            }
+
+            logger.info("Waiting for cookies to be created...");
+            await page.waitForTimeout(3000);
+        }
+    }
+
+    if (headless) {
+        while (true) {
 
             // Check for email verification code
             try {
@@ -427,10 +466,8 @@ export async function login(browser: Browser, username?: string, password?: stri
                 logger.info("Email verification found.");
 
                 // Prompt user for code
-                prompt.start();
                 const result: any = await utils.asyncPrompt(["code"]);
                 const code = result["code"];
-                prompt.stop();
 
                 // Enter code
                 const first_input = await page.waitForXPath("(//input)[1]");
@@ -456,10 +493,8 @@ export async function login(browser: Browser, username?: string, password?: stri
                 logger.info("2FA verification found.");
 
                 // Prompt user for code
-                prompt.start();
                 const result: any = await utils.asyncPrompt(["code"]);
                 const code = result["code"];
-                prompt.stop();
 
                 // Enter code
                 const first_input = await page.waitForXPath('(//input[@type="text"])');
@@ -494,15 +529,14 @@ export async function login(browser: Browser, username?: string, password?: stri
 
         // Wait for redirect to main Twitch page. If this times out then there is probably a different type of verification that we haven't checked for.
         try {
-            await page.waitForNavigation();
+            await waitForCookies();
         } catch (error) {
             if (error instanceof TimeoutError) {
                 const time = new Date().getTime();
                 const screenshotPath = "failed-login-screenshot-" + time + ".png";
                 const htmlPath = "failed-login-html-" + time + ".html";
-                logger.error("Failed to login. There was probably an extra verification step that this app didn't check for. " +
-                    "A screenshot of the page will be saved to " + screenshotPath + " and the page content will be saved to " + htmlPath +
-                    ". Please create an issue on GitHub with both of these files.");
+                logger.error("Failed to login. There was probably an extra verification step that this app didn't check for."
+                    + " A screenshot of the page will be saved to " + screenshotPath + ".");
                 await page.screenshot({
                     fullPage: true,
                     path: screenshotPath
@@ -513,8 +547,7 @@ export async function login(browser: Browser, username?: string, password?: stri
         }
 
     } else {
-        // Wait for redirect to main Twitch page. The timeout is unlimited here because we may be prompted for additional authentication.
-        await page.waitForNavigation({timeout: 0});
+        await waitForCookies();
     }
 
     const cookies = await page.cookies();
