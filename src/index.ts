@@ -3,6 +3,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import axios from "axios";
+
 import logger from './logger';
 import twitch from './twitch';
 import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options';
@@ -52,9 +54,9 @@ const options = [
                 case "win32":
                     const pathNative = path.join("C:", "Program Files", "Google", "Chrome", "Application", "chrome.exe");
                     const path32bit = path.join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe");
-                    if (fs.existsSync(pathNative)){
+                    if (fs.existsSync(pathNative)) {
                         return pathNative;
-                    } else if (fs.existsSync(path32bit)){
+                    } else if (fs.existsSync(path32bit)) {
                         return path32bit;
                     }
                     return pathNative;
@@ -87,7 +89,8 @@ const options = [
     new StringListOption("--ignored-games"),
     new BooleanOption("--attempt-impossible-campaigns", false, {defaultValue: true}),
     new BooleanOption("--watch-streams-when-no-drop-campaigns-active", true, {alias: "-wswndca"}),
-    new StringListOption("--broadcasters")
+    new StringListOption("--broadcasters"),
+    new BooleanOption("--do-version-check", false, {defaultValue: true})
 ];
 
 // Parse arguments
@@ -100,7 +103,6 @@ if (config['log_level']) {
     logger.level = config['log_level'];
 }
 
-// todo: Check application version
 logger.debug(`git commit hash: ${process.env.GIT_COMMIT_HASH}`);
 
 // Add required browser args
@@ -127,7 +129,32 @@ const printableConfig = {...config};
 printableConfig['password'] = config['password'] ? 'present' : undefined;
 logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
 
+async function checkVersion() {
+    // The current commit SHA hash comes from the environment variable provided during the docker build
+    const currentCommitSha = process.env.GIT_COMMIT_HASH;
+
+    // If the current commit SHA hash is undefined, then we are likely not running from a docker container
+    if (currentCommitSha === undefined) {
+        return;
+    }
+
+    // Get the latest commit hash from the master branch
+    const result = await axios.get("https://api.github.com/repos/tychothetaco/twitch-drops-bot/branches/master");
+    const data = result.data;
+    const latestCommitSha = data["commit"]["sha"];
+    logger.debug("latestCommitSha: " + latestCommitSha);
+
+    // Warn the user if the current version is different from the latest version
+    if (currentCommitSha !== latestCommitSha) {
+        logger.warn("A newer version of Twitch-Drops-Bot is available on GitHub! Use `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest` to get the latest version.");
+    }
+}
+
 (async () => {
+
+    if (config["do_version_check"]) {
+        await checkVersion();
+    }
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
