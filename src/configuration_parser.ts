@@ -18,6 +18,8 @@ export class ConfigurationParser {
 
     parse(): object {
 
+        // todo: add a validation/transform step
+
         // Parse arguments
         const parser = new ArgumentParser();
         parser.add_argument('--config', '-c', {default: 'config.json'});

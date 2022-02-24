@@ -138,6 +138,10 @@ Below is a list of all available options.
 
 `‑-broadcasters` | `broadcasters` A list of broadcasters (streamers) usernames that the bot should watch when it is idle (no Drop Campaigns active). This list is in order of priority.
 
+`‑-do-version-check` | `do_version_check` Check for a new version on startup.
+
+- Default: `true`
+
 ### Update Games List
 
 If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
