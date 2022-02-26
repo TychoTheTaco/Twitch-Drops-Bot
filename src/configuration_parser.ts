@@ -1,10 +1,11 @@
 'use strict';
 
 import fs from 'fs';
+
 const {ArgumentParser} = require('argparse');
 
 import logger from './logger';
-import {Option} from "./options";
+import {Option, StringListOption} from "./options";
 
 export class ConfigurationParser {
 
@@ -32,6 +33,10 @@ export class ConfigurationParser {
         }
         const args = parser.parse_args();
 
+        const getJsonKey = (option: Option<any>): string => {
+            return option.name.replace(/^-+/g, '').replace(/-/g, '_');
+        }
+
         // Load config from file if it exists
         let config: any = {};
         logger.info('Loading config file: ' + args['config']);
@@ -39,6 +44,21 @@ export class ConfigurationParser {
         if (configFileExists) {
             try {
                 config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+                for (const option of this.#options) {
+                    // Verify that this actually contains only strings
+                    if (option instanceof StringListOption) {
+                        const key = getJsonKey(option);
+                        const value = config[key];
+                        if (value === undefined) {
+                            continue;
+                        }
+                        for (const item of value) {
+                            if (typeof item !== 'string') {
+                                throw new Error(`Error parsing option "${key}": Item is not a string: ${item}`);
+                            }
+                        }
+                    }
+                }
             } catch (error) {
                 logger.error('Failed to read config file!');
                 logger.error(error);
@@ -50,7 +70,7 @@ export class ConfigurationParser {
 
         // Override options from config with options from arguments and set defaults
         for (const option of this.#options) {
-            const key = option['name'].replace(/^-+/g, '').replace(/-/g, '_');
+            const key = getJsonKey(option);
             if (args[key] === undefined) {
                 if (config[key] === undefined) {
                     const defaultValue = option.defaultValue;
@@ -70,7 +90,7 @@ export class ConfigurationParser {
         }
 
         // Save config file if it didn't exist
-        if (this.#saveIfNotExist){
+        if (this.#saveIfNotExist) {
             if (!configFileExists) {
                 fs.writeFileSync(args['config'], JSON.stringify(config, null, 4));
                 logger.info('Config saved to ' + args['config']);
