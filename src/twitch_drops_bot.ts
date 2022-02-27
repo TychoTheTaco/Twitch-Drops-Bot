@@ -171,7 +171,7 @@ export class TwitchDropsBot {
      * A mapping of Drop Campaign IDs to Drop Campaigns. This "database" stores the latest information on each Drop Campaign.
      * @private
      */
-    #dropCampaignMap: { [key: string]: DropCampaign } = {};
+    readonly #dropCampaignMap: { [key: string]: DropCampaign } = {};
 
     #progressBar: any = null;
     #payload: any = null;
@@ -460,6 +460,21 @@ export class TwitchDropsBot {
     }
 
     /**
+     * Wait for an update from the {@link TwitchDropsWatchdog}, or for {@link sleepTimeMilliseconds}, whichever comes
+     * first.
+     */
+    async waitForDropCampaignUpdateOrTimeout(){
+        const timeout = setTimeout(() => {
+            logger.debug('notify all!');
+            this.#pendingDropCampaignIdsNotifier.notifyAll();
+        }, this.sleepTimeMilliseconds);
+        logger.debug('waiting for waitNotify');
+        await this.#pendingDropCampaignIdsNotifier.wait();
+        clearTimeout(timeout);
+        logger.debug('done');
+    }
+
+    /**
      * Starts the bot.
      */
     async start() {
@@ -492,15 +507,7 @@ export class TwitchDropsBot {
                     }
                     if (streamUrl === null) {
                         logger.warn("No idle streams available! sleeping for a bit...");
-
-                        setTimeout(() => {
-                            logger.debug('notify all!');
-                            this.#pendingDropCampaignIdsNotifier.notifyAll();
-                        }, this.sleepTimeMilliseconds);
-                        logger.debug('waiting for waitNotify');
-                        await this.#pendingDropCampaignIdsNotifier.wait();
-                        logger.debug('done');
-
+                        await this.waitForDropCampaignUpdateOrTimeout();
                         continue;
                     }
                     logger.info("stream: " + streamUrl)
@@ -549,13 +556,7 @@ export class TwitchDropsBot {
 
                     // Sleep
                     logger.info('No campaigns active/streams online. Checking again in ' + (sleepTime / 1000 / 60).toFixed(1) + ' min.');
-                    setTimeout(() => {
-                        logger.debug('notify all!');
-                        this.#pendingDropCampaignIdsNotifier.notifyAll();
-                    }, sleepTime);
-                    logger.debug('waiting for waitNotify');
-                    await this.#pendingDropCampaignIdsNotifier.wait();
-                    logger.debug('done');
+                    await this.waitForDropCampaignUpdateOrTimeout();
                 }
 
             } else {
