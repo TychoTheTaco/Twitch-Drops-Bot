@@ -13,7 +13,7 @@ import {StreamPage} from "./pages/stream";
 import utils, {TimedSet} from './utils';
 import logger from "./logger";
 import {ElementHandle, Page} from "puppeteer";
-import {Client, TimeBasedDrop, DropCampaign, Tag, getInventoryDrop, getFirstUnclaimedDrop} from "./twitch";
+import {Client, TimeBasedDrop, DropCampaign, Tag, getInventoryDrop, getFirstUnclaimedDrop, isCampaignCompleted} from "./twitch";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors";
 
 type Class<T> = { new(...args: any[]): T };
@@ -211,6 +211,13 @@ export class TwitchDropsBot {
      */
     readonly #streamUrlTemporaryBlacklist: TimedSet<string>;
 
+    /**
+     * A list of Drop Campaign IDs for Drop Campaigns that we have already completed. This may contain IDs for Drop
+     * Campaigns that we completed in the past, not just the Drop Campaigns that we completed in this session.
+     * @private
+     */
+    readonly #completedDropCampaignIds: string[] = [];
+
     constructor(page: Page, client: Client, options?: TwitchDropsBotOptions) {
         this.#page = page;
         this.#twitchClient = client;
@@ -274,18 +281,20 @@ export class TwitchDropsBot {
                 this.#pendingDropCampaignIds.pop();
             }
 
+            const inventory = await this.#twitchClient.getInventory();
+
             // Add to pending
-            campaigns.forEach(campaign => {
+            for (const campaign of campaigns) {
 
                 // Ignore drop campaigns that are not either active or upcoming
                 const campaignStatus = campaign.status;
                 if (campaignStatus !== 'ACTIVE' && campaignStatus !== 'UPCOMING') {
-                    return;
+                    continue;
                 }
 
                 // Ignore some games
                 if (this.#ignoredGameIds.includes(campaign.game.id)) {
-                    return;
+                    continue;
                 }
 
                 const dropCampaignId = campaign.id;
@@ -293,14 +302,24 @@ export class TwitchDropsBot {
 
                 if (this.#gameIds.length === 0 || this.#gameIds.includes(campaign.game.id) || this.#watchUnlistedGames) {
 
-                    // Check if this campaign is finished already TODO: Find a reliable way of checking if we finished a campaign
-                    /*if (this.#completedCampaignIds.has(dropCampaignId)) {
-                        return;
-                    }*/
+                    // Skip Drop Campaigns that we already completed
+                    if (this.#completedDropCampaignIds.includes(dropCampaignId)) {
+                        logger.debug("skipping completed campaign: " + dropCampaignId);
+                        continue;
+                    }
 
+                    // Check if we completed this Drop Campaign
+                    const dropCampaignDetails = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
+                    if (isCampaignCompleted(dropCampaignId, dropCampaignDetails, inventory)) {
+                        logger.info("campaign already completed: " + this.#getDropCampaignFullName(dropCampaignId));
+                        this.#completedDropCampaignIds.push(dropCampaignId);
+                        continue;
+                    }
+
+                    // We haven't finished this Drop Campaign yet, add it to the pending Drop Campaigns list
                     this.#pendingDropCampaignIds.insert(dropCampaignId);
                 }
-            });
+            }
             logger.debug('Found ' + this.#pendingDropCampaignIds.length + ' pending campaigns.');
 
             // Check if we are currently working on a drop campaign
@@ -463,13 +482,14 @@ export class TwitchDropsBot {
      * Wait for an update from the {@link TwitchDropsWatchdog}, or for {@link sleepTimeMilliseconds}, whichever comes
      * first.
      */
-    async waitForDropCampaignUpdateOrTimeout(){
+    async waitForDropCampaignUpdateOrTimeout() {
         const timeout = setTimeout(() => {
             logger.debug('notify all!');
             this.#pendingDropCampaignIdsNotifier.notifyAll();
         }, this.sleepTimeMilliseconds);
-        logger.debug('waiting for waitNotify');
+        logger.debug('waiting for waitNotify: ' + timeout);
         await this.#pendingDropCampaignIdsNotifier.wait();
+        logger.debug('clear: ' + timeout)
         clearTimeout(timeout);
         logger.debug('done');
     }
@@ -506,7 +526,7 @@ export class TwitchDropsBot {
                         logger.debug(error);
                     }
                     if (streamUrl === null) {
-                        logger.warn("No idle streams available! sleeping for a bit...");
+                        logger.info("No idle streams available! sleeping for a bit...");
                         await this.waitForDropCampaignUpdateOrTimeout();
                         continue;
                     }

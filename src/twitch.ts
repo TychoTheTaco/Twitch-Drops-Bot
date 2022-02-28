@@ -386,6 +386,16 @@ export function getFirstUnclaimedDrop(campaignId: string, dropCampaignDetails: D
     return null;
 }
 
+export function isCampaignCompleted(campaignId: string, dropCampaignDetails: DropCampaign, inventory: Inventory): boolean {
+    // TODO: Not all campaigns have time based drops
+    for (const drop of dropCampaignDetails.timeBasedDrops) {
+        if (!isDropClaimed(drop, inventory)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // todo: move this somewhere else, maybe part of twitch drops bot? use http api to login?
 export async function login(browser: Browser, username?: string, password?: string, headless: boolean = false, timeout?: number) {
     const page = await browser.newPage();

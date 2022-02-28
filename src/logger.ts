@@ -1,7 +1,8 @@
 'use strict';
 
-// Set up logger
 import {transports, createLogger, format} from 'winston';
+
+// Set up logger
 const logger = createLogger({
     format: format.combine(
         format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
@@ -16,7 +17,12 @@ const logger = createLogger({
         })
     ),
     transports: [
-        new transports.Console(),
+        new transports.Console({
+            format: format.colorize({
+                colors: {info: "white", warn: "yellow", error: "red"},
+                all: true
+            })
+        }),
         new transports.File({
             filename: `log-${new Date().getTime()}.txt`,
             level: 'debug'
