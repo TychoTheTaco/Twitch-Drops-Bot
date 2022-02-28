@@ -18,7 +18,7 @@ import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedErro
 
 type Class<T> = { new(...args: any[]): T };
 
-function getDropName(drop: TimeBasedDrop): string {
+export function getDropName(drop: TimeBasedDrop): string {
     let dropName = "";
     for (let i = 0; i < drop.benefitEdges.length; ++i){
         if (i > 0){

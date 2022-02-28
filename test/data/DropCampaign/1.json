@@ -1,0 +1,189 @@
+{
+	"id": "0aec6b1d-3877-40ce-9ba2-c8bddee76b44",
+	"self": {
+		"isAccountConnected": false,
+		"__typename": "DropCampaignSelfEdge"
+	},
+	"allow": {
+		"channels": [
+			{
+				"id": "498501291",
+				"displayName": "gunner62",
+				"__typename": "Channel"
+			}
+		],
+		"isEnabled": true,
+		"__typename": "DropCampaignACL"
+	},
+	"accountLinkURL": "https://twitch.playeternalreturn.com/",
+	"description": " ER partners drops",
+	"detailsURL": "https://twitch.playeternalreturn.com/",
+	"endAt": "2022-02-28T20:00:00Z",
+	"eventBasedDrops": [],
+	"game": {
+		"id": "512864",
+		"name": "Eternal Return",
+		"displayName": "Eternal Return",
+		"__typename": "Game"
+	},
+	"imageURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/CAMPAIGN-e8ecbc77-dae5-457f-97ec-dcd6c61710ec.png",
+	"name": "February ER Partners DROPS! - Gunner62",
+	"owner": {
+		"id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+		"name": "Nimble Neuron Games",
+		"__typename": "Organization"
+	},
+	"startAt": "2022-02-26T03:00:00Z",
+	"status": "ACTIVE",
+	"timeBasedDrops": [
+		{
+			"id": "d26e8f9c-f20b-4030-88ac-032ad805684b",
+			"benefitEdges": [
+				{
+					"benefit": {
+						"id": "DROPS_REWARD_500",
+						"createdAt": "2022-02-15T03:16:29Z",
+						"entitlementLimit": -1,
+						"game": {
+							"id": "512864",
+							"name": "Eternal Return",
+							"__typename": "Game"
+						},
+						"imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-30da0bfb-b3f5-442b-b377-b4997e5f3796.png",
+						"isIosAvailable": false,
+						"name": "A-Coin 500",
+						"ownerOrganization": {
+							"id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+							"name": "Nimble Neuron Games",
+							"__typename": "Organization"
+						},
+						"__typename": "DropBenefit"
+					},
+					"entitlementLimit": 1,
+					"__typename": "DropBenefitEdge"
+				}
+			],
+			"endAt": "2022-02-26T20:00:00Z",
+			"name": "1시간",
+			"preconditionDrops": null,
+			"requiredMinutesWatched": 60,
+			"startAt": "2022-02-26T03:00:00Z",
+			"__typename": "TimeBasedDrop"
+		},
+		{
+			"id": "3c285649-9333-4426-b384-f3227a255097",
+			"benefitEdges": [
+				{
+					"benefit": {
+						"id": "DROPS_REWARD_500",
+						"createdAt": "2022-02-15T03:16:29Z",
+						"entitlementLimit": -1,
+						"game": {
+							"id": "512864",
+							"name": "Eternal Return",
+							"__typename": "Game"
+						},
+						"imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-30da0bfb-b3f5-442b-b377-b4997e5f3796.png",
+						"isIosAvailable": false,
+						"name": "A-Coin 500",
+						"ownerOrganization": {
+							"id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+							"name": "Nimble Neuron Games",
+							"__typename": "Organization"
+						},
+						"__typename": "DropBenefit"
+					},
+					"entitlementLimit": 1,
+					"__typename": "DropBenefitEdge"
+				},
+				{
+					"benefit": {
+						"id": "EMBLEM_MARK_EVENT53",
+						"createdAt": "2022-02-14T07:35:05Z",
+						"entitlementLimit": -1,
+						"game": {
+							"id": "512864",
+							"name": "Eternal Return",
+							"__typename": "Game"
+						},
+						"imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-4795c1b5-8db0-4cdf-814b-7b48d0a1b7ab.png",
+						"isIosAvailable": false,
+						"name": "Tasty Carp Bread Icon",
+						"ownerOrganization": {
+							"id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+							"name": "Nimble Neuron Games",
+							"__typename": "Organization"
+						},
+						"__typename": "DropBenefit"
+					},
+					"entitlementLimit": 1,
+					"__typename": "DropBenefitEdge"
+				}
+			],
+			"endAt": "2022-02-26T20:00:00Z",
+			"name": "2시간",
+			"preconditionDrops": null,
+			"requiredMinutesWatched": 120,
+			"startAt": "2022-02-26T03:00:00Z",
+			"__typename": "TimeBasedDrop"
+		},
+		{
+			"id": "95375ea1-6efe-4867-b5f2-b5069f9a8493",
+			"benefitEdges": [
+				{
+					"benefit": {
+						"id": "DROPS_REWARD_500",
+						"createdAt": "2022-02-15T03:16:29Z",
+						"entitlementLimit": -1,
+						"game": {
+							"id": "512864",
+							"name": "Eternal Return",
+							"__typename": "Game"
+						},
+						"imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-30da0bfb-b3f5-442b-b377-b4997e5f3796.png",
+						"isIosAvailable": false,
+						"name": "A-Coin 500",
+						"ownerOrganization": {
+							"id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+							"name": "Nimble Neuron Games",
+							"__typename": "Organization"
+						},
+						"__typename": "DropBenefit"
+					},
+					"entitlementLimit": 1,
+					"__typename": "DropBenefitEdge"
+				},
+				{
+					"benefit": {
+						"id": "SPRAY_TastyCarpBread_1503005",
+						"createdAt": "2022-02-14T07:33:48Z",
+						"entitlementLimit": -1,
+						"game": {
+							"id": "512864",
+							"name": "Eternal Return",
+							"__typename": "Game"
+						},
+						"imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-de9aca08-5dc4-40c6-aaa0-6db92fed01c4.png",
+						"isIosAvailable": false,
+						"name": "Tasty Carp Bread Spray",
+						"ownerOrganization": {
+							"id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+							"name": "Nimble Neuron Games",
+							"__typename": "Organization"
+						},
+						"__typename": "DropBenefit"
+					},
+					"entitlementLimit": 1,
+					"__typename": "DropBenefitEdge"
+				}
+			],
+			"endAt": "2022-02-26T20:00:00Z",
+			"name": "3시간",
+			"preconditionDrops": null,
+			"requiredMinutesWatched": 180,
+			"startAt": "2022-02-26T03:00:00Z",
+			"__typename": "TimeBasedDrop"
+		}
+	],
+	"__typename": "DropCampaign"
+}
