@@ -336,6 +336,7 @@ export function isDropClaimed(drop: TimeBasedDrop, inventory: Inventory): boolea
                 return false;
             }
         }
+        return true;
     }
 
     return false;
