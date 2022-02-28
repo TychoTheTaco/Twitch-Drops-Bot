@@ -50,7 +50,8 @@ export interface DropCampaign {
 }
 
 export interface TimeBasedDrop {
-    id: string
+    id: string,
+    // A `TimeBasedDrop` may have multiple rewards. Each reward is specified by a `BenefitEdge`
     benefitEdges: {
         benefit: {
             id: string,
@@ -315,15 +316,24 @@ export function isDropClaimed(drop: TimeBasedDrop, inventory: Inventory): boolea
     // Check claimed drops
     const gameEventDrops = inventory.gameEventDrops;
     if (gameEventDrops != null) {
-        for (const d of gameEventDrops) {
-            if (d.id === drop.benefitEdges[0].benefit.id) {
-                // I haven't found a way to confirm that this specific drop was claimed, but if we get to this point it
-                // means one of two things: (1) We haven't made any progress towards the campaign so it does not show up
-                // in the "dropCampaignsInProgress" section. (2) We have already claimed everything from this campaign.
-                // In the first case, the drop won't show up here either so we can just return false. In the second case
-                // I assume that if we received a drop reward of the same type after this campaign started, that it has
-                // been claimed.
-                return Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
+
+        // Check that we have all the benefits of the drop in our inventory
+        for (const benefitEdge of drop.benefitEdges) {
+            let isBenefitClaimed = false;
+            for (const d of gameEventDrops) {
+                if (d.id === benefitEdge.benefit.id) {
+                    // I haven't found a way to confirm that this specific drop was claimed, but if we get to this point it
+                    // means one of two things: (1) We haven't made any progress towards the campaign, so it does not show up
+                    // in the "dropCampaignsInProgress" section. (2) We have already claimed everything from this campaign.
+                    // In the first case, the drop won't show up here either, so we can just return false. In the second case
+                    // I assume that if we received a drop reward of the same type after this campaign started, that it has
+                    // been claimed.
+                    isBenefitClaimed = Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
+                    break;
+                }
+            }
+            if (!isBenefitClaimed) {
+                return false;
             }
         }
     }

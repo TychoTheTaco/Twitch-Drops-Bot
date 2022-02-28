@@ -19,7 +19,14 @@ import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedErro
 type Class<T> = { new(...args: any[]): T };
 
 function getDropName(drop: TimeBasedDrop): string {
-    return drop.benefitEdges[0].benefit.name;
+    let dropName = "";
+    for (let i = 0; i < drop.benefitEdges.length; ++i){
+        if (i > 0){
+            dropName += ", ";
+        }
+        dropName += drop.benefitEdges[i].benefit.name;
+    }
+    return dropName;
 }
 
 function ansiEscape(code: string): string {
