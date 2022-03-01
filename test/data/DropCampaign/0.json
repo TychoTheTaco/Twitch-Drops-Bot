@@ -1,0 +1,76 @@
+{
+    "id": "387e589c-63b1-4b6e-804a-6bdcf47123df",
+    "self": {
+        "isAccountConnected": false,
+        "__typename": "DropCampaignSelfEdge"
+    },
+    "allow": {
+        "channels": [
+            {
+                "id": "739087146",
+                "displayName": "AmznGTom",
+                "name": "amzngtom",
+                "__typename": "Channel"
+            }
+        ],
+        "isEnabled": true,
+        "__typename": "DropCampaignACL"
+    },
+    "accountLinkURL": "https://www.playlostark.com/twitch-drops",
+    "description": "Ready for your first pet? Watch 4 hours of Lost Ark to earn one of 6 unique Saphia Pets. Play Lost Ark for FREE starting February 11th.  ",
+    "detailsURL": "https://www.playlostark.com/twitch-drops",
+    "endAt": "2022-03-07T08:00:00Z",
+    "eventBasedDrops": [],
+    "game": {
+        "id": "490100",
+        "name": "Lost Ark",
+        "displayName": "Lost Ark",
+        "__typename": "Game"
+    },
+    "imageURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/CAMPAIGN-1c5bd6f1-b16c-40ac-b5b9-865581227f32.png",
+    "name": "Saphia Pet Chest",
+    "owner": {
+        "id": "8deb8492-e435-4375-9918-a270526bfdd2",
+        "name": "Smilegate + Amazon Games",
+        "__typename": "Organization"
+    },
+    "startAt": "2022-02-08T00:00:00Z",
+    "status": "ACTIVE",
+    "timeBasedDrops": [
+        {
+            "id": "eecb4df0-74cd-4ebb-9a2c-68810134e9ae",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "2a569726-51ca-4892-b41a-e7e79b0b38fd",
+                        "createdAt": "2022-02-04T17:19:23Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "490100",
+                            "name": "Lost Ark",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-d8aef125-3c4c-4d3f-997c-bbe44e15a045.png",
+                        "isIosAvailable": false,
+                        "name": "Saphia Pet Chest",
+                        "ownerOrganization": {
+                            "id": "8deb8492-e435-4375-9918-a270526bfdd2",
+                            "name": "Smilegate + Amazon Games",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-07T08:00:00Z",
+            "name": "Saphia Pet Chest",
+            "preconditionDrops": null,
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-08T00:00:00Z",
+            "__typename": "TimeBasedDrop"
+        }
+    ],
+    "__typename": "DropCampaign"
+}

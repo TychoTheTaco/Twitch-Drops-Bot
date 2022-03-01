@@ -1,0 +1,944 @@
+{
+    "id": "3a0f1703-b650-4c81-9fe2-bfd139837363",
+    "self": {
+        "isAccountConnected": true,
+        "__typename": "DropCampaignSelfEdge"
+    },
+    "allow": {
+        "channels": [
+            {
+                "id": "182560660",
+                "displayName": "WorldofTanks",
+                "name": "worldoftanks",
+                "__typename": "Channel"
+            },
+            {
+                "id": "92176861",
+                "displayName": "worldoftanksde",
+                "name": "worldoftanksde",
+                "__typename": "Channel"
+            },
+            {
+                "id": "84303902",
+                "displayName": "Chessrulez",
+                "name": "chessrulez",
+                "__typename": "Channel"
+            },
+            {
+                "id": "92428969",
+                "displayName": "Kipinka",
+                "name": "kipinka",
+                "__typename": "Channel"
+            },
+            {
+                "id": "64887660",
+                "displayName": "Klasik_",
+                "name": "klasik_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "49099014",
+                "displayName": "marty_vole",
+                "name": "marty_vole",
+                "__typename": "Channel"
+            },
+            {
+                "id": "58150192",
+                "displayName": "Maxximus2323",
+                "name": "maxximus2323",
+                "__typename": "Channel"
+            },
+            {
+                "id": "149590098",
+                "displayName": "SuperKravatak",
+                "name": "superkravatak",
+                "__typename": "Channel"
+            },
+            {
+                "id": "35628354",
+                "displayName": "Svitman",
+                "name": "svitman",
+                "__typename": "Channel"
+            },
+            {
+                "id": "66858936",
+                "displayName": "TacticalNuke__",
+                "name": "tacticalnuke__",
+                "__typename": "Channel"
+            },
+            {
+                "id": "103179576",
+                "displayName": "Fr3dd_y",
+                "name": "fr3dd_y",
+                "__typename": "Channel"
+            },
+            {
+                "id": "217109907",
+                "displayName": "ALEXundBANDE",
+                "name": "alexundbande",
+                "__typename": "Channel"
+            },
+            {
+                "id": "131496667",
+                "displayName": "ALGO_24",
+                "name": "algo_24",
+                "__typename": "Channel"
+            },
+            {
+                "id": "41044567",
+                "displayName": "AzumDzumHzumS",
+                "name": "azumdzumhzums",
+                "__typename": "Channel"
+            },
+            {
+                "id": "111768177",
+                "displayName": "Chessgenie",
+                "name": "chessgenie",
+                "__typename": "Channel"
+            },
+            {
+                "id": "49766631",
+                "displayName": "mootality",
+                "name": "mootality",
+                "__typename": "Channel"
+            },
+            {
+                "id": "115436219",
+                "displayName": "KarlHeinz99",
+                "name": "karlheinz99",
+                "__typename": "Channel"
+            },
+            {
+                "id": "90676239",
+                "displayName": "Kreilo_",
+                "name": "kreilo_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "103439953",
+                "displayName": "KrokodilMitButterbrot",
+                "name": "krokodilmitbutterbrot",
+                "__typename": "Channel"
+            },
+            {
+                "id": "117972622",
+                "displayName": "L4ny_",
+                "name": "l4ny_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "61776958",
+                "displayName": "mailand",
+                "name": "mailand",
+                "__typename": "Channel"
+            },
+            {
+                "id": "97903976",
+                "displayName": "Mouzakrobat",
+                "name": "mouzakrobat",
+                "__typename": "Channel"
+            },
+            {
+                "id": "79248512",
+                "displayName": "Ohare83",
+                "name": "ohare83",
+                "__typename": "Channel"
+            },
+            {
+                "id": "62763356",
+                "displayName": "oldskool",
+                "name": "oldskool",
+                "__typename": "Channel"
+            },
+            {
+                "id": "79075908",
+                "displayName": "RagingRaptor",
+                "name": "ragingraptor",
+                "__typename": "Channel"
+            },
+            {
+                "id": "166514356",
+                "displayName": "Xilense",
+                "name": "xilense",
+                "__typename": "Channel"
+            },
+            {
+                "id": "57885921",
+                "displayName": "06wallst",
+                "name": "06wallst",
+                "__typename": "Channel"
+            },
+            {
+                "id": "112588095",
+                "displayName": "BarbaUrke",
+                "name": "barbaurke",
+                "__typename": "Channel"
+            },
+            {
+                "id": "59520691",
+                "displayName": "Blaold",
+                "name": "blaold",
+                "__typename": "Channel"
+            },
+            {
+                "id": "37485717",
+                "displayName": "Circon",
+                "name": "circon",
+                "__typename": "Channel"
+            },
+            {
+                "id": "25722719",
+                "displayName": "Dakillzor",
+                "name": "dakillzor",
+                "__typename": "Channel"
+            },
+            {
+                "id": "41800397",
+                "displayName": "DezGamez",
+                "name": "dezgamez",
+                "__typename": "Channel"
+            },
+            {
+                "id": "137329885",
+                "displayName": "Doctor_Nix",
+                "name": "doctor_nix",
+                "__typename": "Channel"
+            },
+            {
+                "id": "52161910",
+                "displayName": "AwesomeEpicGuys",
+                "name": "awesomeepicguys",
+                "__typename": "Channel"
+            },
+            {
+                "id": "41729715",
+                "displayName": "GoodBad93",
+                "name": "goodbad93",
+                "__typename": "Channel"
+            },
+            {
+                "id": "51420061",
+                "displayName": "missj4cky",
+                "name": "missj4cky",
+                "__typename": "Channel"
+            },
+            {
+                "id": "152184473",
+                "displayName": "Keily___",
+                "name": "keily___",
+                "__typename": "Channel"
+            },
+            {
+                "id": "43255641",
+                "displayName": "GWJ_Gaming_With_Jack",
+                "name": "gwj_gaming_with_jack",
+                "__typename": "Channel"
+            },
+            {
+                "id": "55573490",
+                "displayName": "KojotGenije",
+                "name": "kojotgenije",
+                "__typename": "Channel"
+            },
+            {
+                "id": "91282212",
+                "displayName": "MrBotosh",
+                "name": "mrbotosh",
+                "__typename": "Channel"
+            },
+            {
+                "id": "47167396",
+                "displayName": "MrScheff",
+                "name": "mrscheff",
+                "__typename": "Channel"
+            },
+            {
+                "id": "58782558",
+                "displayName": "Ohzman",
+                "name": "ohzman",
+                "__typename": "Channel"
+            },
+            {
+                "id": "44536868",
+                "displayName": "Orzanel",
+                "name": "orzanel",
+                "__typename": "Channel"
+            },
+            {
+                "id": "30623831",
+                "displayName": "QuickyBaby",
+                "name": "quickybaby",
+                "__typename": "Channel"
+            },
+            {
+                "id": "110775952",
+                "displayName": "skill4ltu",
+                "name": "skill4ltu",
+                "__typename": "Channel"
+            },
+            {
+                "id": "90326940",
+                "displayName": "StronkMaxi",
+                "name": "stronkmaxi",
+                "__typename": "Channel"
+            },
+            {
+                "id": "126069105",
+                "displayName": "SwedishLadyC",
+                "name": "swedishladyc",
+                "__typename": "Channel"
+            },
+            {
+                "id": "98827681",
+                "displayName": "Tankelit",
+                "name": "tankelit",
+                "__typename": "Channel"
+            },
+            {
+                "id": "38181398",
+                "displayName": "jXcr",
+                "name": "jxcr",
+                "__typename": "Channel"
+            },
+            {
+                "id": "29322899",
+                "displayName": "Yzn3",
+                "name": "yzn3",
+                "__typename": "Channel"
+            },
+            {
+                "id": "51466745",
+                "displayName": "WOTINFO",
+                "name": "wotinfo",
+                "__typename": "Channel"
+            },
+            {
+                "id": "43652912",
+                "displayName": "Balrog22",
+                "name": "balrog22",
+                "__typename": "Channel"
+            },
+            {
+                "id": "104114361",
+                "displayName": "Remi_LTP",
+                "name": "remi_ltp",
+                "__typename": "Channel"
+            },
+            {
+                "id": "67652247",
+                "displayName": "Fransosiche__",
+                "name": "fransosiche__",
+                "__typename": "Channel"
+            },
+            {
+                "id": "61754680",
+                "displayName": "Necromium",
+                "name": "necromium",
+                "__typename": "Channel"
+            },
+            {
+                "id": "122422572",
+                "displayName": "pamboum",
+                "name": "pamboum",
+                "__typename": "Channel"
+            },
+            {
+                "id": "51045488",
+                "displayName": "synop_s",
+                "name": "synop_s",
+                "__typename": "Channel"
+            },
+            {
+                "id": "44595372",
+                "displayName": "ZeFeKa",
+                "name": "zefeka",
+                "__typename": "Channel"
+            },
+            {
+                "id": "137363305",
+                "displayName": "call_me_piotr",
+                "name": "call_me_piotr",
+                "__typename": "Channel"
+            },
+            {
+                "id": "98314017",
+                "displayName": "ChudyChudziutki",
+                "name": "chudychudziutki",
+                "__typename": "Channel"
+            },
+            {
+                "id": "62603776",
+                "displayName": "cygan___",
+                "name": "cygan___",
+                "__typename": "Channel"
+            },
+            {
+                "id": "74696708",
+                "displayName": "DED87",
+                "name": "ded87",
+                "__typename": "Channel"
+            },
+            {
+                "id": "123584344",
+                "displayName": "KamilEater",
+                "name": "kamileater",
+                "__typename": "Channel"
+            },
+            {
+                "id": "30118763",
+                "displayName": "NewMultiShow",
+                "name": "newmultishow",
+                "__typename": "Channel"
+            },
+            {
+                "id": "52092222",
+                "displayName": "Rysiek",
+                "name": "rysiek",
+                "__typename": "Channel"
+            },
+            {
+                "id": "72618986",
+                "displayName": "Vdr1984",
+                "name": "vdr1984",
+                "__typename": "Channel"
+            },
+            {
+                "id": "125185642",
+                "displayName": "Zurugula",
+                "name": "zurugula",
+                "__typename": "Channel"
+            },
+            {
+                "id": "167886748",
+                "displayName": "Pobuogoslav",
+                "name": "pobuogoslav",
+                "__typename": "Channel"
+            },
+            {
+                "id": "54884216",
+                "displayName": "PaPaPawian",
+                "name": "papapawian",
+                "__typename": "Channel"
+            },
+            {
+                "id": "112710939",
+                "displayName": "Benso_2",
+                "name": "benso_2",
+                "__typename": "Channel"
+            },
+            {
+                "id": "144294896",
+                "displayName": "acid_fired",
+                "name": "acid_fired",
+                "__typename": "Channel"
+            },
+            {
+                "id": "59859954",
+                "displayName": "KriegerischBerater",
+                "name": "kriegerischberater",
+                "__typename": "Channel"
+            },
+            {
+                "id": "35887744",
+                "displayName": "Charlyroy",
+                "name": "charlyroy",
+                "__typename": "Channel"
+            },
+            {
+                "id": "236676066",
+                "displayName": "dukl_",
+                "name": "dukl_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "58153053",
+                "displayName": "env1ro",
+                "name": "env1ro",
+                "__typename": "Channel"
+            },
+            {
+                "id": "97074281",
+                "displayName": "iksta101",
+                "name": "iksta101",
+                "__typename": "Channel"
+            },
+            {
+                "id": "107025980",
+                "displayName": "Mishulika12",
+                "name": "mishulika12",
+                "__typename": "Channel"
+            },
+            {
+                "id": "56443942",
+                "displayName": "Monsteryoo",
+                "name": "monsteryoo",
+                "__typename": "Channel"
+            },
+            {
+                "id": "115609640",
+                "displayName": "ruen___",
+                "name": "ruen___",
+                "__typename": "Channel"
+            },
+            {
+                "id": "443826579",
+                "displayName": "K4ROL___",
+                "name": "k4rol___",
+                "__typename": "Channel"
+            },
+            {
+                "id": "247378647",
+                "displayName": "Stahlrusse",
+                "name": "stahlrusse",
+                "__typename": "Channel"
+            },
+            {
+                "id": "175066413",
+                "displayName": "ThePanzerMaiden",
+                "name": "thepanzermaiden",
+                "__typename": "Channel"
+            },
+            {
+                "id": "134377141",
+                "displayName": "Kaliummangel",
+                "name": "kaliummangel",
+                "__typename": "Channel"
+            },
+            {
+                "id": "115872559",
+                "displayName": "M0ff_",
+                "name": "m0ff_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "132698290",
+                "displayName": "jaeckefa",
+                "name": "jaeckefa",
+                "__typename": "Channel"
+            },
+            {
+                "id": "29599366",
+                "displayName": "kajzoo",
+                "name": "kajzoo",
+                "__typename": "Channel"
+            },
+            {
+                "id": "101563036",
+                "displayName": "gr4siii",
+                "name": "gr4siii",
+                "__typename": "Channel"
+            },
+            {
+                "id": "132092863",
+                "displayName": "GotYouBaby",
+                "name": "gotyoubaby",
+                "__typename": "Channel"
+            },
+            {
+                "id": "132782249",
+                "displayName": "Panzer_Nika",
+                "name": "panzer_nika",
+                "__typename": "Channel"
+            },
+            {
+                "id": "603172496",
+                "displayName": "pelus99",
+                "name": "pelus99",
+                "__typename": "Channel"
+            },
+            {
+                "id": "137735199",
+                "displayName": "johnBVB",
+                "name": "johnbvb",
+                "__typename": "Channel"
+            },
+            {
+                "id": "482488661",
+                "displayName": "GG_Go_Next_xD",
+                "name": "gg_go_next_xd",
+                "__typename": "Channel"
+            },
+            {
+                "id": "517147808",
+                "displayName": "Allterka",
+                "name": "allterka",
+                "__typename": "Channel"
+            },
+            {
+                "id": "591063080",
+                "displayName": "Haker_v1",
+                "name": "haker_v1",
+                "__typename": "Channel"
+            },
+            {
+                "id": "76126905",
+                "displayName": "NeecrozZ",
+                "name": "neecrozz",
+                "__typename": "Channel"
+            },
+            {
+                "id": "135310458",
+                "displayName": "SilentXV2",
+                "name": "silentxv2",
+                "__typename": "Channel"
+            },
+            {
+                "id": "163216709",
+                "displayName": "Quinnetic",
+                "name": "quinnetic",
+                "__typename": "Channel"
+            },
+            {
+                "id": "70867638",
+                "displayName": "Decha__",
+                "name": "decha__",
+                "__typename": "Channel"
+            },
+            {
+                "id": "214777260",
+                "displayName": "KECAJEK",
+                "name": "kecajek",
+                "__typename": "Channel"
+            },
+            {
+                "id": "69135827",
+                "displayName": "Ondra_Motivace",
+                "name": "ondra_motivace",
+                "__typename": "Channel"
+            },
+            {
+                "id": "141982730",
+                "displayName": "God_Pack",
+                "name": "god_pack",
+                "__typename": "Channel"
+            },
+            {
+                "id": "271751155",
+                "displayName": "mrscatastr0phe",
+                "name": "mrscatastr0phe",
+                "__typename": "Channel"
+            },
+            {
+                "id": "133945443",
+                "displayName": "LonnyBTW",
+                "name": "lonnybtw",
+                "__typename": "Channel"
+            },
+            {
+                "id": "594619695",
+                "displayName": "EvaTheDiiva",
+                "name": "evathediiva",
+                "__typename": "Channel"
+            },
+            {
+                "id": "88198553",
+                "displayName": "Etnie",
+                "name": "etnie",
+                "__typename": "Channel"
+            },
+            {
+                "id": "28454116",
+                "displayName": "jckl",
+                "name": "jckl",
+                "__typename": "Channel"
+            },
+            {
+                "id": "177737272",
+                "displayName": "Pomeranc_SquEEzeMe",
+                "name": "pomeranc_squeezeme",
+                "__typename": "Channel"
+            },
+            {
+                "id": "153138920",
+                "displayName": "F4KER____",
+                "name": "f4ker____",
+                "__typename": "Channel"
+            },
+            {
+                "id": "64100925",
+                "displayName": "aaalois",
+                "name": "aaalois",
+                "__typename": "Channel"
+            },
+            {
+                "id": "496375480",
+                "displayName": "schattenfee_",
+                "name": "schattenfee_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "231141385",
+                "displayName": "GoaT_NOOB",
+                "name": "goat_noob",
+                "__typename": "Channel"
+            },
+            {
+                "id": "154016383",
+                "displayName": "crazy_luciano",
+                "name": "crazy_luciano",
+                "__typename": "Channel"
+            },
+            {
+                "id": "68661210",
+                "displayName": "LuckyBlast_",
+                "name": "luckyblast_",
+                "__typename": "Channel"
+            },
+            {
+                "id": "111818352",
+                "displayName": "Buksika__",
+                "name": "buksika__",
+                "__typename": "Channel"
+            },
+            {
+                "id": "250676165",
+                "displayName": "Mausi99",
+                "name": "mausi99",
+                "__typename": "Channel"
+            },
+            {
+                "id": "79159662",
+                "displayName": "TheGamingLion7",
+                "name": "thegaminglion7",
+                "__typename": "Channel"
+            },
+            {
+                "id": "126963306",
+                "displayName": "ScatterW",
+                "name": "scatterw",
+                "__typename": "Channel"
+            },
+            {
+                "id": "254537964",
+                "displayName": "f3armenot",
+                "name": "f3armenot",
+                "__typename": "Channel"
+            },
+            {
+                "id": "98556827",
+                "displayName": "Huzumi_najarB",
+                "name": "huzumi_najarb",
+                "__typename": "Channel"
+            },
+            {
+                "id": "132231019",
+                "displayName": "szfak",
+                "name": "szfak",
+                "__typename": "Channel"
+            },
+            {
+                "id": "52556545",
+                "displayName": "Msimpson54",
+                "name": "msimpson54",
+                "__typename": "Channel"
+            },
+            {
+                "id": "55582684",
+                "displayName": "paja_beny",
+                "name": "paja_beny",
+                "__typename": "Channel"
+            },
+            {
+                "id": "57827793",
+                "displayName": "slavokiller",
+                "name": "slavokiller",
+                "__typename": "Channel"
+            },
+            {
+                "id": "79115176",
+                "displayName": "Vokurkar",
+                "name": "vokurkar",
+                "__typename": "Channel"
+            },
+            {
+                "id": "48107171",
+                "displayName": "Schockisch",
+                "name": "schockisch",
+                "__typename": "Channel"
+            },
+            {
+                "id": "29625958",
+                "displayName": "Blaczk",
+                "name": "blaczk",
+                "__typename": "Channel"
+            },
+            {
+                "id": "66238713",
+                "displayName": "Mikecase",
+                "name": "mikecase",
+                "__typename": "Channel"
+            }
+        ],
+        "isEnabled": true,
+        "__typename": "DropCampaignACL"
+    },
+    "accountLinkURL": "https://worldoftanks.eu/en/content/guide/twitch-drops/",
+    "description": "New week, new Drops, new mission! Tokens you receive can be used to customize your Twitch Drops Rewards in the new Twitch Drops Store. Spend a few right away for useful in-game perks, or save up for fantastic prizes, like 2D styles and Premium Vehicles!",
+    "detailsURL": "https://worldoftanks.eu/en/news/live-streams/monthly-twitch-drops-guide-february-2022/",
+    "endAt": "2022-02-28T05:00:00Z",
+    "eventBasedDrops": [],
+    "game": {
+        "id": "27546",
+        "name": "World of Tanks",
+        "displayName": "World of Tanks",
+        "__typename": "Game"
+    },
+    "imageURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/CAMPAIGN-a56bfabd-13b0-43e4-9940-a5d1bdc93ed3.jpeg",
+    "name": "EU: Monthly Drops 4",
+    "owner": {
+        "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+        "name": "Wargaming",
+        "__typename": "Organization"
+    },
+    "startAt": "2022-02-21T05:00:00Z",
+    "status": "EXPIRED",
+    "timeBasedDrops": [
+        {
+            "id": "b9cd08c3-440c-44e1-bac8-d134703d11d3",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "1_MTD_Token_Fourth",
+                        "createdAt": "2022-02-18T13:42:19Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "27546",
+                            "name": "World of Tanks",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-d5ab24dc-ec69-4819-84a2-8348632072bf.png",
+                        "isIosAvailable": false,
+                        "name": "1 Monthly Drops Token",
+                        "ownerOrganization": {
+                            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+                            "name": "Wargaming",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-02-28T05:00:00Z",
+            "name": "Drop 1",
+            "preconditionDrops": null,
+            "requiredMinutesWatched": 60,
+            "startAt": "2022-02-21T05:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "c0781831-693d-4944-a90f-71011ac6576b",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "MTD_Mission4_Feb",
+                        "createdAt": "2022-02-18T13:55:10Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "27546",
+                            "name": "World of Tanks",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-7ef6d13a-bafb-458b-ab7d-1ea0125ed784.png",
+                        "isIosAvailable": false,
+                        "name": "Monthly Drops Mission x1",
+                        "ownerOrganization": {
+                            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+                            "name": "Wargaming",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-02-28T05:00:00Z",
+            "name": "Drop 2",
+            "preconditionDrops": null,
+            "requiredMinutesWatched": 120,
+            "startAt": "2022-02-21T05:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "8fa0e9f9-128f-49a4-9cac-90ab87af02d0",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "MTD_Mission4_Feb_Twice",
+                        "createdAt": "2022-02-18T13:55:58Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "27546",
+                            "name": "World of Tanks",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-54f9c3c9-8c63-4003-801d-4107d27f601e.png",
+                        "isIosAvailable": false,
+                        "name": "Monthly Drops Mission x2",
+                        "ownerOrganization": {
+                            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+                            "name": "Wargaming",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-02-28T05:00:00Z",
+            "name": "Drop 3",
+            "preconditionDrops": [
+                {
+                    "id": "c0781831-693d-4944-a90f-71011ac6576b",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 120,
+            "startAt": "2022-02-21T05:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "38639c94-d8ea-428f-97e4-3589ce84ea1b",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "MTD_Mission4_Feb_Third",
+                        "createdAt": "2022-02-18T13:57:19Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "27546",
+                            "name": "World of Tanks",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-7a8e5ef3-2f4a-4168-a1df-0ca34e194d42.png",
+                        "isIosAvailable": false,
+                        "name": "Monthly Drops Mission x3",
+                        "ownerOrganization": {
+                            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+                            "name": "Wargaming",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-02-28T05:00:00Z",
+            "name": "Drop 4",
+            "preconditionDrops": [
+                {
+                    "id": "8fa0e9f9-128f-49a4-9cac-90ab87af02d0",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 120,
+            "startAt": "2022-02-21T05:00:00Z",
+            "__typename": "TimeBasedDrop"
+        }
+    ],
+    "__typename": "DropCampaign"
+}

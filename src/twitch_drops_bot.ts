@@ -408,7 +408,6 @@ export class TwitchDropsBot {
             // Make sure there are active streams before switching
             try {
                 const streams = await this.#getActiveStreams(dropCampaignId, details);
-                logger.debug("streams: " + JSON.stringify(streams, null, 4));
                 if (streams.length > 0) {
                     logger.info('Higher priority campaign found: ' + this.#getDropCampaignFullName(dropCampaignId) + ' id: ' + dropCampaignId);
                     return true;

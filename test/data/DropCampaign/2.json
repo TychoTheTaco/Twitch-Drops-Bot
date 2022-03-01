@@ -1,0 +1,82 @@
+{
+    "id": "60a23305-0194-405d-b158-9b6102a1564f",
+    "self": {
+        "isAccountConnected": false,
+        "__typename": "DropCampaignSelfEdge"
+    },
+    "allow": {
+        "channels": [
+            {
+                "id": "563817305",
+                "displayName": "PlayLostArk",
+                "name": "playlostark",
+                "__typename": "Channel"
+            },
+            {
+                "id": "739087146",
+                "displayName": "AmznGTom",
+                "name": "amzngtom",
+                "__typename": "Channel"
+            }
+        ],
+        "isEnabled": true,
+        "__typename": "DropCampaignACL"
+    },
+    "accountLinkURL": "https://www.playlostark.com/twitch-drops",
+    "description": "Legends of Lost Ark Drop 1, the Starter Set, includes a Battle Item Chest 3 Pack, Regulus' Light Currency Chest (100K Silver), and an Amethyst Shard Pack (1,500 Shards). ",
+    "detailsURL": "https://www.playlostark.com/twitch-drops",
+    "endAt": "2022-03-01T08:00:00Z",
+    "eventBasedDrops": [],
+    "game": {
+        "id": "490100",
+        "name": "Lost Ark",
+        "displayName": "Lost Ark",
+        "__typename": "Game"
+    },
+    "imageURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/CAMPAIGN-b3051d05-690b-4a5b-922b-b5372b2008b4.png",
+    "name": "LoLA Starter Item Set",
+    "owner": {
+        "id": "8deb8492-e435-4375-9918-a270526bfdd2",
+        "name": "Smilegate + Amazon Games",
+        "__typename": "Organization"
+    },
+    "startAt": "2022-02-08T16:00:00Z",
+    "status": "ACTIVE",
+    "timeBasedDrops": [
+        {
+            "id": "cee857ae-d951-4f70-8d6e-ac3a8914c45b",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "b20f6f2b-5806-4f9a-9285-8c1b9d48d9be",
+                        "createdAt": "2022-02-04T17:22:58Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "490100",
+                            "name": "Lost Ark",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-03a07bb4-d6a2-438e-83e2-31319228f82b.png",
+                        "isIosAvailable": false,
+                        "name": "LoLA Starter Item Set",
+                        "ownerOrganization": {
+                            "id": "8deb8492-e435-4375-9918-a270526bfdd2",
+                            "name": "Smilegate + Amazon Games",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T08:00:00Z",
+            "name": "LoLA Starter Item Set",
+            "preconditionDrops": null,
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-08T16:00:00Z",
+            "__typename": "TimeBasedDrop"
+        }
+    ],
+    "__typename": "DropCampaign"
+}

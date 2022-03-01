@@ -1,14 +1,29 @@
-import {getDropName} from "../src/twitch_drops_bot";
 import fs from "fs";
 
-test("getDropName", () => {
-    const dropCampaign = JSON.parse(fs.readFileSync("data/DropCampaign/1.json", {encoding: "utf-8"}));
-    const expectedOutputs = [
-        "A-Coin 500",
-        "A-Coin 500, Tasty Carp Bread Icon",
-        "A-Coin 500, Tasty Carp Bread Spray"
-    ];
-    for (let i = 0; i < dropCampaign.timeBasedDrops.length; ++i){
-        expect(getDropName(dropCampaign.timeBasedDrops[i])).toBe(expectedOutputs[i]);
+import {isDropClaimed} from "../src/twitch";
+
+test("isDropClaimed", () => {
+    const inventory = JSON.parse(fs.readFileSync("test/data/Inventory/0.json", {encoding: "utf-8"}));
+
+    const dropCampaigns = [];
+    for (let i = 0; i < 6; ++i){
+        dropCampaigns.push(JSON.parse(fs.readFileSync("test/data/DropCampaign/" + i + ".json", {encoding: "utf-8"})));
     }
+
+    const expectedResults = [
+        false, true,  false,
+        false, false, false,
+        false, false, false,
+        false, false, true,
+        true,  true,  false
+    ];
+
+    let i = 0;
+    for (const campaign of dropCampaigns){
+        for (let j = 0; j < campaign.timeBasedDrops.length; ++j){
+            expect(isDropClaimed(campaign.timeBasedDrops[j], inventory)).toBe(expectedResults[i]);
+            i++;
+        }
+    }
+
 });

@@ -1,0 +1,303 @@
+{
+    "id": "beaf0fcb-6fe8-4d5b-9dcf-9807c1a7565c",
+    "self": {
+        "isAccountConnected": false,
+        "__typename": "DropCampaignSelfEdge"
+    },
+    "allow": {
+        "channels": null,
+        "isEnabled": true,
+        "__typename": "DropCampaignACL"
+    },
+    "accountLinkURL": "https://my.hirezstudios.com",
+    "description": "Viewers will receive 48 Bounty Coins for each four hours spent viewing participating streams from February 22, 2022 until March 1, 2022 at 12:00 UTC.  Rewards must be claimed while the Twitch Campaign is running in order to be received in-game.",
+    "detailsURL": "https://www.paladins.com/news/twitch-drops-guide-and-faq",
+    "endAt": "2022-03-01T12:00:00Z",
+    "eventBasedDrops": [],
+    "game": {
+        "id": "491115",
+        "name": "Paladins",
+        "displayName": "Paladins",
+        "__typename": "Game"
+    },
+    "imageURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/CAMPAIGN-77ef9ac2-d6fa-4901-87b4-a31c550033a5.jpeg",
+    "name": "Paladins Drops 22.1 Wk 6",
+    "owner": {
+        "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+        "name": "Hi-Rez Studios",
+        "__typename": "Organization"
+    },
+    "startAt": "2022-02-22T12:00:00Z",
+    "status": "ACTIVE",
+    "timeBasedDrops": [
+        {
+            "id": "9c1cd939-8209-49bd-8151-43ed95cfe1d9",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D57",
+                        "createdAt": "2022-02-22T13:40:15Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-c2721079-8a4e-4917-8e6f-3eaeaf30a57a.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 1",
+            "preconditionDrops": null,
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "676833f7-da91-4630-b333-9443e7a853ea",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D58",
+                        "createdAt": "2022-02-22T13:41:27Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-26564885-704b-47a9-b8c1-3fb1a4d1a69e.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 2",
+            "preconditionDrops": [
+                {
+                    "id": "9c1cd939-8209-49bd-8151-43ed95cfe1d9",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "5a434cc4-213b-439f-b07a-8f5e17261723",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D59",
+                        "createdAt": "2022-02-22T13:42:32Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-2c00498f-2a60-4126-944c-4a9182599077.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 3",
+            "preconditionDrops": [
+                {
+                    "id": "676833f7-da91-4630-b333-9443e7a853ea",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "55face4b-783f-4e01-93fd-0e24ef3a5dac",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D60",
+                        "createdAt": "2022-02-22T13:43:34Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-0744d8b8-082f-4942-b51d-86725afd0fb3.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 4",
+            "preconditionDrops": [
+                {
+                    "id": "5a434cc4-213b-439f-b07a-8f5e17261723",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "5aeeb59b-c360-4a59-9ef8-be6c797655de",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D61",
+                        "createdAt": "2022-02-22T13:44:25Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-b458da2d-04a4-419c-99e4-08ed7211078e.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 5",
+            "preconditionDrops": [
+                {
+                    "id": "55face4b-783f-4e01-93fd-0e24ef3a5dac",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "6c896f60-bf6a-423b-a41d-cdbe22d8c898",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D62",
+                        "createdAt": "2022-02-22T13:45:22Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-111909af-b713-4584-9e79-05c91b4a4f7b.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 6",
+            "preconditionDrops": [
+                {
+                    "id": "5aeeb59b-c360-4a59-9ef8-be6c797655de",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        },
+        {
+            "id": "a30b8223-69b6-4476-a4f1-fcc6811909ca",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "PAL-TWITCH-69409-5P1D63",
+                        "createdAt": "2022-02-22T13:46:33Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "491115",
+                            "name": "Paladins",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-72206e1c-c8d9-4893-8405-069c99136720.jpeg",
+                        "isIosAvailable": false,
+                        "name": "Bounty Coins",
+                        "ownerOrganization": {
+                            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+                            "name": "Hi-Rez Studios",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-03-01T12:00:00Z",
+            "name": "BC Drop 7",
+            "preconditionDrops": [
+                {
+                    "id": "6c896f60-bf6a-423b-a41d-cdbe22d8c898",
+                    "__typename": "TimeBasedDrop"
+                }
+            ],
+            "requiredMinutesWatched": 240,
+            "startAt": "2022-02-22T12:00:00Z",
+            "__typename": "TimeBasedDrop"
+        }
+    ],
+    "__typename": "DropCampaign"
+}

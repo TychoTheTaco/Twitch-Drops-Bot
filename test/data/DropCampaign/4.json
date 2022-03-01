@@ -1,0 +1,76 @@
+{
+    "id": "26fcc82b-4a66-470c-8b10-74fb7c17602e",
+    "self": {
+        "isAccountConnected": false,
+        "__typename": "DropCampaignSelfEdge"
+    },
+    "allow": {
+        "channels": [
+            {
+                "id": "241448668",
+                "displayName": "NimbleNeuron",
+                "name": "nimbleneuron",
+                "__typename": "Channel"
+            }
+        ],
+        "isEnabled": true,
+        "__typename": "DropCampaignACL"
+    },
+    "accountLinkURL": "https://twitch.playeternalreturn.com/",
+    "description": "LABS DROPS!",
+    "detailsURL": "https://twitch.playeternalreturn.com/",
+    "endAt": "2022-03-03T07:59:00Z",
+    "eventBasedDrops": [],
+    "game": {
+        "id": "512864",
+        "name": "Eternal Return",
+        "displayName": "Eternal Return",
+        "__typename": "Game"
+    },
+    "imageURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/CAMPAIGN-80d53c8d-62ec-49f6-a5ae-4b23c5c17b64.png",
+    "name": "LABS DROPS!",
+    "owner": {
+        "id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+        "name": "Nimble Neuron Games",
+        "__typename": "Organization"
+    },
+    "startAt": "2022-02-28T00:00:00Z",
+    "status": "ACTIVE",
+    "timeBasedDrops": [
+        {
+            "id": "985a4001-5fc6-4d2b-b81d-389db2a0d4da",
+            "benefitEdges": [
+                {
+                    "benefit": {
+                        "id": "DROPS_REWARD_1000",
+                        "createdAt": "2021-01-15T01:49:42Z",
+                        "entitlementLimit": -1,
+                        "game": {
+                            "id": "512864",
+                            "name": "Eternal Return",
+                            "__typename": "Game"
+                        },
+                        "imageAssetURL": "https://static-cdn.jtvnw.net/twitch-drops-assets-prod/BENEFIT-dbfadf40-3e75-490b-a829-9ce617754055.png",
+                        "isIosAvailable": false,
+                        "name": "A-Coin 1000",
+                        "ownerOrganization": {
+                            "id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+                            "name": "Nimble Neuron Games",
+                            "__typename": "Organization"
+                        },
+                        "__typename": "DropBenefit"
+                    },
+                    "entitlementLimit": 1,
+                    "__typename": "DropBenefitEdge"
+                }
+            ],
+            "endAt": "2022-02-28T07:59:00Z",
+            "name": "1000 A-Coin",
+            "preconditionDrops": null,
+            "requiredMinutesWatched": 60,
+            "startAt": "2022-02-28T00:00:00Z",
+            "__typename": "TimeBasedDrop"
+        }
+    ],
+    "__typename": "DropCampaign"
+}
