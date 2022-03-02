@@ -488,11 +488,11 @@ export class TwitchDropsBot {
      * Wait for an update from the {@link TwitchDropsWatchdog}, or for {@link sleepTimeMilliseconds}, whichever comes
      * first.
      */
-    async waitForDropCampaignUpdateOrTimeout() {
+    async waitForDropCampaignUpdateOrTimeout(sleepTime: number) {
         const timeout = setTimeout(() => {
             logger.debug('notify all!');
             this.#pendingDropCampaignIdsNotifier.notifyAll();
-        }, this.sleepTimeMilliseconds);
+        }, sleepTime);
         logger.debug('waiting for waitNotify: ' + timeout);
         await this.#pendingDropCampaignIdsNotifier.wait();
         logger.debug('clear: ' + timeout)
@@ -533,7 +533,7 @@ export class TwitchDropsBot {
                     }
                     if (streamUrl === null) {
                         logger.info("No idle streams available! sleeping for a bit...");
-                        await this.waitForDropCampaignUpdateOrTimeout();
+                        await this.waitForDropCampaignUpdateOrTimeout(this.sleepTimeMilliseconds);
                         continue;
                     }
                     logger.info("stream: " + streamUrl)
@@ -582,7 +582,7 @@ export class TwitchDropsBot {
 
                     // Sleep
                     logger.info('No campaigns active/streams online. Checking again in ' + (sleepTime / 1000 / 60).toFixed(1) + ' min.');
-                    await this.waitForDropCampaignUpdateOrTimeout();
+                    await this.waitForDropCampaignUpdateOrTimeout(sleepTime);
                 }
 
             } else {
