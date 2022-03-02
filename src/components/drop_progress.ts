@@ -26,11 +26,10 @@ export default class DropProgressComponent extends Component {
      */
     #currentDrop: TimeBasedDrop | null = null;  // TODO: It is possible to make progress towards 2 or more drops at the same time!
 
-    // Reset variables
     readonly #currentMinutesWatched: { [key: string]: number } = {};
     readonly #lastMinutesWatched: { [key: string]: number } = {};
     readonly #lastProgressTime: { [key: string]: number } = {};
-    #isDropReadyToClaim = false;
+    #isDropReadyToClaim: boolean = false;
 
     constructor(options?: { targetDrop?: TimeBasedDrop, requireProgress?: boolean, exitOnClaim?: boolean }) {
         super();
@@ -58,6 +57,11 @@ export default class DropProgressComponent extends Component {
                 this.#currentMinutesWatched[this.#targetDrop.id] = inventoryDrop.self.currentMinutesWatched;
                 this.#lastMinutesWatched[this.#targetDrop.id] = this.#currentMinutesWatched[this.#targetDrop.id];
                 logger.debug('Initial drop progress: ' + this.#currentMinutesWatched[this.#targetDrop.id] + ' minutes');
+
+                // Check if this drop is ready to be claimed
+                if (this.#currentMinutesWatched[this.#targetDrop.id] >= this.#targetDrop.requiredMinutesWatched) {
+                    this.#isDropReadyToClaim = true;
+                }
             } else {
                 logger.debug('Initial drop progress: none');
             }
@@ -65,10 +69,19 @@ export default class DropProgressComponent extends Component {
 
         webSocketListener.on('drop-progress', async data => {
 
+            const dropId = data['drop_id'];
+
+            // Check if the drop is ready to be claimed. This might not be the same drop that we intended to make progress towards
+            // since we can make progress towards multiple drops at once.
+            if (dropId in this.#currentMinutesWatched){
+                if (this.#currentMinutesWatched[dropId] >= data["required_progress_min"]) {
+                    this.#isDropReadyToClaim = true;
+                }
+            }
+
             // Check if we are making progress towards the expected drop. This is not always the case since a game may
             // have multiple drop campaigns, but only one is active at a time. If this happens, then we will just set
             // the current drop to the one we are making progress on.
-            const dropId = data['drop_id'];
             if (dropId !== this.#currentDrop?.id) {
                 logger.debug('Drop progress message does not match expected drop: ' + this.#currentDrop?.id + ' vs ' + dropId);
 
@@ -108,9 +121,6 @@ export default class DropProgressComponent extends Component {
                 }
             }
         });
-        webSocketListener.on('drop-claim', () => {
-            this.#isDropReadyToClaim = true;
-        });
     }
 
     async onUpdate(page: Page, twitchClient: Client): Promise<boolean> {
@@ -134,13 +144,18 @@ export default class DropProgressComponent extends Component {
                             this.#lastProgressTime[currentDropId] = new Date().getTime();
                             this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
                             logger.debug('No progress from web socket! using inventory progress: ' + this.#currentMinutesWatched[currentDropId] + ' minutes');
+
+                            // Check if this drop is ready to be claimed
+                            if (this.#currentMinutesWatched[currentDropId] >= this.#currentDrop.requiredMinutesWatched) {
+                                this.#isDropReadyToClaim = true;
+                            }
+
                         } else {
                             throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
                         }
                     } else {
                         throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
                     }
-
                 }
             }
 
