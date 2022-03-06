@@ -31,6 +31,8 @@ export default class DropProgressComponent extends Component {
     readonly #lastProgressTime: { [key: string]: number } = {};
     #isDropReadyToClaim: boolean = false;
 
+    #shouldStop: boolean = false;
+
     constructor(options?: { targetDrop?: TimeBasedDrop, requireProgress?: boolean, exitOnClaim?: boolean }) {
         super();
         this.#targetDrop = options?.targetDrop ?? this.#targetDrop;
@@ -38,7 +40,7 @@ export default class DropProgressComponent extends Component {
         this.#exitOnClaim = options?.exitOnClaim ?? this.#exitOnClaim;
 
         this.#currentDrop = this.#targetDrop ?? this.#currentDrop;
-        logger.debug('target: ' + this.#targetDrop?.id);
+        logger.debug('target: ' + JSON.stringify(this.#targetDrop, null, 4));
 
         if (this.#targetDrop !== null) {
             this.#currentMinutesWatched[this.#targetDrop.id] = 0;
@@ -61,6 +63,7 @@ export default class DropProgressComponent extends Component {
                 // Check if this drop is ready to be claimed
                 if (this.#currentMinutesWatched[this.#targetDrop.id] >= this.#targetDrop.requiredMinutesWatched) {
                     this.#isDropReadyToClaim = true;
+                    logger.debug("ready to claim! ip");
                 }
             } else {
                 logger.debug('Initial drop progress: none');
@@ -73,10 +76,10 @@ export default class DropProgressComponent extends Component {
 
             // Check if the drop is ready to be claimed. This might not be the same drop that we intended to make progress towards
             // since we can make progress towards multiple drops at once.
-            if (dropId in this.#currentMinutesWatched){
-                if (this.#currentMinutesWatched[dropId] >= data["required_progress_min"]) {
-                    this.#isDropReadyToClaim = true;
-                }
+            if (data["current_progress_min"] >= data["required_progress_min"]) {
+                logger.debug("ready to claim! dp");
+                await this.#claimDrop(data["drop_id"], twitchClient);
+                this.#shouldStop = true;
             }
 
             // Check if we are making progress towards the expected drop. This is not always the case since a game may
@@ -148,6 +151,7 @@ export default class DropProgressComponent extends Component {
                             // Check if this drop is ready to be claimed
                             if (this.#currentMinutesWatched[currentDropId] >= this.#currentDrop.requiredMinutesWatched) {
                                 this.#isDropReadyToClaim = true;
+                                logger.debug("ready to claim! invp");
                             }
 
                         } else {
@@ -161,17 +165,7 @@ export default class DropProgressComponent extends Component {
 
             if (this.#isDropReadyToClaim) {
                 this.#isDropReadyToClaim = false;
-
-                const inventory = await twitchClient.getInventory();
-                const inventoryDrop = getInventoryDrop(this.#currentDrop.id, inventory);
-
-                if (inventoryDrop === null) {
-                    throw new Error("inventory drop was null when trying to claim it!")
-                }
-
-                // Claim the drop
-                await twitchClient.claimDropReward(inventoryDrop.self.dropInstanceID);
-                this.emit('drop-claimed', inventoryDrop);
+                await this.#claimDrop(this.#currentDrop.id, twitchClient);
 
                 // TODO: dont return, check for more drops
                 if (this.#exitOnClaim) {
@@ -179,9 +173,30 @@ export default class DropProgressComponent extends Component {
                 }
             }
 
+            if (this.#exitOnClaim && this.#shouldStop){
+                this.#shouldStop = false;
+                return true;
+            }
+
         }
 
         return false;
+    }
+
+    async #claimDrop(dropId: string, twitchClient: Client) {
+        logger.debug("claiming...");
+
+        const inventory = await twitchClient.getInventory();
+        const inventoryDrop = getInventoryDrop(dropId, inventory);
+        logger.debug("inventory drop: " + JSON.stringify(inventoryDrop, null, 4));
+
+        if (inventoryDrop === null) {
+            throw new Error("inventory drop was null when trying to claim it!")
+        }
+
+        // Claim the drop
+        await twitchClient.claimDropReward(inventoryDrop.self.dropInstanceID);
+        this.emit('drop-claimed', inventoryDrop);
     }
 
     get currentDrop(): TimeBasedDrop | null {

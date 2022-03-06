@@ -37,6 +37,15 @@ export class ConfigurationParser {
             return option.name.replace(/^-+/g, '').replace(/-/g, '_');
         }
 
+        const getOptionByName = (name: string): Option<any> | null => {
+            for (const option of this.#options) {
+                if (getJsonKey(option) === name) {
+                    return option;
+                }
+            }
+            return null;
+        }
+
         // Load config from file if it exists
         let config: any = {};
         logger.info('Loading config file: ' + args['config']);
@@ -44,6 +53,14 @@ export class ConfigurationParser {
         if (configFileExists) {
             try {
                 config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+
+                // Check for unknown options
+                for (const key of Object.keys(config)) {
+                    if (getOptionByName(key) === null) {
+                        logger.warn("Unknown option: " + key);
+                    }
+                }
+
                 for (const option of this.#options) {
                     // Verify that this actually contains only strings
                     if (option instanceof StringListOption) {

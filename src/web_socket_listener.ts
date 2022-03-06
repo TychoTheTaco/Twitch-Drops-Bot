@@ -59,6 +59,7 @@ class WebSocketListener extends EventEmitter {
                 case 'points-earned':
                 case 'reward-redeemed':
                 case 'claim-claimed':
+                case "active-multipliers-updated":
                     return true;
             }
             return false;
@@ -81,7 +82,9 @@ class WebSocketListener extends EventEmitter {
         'channel-bounty-board-events.cta': this.#ignoreTopicHandler,
         'crowd-chant-channel-v1': this.#ignoreTopicHandler,
         'radio-events-v1': this.#ignoreTopicHandler,
-        'stream-change-v1': this.#ignoreTopicHandler
+        'stream-change-v1': this.#ignoreTopicHandler,
+        'user-subscribe-events-v1': this.#ignoreTopicHandler,
+        'onsite-notifications-v1': this.#ignoreTopicHandler,
     };
 
     async attach(page: Page) {

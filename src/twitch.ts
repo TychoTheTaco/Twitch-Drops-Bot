@@ -14,9 +14,13 @@ prompt.start();  // Initialize prompt (this should only be called once!)
 import logger from "./logger";
 import utils from "./utils";
 
-export interface Stream {
+export interface StreamData {
     url: string,
     broadcaster_id: string
+}
+
+export enum StreamTag {
+    DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
 }
 
 /*
@@ -86,8 +90,30 @@ export interface Inventory {
     gameEventDrops: UserDropReward[]
 }
 
-export enum Tag {
-    DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
+export interface Tag {
+    id: string,
+    isLanguageTag: boolean,
+    localizedName: string,
+    scope: string,
+    tagName: string
+}
+
+export interface Stream {
+    createdAt: string,
+    game: Game,
+    id: string,
+    type: string,
+    tags: Tag[]
+}
+
+export interface User {
+    stream: Stream,
+    lastBroadcast: {
+        id: string,
+        title: string
+    },
+    id: string,
+    isPartner: boolean
 }
 
 export class Client {
@@ -213,7 +239,7 @@ export class Client {
      * @param gameName
      * @param options
      */
-    async getActiveStreams(gameName: string, options?: { tags?: string[] }): Promise<Stream[]> {
+    async getActiveStreams(gameName: string, options?: { tags?: string[] }): Promise<StreamData[]> {
         const data = await this.#post({
             "operationName": "DirectoryPage_Game",
             "variables": {
@@ -276,7 +302,7 @@ export class Client {
      * Check if a stream is online.
      * @param broadcasterId
      */
-    async isStreamOnline(broadcasterId: string) {
+    async isStreamOnline(broadcasterId: string): Promise<boolean> {
         const data = await this.#post({
             "operationName": "ChannelShell",
             "variables": {
@@ -292,10 +318,42 @@ export class Client {
         return data["data"]["userOrError"]["stream"] !== null;
     }
 
+    async getStreamMetadata(channelLogin: string): Promise<User> {
+        const data = await this.#post({
+            "operationName": "StreamMetadata",
+            "variables": {
+                "channelLogin": channelLogin
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "a647c2a13599e5991e175155f798ca7f1ecddde73f7f341f39009c14dbf59962"
+                }
+            }
+        });
+        return data["data"]["user"];
+    }
+
+    async getStreamTags(channelLogin: string): Promise<User | null> {
+        const data = await this.#post({
+            "operationName": "RealtimeStreamTagList",
+            "variables": {
+                "channelLogin": channelLogin
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "9d952e4aacd4f8bb9f159bd4d5886d72c398007249a8b09e604a651fc2f8ac17"
+                }
+            }
+        });
+        return data["data"]["user"];
+    }
+
 }
 
 /**
- * Check if the specified Drop has been claimed already.
+ * Check if the specified Drop has been claimed already. A Drop that we haven't claimed, but is expired will also be considered claimed.
  * @param drop
  * @param inventory
  */
@@ -307,7 +365,10 @@ export function isDropClaimed(drop: TimeBasedDrop, inventory: Inventory): boolea
         for (const campaign of dropCampaignsInProgress) {
             for (const d of campaign.timeBasedDrops) {
                 if (d.id === drop.id) {
-                    return d.self.isClaimed;
+                    if (d.self.isClaimed){
+                        return true;
+                    }
+                    return Date.now() > Date.parse(d.endAt);
                 }
             }
         }

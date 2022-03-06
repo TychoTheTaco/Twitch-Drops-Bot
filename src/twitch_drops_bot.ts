@@ -13,15 +13,15 @@ import {StreamPage} from "./pages/stream";
 import utils, {TimedSet} from './utils';
 import logger from "./logger";
 import {ElementHandle, Page} from "puppeteer";
-import {Client, TimeBasedDrop, DropCampaign, Tag, getInventoryDrop, getFirstUnclaimedDrop, isCampaignCompleted} from "./twitch";
+import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, getFirstUnclaimedDrop, isCampaignCompleted, Tag} from "./twitch";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors";
 
 type Class<T> = { new(...args: any[]): T };
 
 export function getDropName(drop: TimeBasedDrop): string {
     let dropName = "";
-    for (let i = 0; i < drop.benefitEdges.length; ++i){
-        if (i > 0){
+    for (let i = 0; i < drop.benefitEdges.length; ++i) {
+        if (i > 0) {
             dropName += ", ";
         }
         dropName += drop.benefitEdges[i].benefit.name;
@@ -46,6 +46,14 @@ export interface TwitchDropsBotOptions {
     attemptImpossibleDropCampaigns?: boolean,
     watchStreamsWhenNoDropCampaignsActive?: boolean,
     broadcasterIds?: string[]
+}
+
+function hasDropsEnabledTag(tags: Tag[]) {
+    for (const tag of tags) {
+        if (tag.id === StreamTag.DROPS_ENABLED) {
+            return true;
+        }
+    }
 }
 
 export class TwitchDropsBot {
@@ -643,7 +651,7 @@ export class TwitchDropsBot {
                 logger.info('no active drops');
                 break;
             }
-            logger.debug('working on drop ' + drop.id);
+            logger.debug('working on drop ' + JSON.stringify(drop, null, 4));
 
             let currentMinutesWatched = 0;
 
@@ -672,7 +680,62 @@ export class TwitchDropsBot {
                 delete this.#failedStreamUrlCounts[streamUrl];
             }
 
-            while (true) {
+            const getStreamToWatch = async () => {
+
+                // Check if one of our preferred broadcasters has a valid stream for this Drop Campaign
+                for (const broadcasterId of this.#broadcasterIds) {
+
+                    const streamUrl = "https://www.twitch.tv/" + broadcasterId;
+
+                    // Check if this stream is on the temporary blacklist
+                    if (this.#streamUrlTemporaryBlacklist.has(streamUrl)) {
+                        continue;
+                    }
+
+                    // Check if they are on the "allow" list
+                    if (details.allow.isEnabled) {
+                        const channels = details.allow.channels;
+                        if (channels != null) {
+                            let isChannelAllowed = false;
+                            for (const channel of details.allow.channels) {
+                                if (channel.id === broadcasterId) {
+                                    isChannelAllowed = true;
+                                    break;
+                                }
+                            }
+                            if (!isChannelAllowed) {
+                                continue;
+                            }
+                        }
+                    }
+
+                    // Get the tags on the stream
+                    const user = await this.#twitchClient.getStreamTags(broadcasterId);
+                    if (user === null) {
+                        logger.warn("Unknown user: " + broadcasterId);
+                        continue;
+                    }
+                    const stream = user.stream;
+                    if (stream === null) {
+                        logger.debug("stream offline: " + broadcasterId);
+                        continue;
+                    }
+
+                    // Check if they have drops enabled
+                    if (!hasDropsEnabledTag(stream.tags)) {
+                        continue;
+                    }
+
+                    // Check if they are streaming the correct game
+                    const streamMetadata = await this.#twitchClient.getStreamMetadata(broadcasterId);
+                    if (streamMetadata.stream.game.id !== details.game.id) {
+                        continue;
+                    }
+
+                    logger.info("selected: " + broadcasterId);
+
+                    return streamUrl;
+                }
 
                 // Get a list of active streams that have drops enabled
                 let streams = await this.#getActiveStreams(dropCampaignId, details);
@@ -685,6 +748,17 @@ export class TwitchDropsBot {
                 logger.info('Found ' + streams.length + ' good streams');
 
                 if (streams.length === 0) {
+                    return null;
+                }
+
+                return streams[0].url;
+            }
+
+            while (true) {
+
+                const streamUrl = await getStreamToWatch();
+
+                if (streamUrl === null) {
                     throw new NoStreamsError();
                 }
 
@@ -696,7 +770,6 @@ export class TwitchDropsBot {
                 ]
 
                 // Watch first stream
-                const streamUrl = streams[0].url;
                 logger.info('Watching stream: ' + streamUrl);
                 try {
                     await this.#watchStreamWrapper(streamUrl, components);
@@ -1012,7 +1085,8 @@ export class TwitchDropsBot {
 
     async #getActiveStreams(campaignId: string, details: DropCampaign) {
         // Get a list of active streams that have drops enabled
-        let streams = await this.#twitchClient.getActiveStreams(this.#getDropCampaignById(campaignId).game.displayName, {tags: [Tag.DROPS_ENABLED]});
+        // todo: this only returns 30 streams. if they all get filtered out by the "allow" filter then we should check for more
+        let streams = await this.#twitchClient.getActiveStreams(this.#getDropCampaignById(campaignId).game.displayName, {tags: [StreamTag.DROPS_ENABLED]});
 
         // Filter out streams that are not in the allowed channels list, if any
         if (details.allow.isEnabled) {
