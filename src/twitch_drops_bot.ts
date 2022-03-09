@@ -324,12 +324,12 @@ export class TwitchDropsBot {
                     }
 
                     // Check if we completed this Drop Campaign
-                    const dropCampaignDetails = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
+                    /*const dropCampaignDetails = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
                     if (isCampaignCompleted(dropCampaignId, dropCampaignDetails, inventory)) {
                         logger.info("campaign already completed: " + this.#getDropCampaignFullName(dropCampaignId));
                         this.#completedDropCampaignIds.push(dropCampaignId);
                         continue;
-                    }
+                    }*/
 
                     // We haven't finished this Drop Campaign yet, add it to the pending Drop Campaigns list
                     this.#pendingDropCampaignIds.insert(dropCampaignId);
