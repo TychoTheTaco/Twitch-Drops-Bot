@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 import fs from 'fs';
 import path from 'path';
@@ -6,10 +6,11 @@ import path from 'path';
 import axios from "axios";
 
 import logger from './logger';
-import twitch from './twitch';
+import {Client} from './twitch';
 import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options';
 import {TwitchDropsBot} from './twitch_drops_bot';
 import {ConfigurationParser} from './configuration_parser';
+import {LoginPage} from "./pages/login";
 
 // Using puppeteer-extra to add plugins
 import puppeteer from 'puppeteer-extra';
@@ -225,7 +226,8 @@ async function checkVersion() {
             });
         }
 
-        cookies = await twitch.login(loginBrowser, config['username'], config['password'], config['headless_login'], config['load_timeout_secs']);
+        const loginPage = new LoginPage(await loginBrowser.newPage());
+        cookies = await loginPage.login(config['username'], config['password'], config['headless_login'], config['load_timeout_secs']);
         await page.setCookie(...cookies);
 
         if (needNewBrowser) {
@@ -267,7 +269,7 @@ async function checkVersion() {
 
     // Seems to be the default hard-coded client ID
     // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-    const twitchClient = new twitch.Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
+    const twitchClient = new Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
 
     const bot = new TwitchDropsBot(page, twitchClient, {
         gameIds: config['games'],

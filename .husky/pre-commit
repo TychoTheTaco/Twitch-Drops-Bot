@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Needed to find tsc
+PATH=$PATH:node_modules/.bin
+
+# Compile
+if ! tsc; then
+	exit 1
+fi
+

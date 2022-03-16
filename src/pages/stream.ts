@@ -1,23 +1,15 @@
-'use strict';
+"use strict";
 
-import {Page} from "puppeteer";
-
-import {click} from '../utils';
 import logger from "../logger";
+import {TwitchPage} from "./page";
 
-export class StreamPage {
-
-    readonly #page: Page;
-
-    constructor(page: Page) {
-        this.#page = page;
-    }
+export class StreamPage extends TwitchPage {
 
     /**
      * Change the visibility of all `video` elements to `hidden` to lower CPU usage.
      */
     async hideVideoElements() {
-        const videoElements = await this.#page.$$('video');
+        const videoElements = await this.page.$$('video');
         for (let handle of videoElements) {
             await handle.evaluate((element: any) => {
                 element.style.visibility = 'hidden';
@@ -30,15 +22,15 @@ export class StreamPage {
      * elements are visible.
      */
     async waitForLoad() {
-        await this.#page.waitForSelector('p[data-a-target="animated-channel-viewers-count"]');
-        await this.#page.waitForSelector('span.live-time');
+        await this.page.waitForSelector('p[data-a-target="animated-channel-viewers-count"]');
+        await this.page.waitForSelector('span.live-time');
     }
 
     /**
      * Click accept on any mature content warnings.
      */
     async acceptMatureContent() {
-        await click(this.#page, '[data-a-target="player-overlay-mature-accept"]');
+        await this.click('[data-a-target="player-overlay-mature-accept"]');
     }
 
     /**
@@ -48,20 +40,20 @@ export class StreamPage {
         await this.#clickSettingsButton();
 
         const qualityButtonSelector = '[data-a-target="player-settings-menu-item-quality"]';
-        await this.#page.waitForSelector(qualityButtonSelector);
-        await click(this.#page, qualityButtonSelector);
+        await this.page.waitForSelector(qualityButtonSelector);
+        await this.click(qualityButtonSelector);
 
         const lowestQualityButtonSelector = 'div[data-a-target="player-settings-menu"]>div:last-child input';
-        const lowestQualityButton = await this.#page.waitForSelector(lowestQualityButtonSelector);
+        const lowestQualityButton = await this.page.waitForSelector(lowestQualityButtonSelector);
         if (!await (await lowestQualityButton?.getProperty('checked'))?.jsonValue()) {
-            await click(this.#page, lowestQualityButtonSelector);
+            await this.click(lowestQualityButtonSelector);
         } else {
             await this.#clickSettingsButton();
         }
     }
 
     async getViewersCount() {
-        const element = await this.#page.$('p[data-a-target="animated-channel-viewers-count"]');
+        const element = await this.page.$('p[data-a-target="animated-channel-viewers-count"]');
         const property = await element?.getProperty('innerText');
         const value = await property?.jsonValue() as string;
         const cleanValue = value.replace(/[.,]/g, '');
@@ -69,20 +61,20 @@ export class StreamPage {
     }
 
     async getUptime() {
-        const element = await this.#page.$('span.live-time');
+        const element = await this.page.$('span.live-time');
         const property = await element?.getProperty('innerText');
         return await property?.jsonValue();
     }
 
     async #clickSettingsButton() {
         const settingsButtonSelector = '[data-a-target="player-settings-button"]';
-        await this.#page.waitForSelector(settingsButtonSelector);
-        await click(this.#page, settingsButtonSelector);
+        await this.page.waitForSelector(settingsButtonSelector);
+        await this.click(settingsButtonSelector);
     }
 
     async expandChatColumn() {
         // Check if the chat column is currently expanded or collapsed
-        const rightColumnDiv = await this.#page.waitForSelector("div.right-column");
+        const rightColumnDiv = await this.page.waitForSelector("div.right-column");
         const dataATargetAttributeValue = await rightColumnDiv?.evaluate((element: any) => {
             return element.getAttribute("data-a-target");
         });
@@ -90,7 +82,7 @@ export class StreamPage {
             // The chat bar is already expanded, so we don't have to do anything
         } else if (dataATargetAttributeValue === "right-column-chat-bar-collapsed") {
             // Expand the chat column
-            await click(this.#page, "button[data-a-target='right-column__toggle-collapse-btn']");
+            await this.click("button[data-a-target='right-column__toggle-collapse-btn']");
         } else {
             logger.debug("Unknown chat column state: " + dataATargetAttributeValue);
         }

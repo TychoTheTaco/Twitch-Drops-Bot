@@ -2,7 +2,8 @@
 
 import fs from 'fs';
 
-const prompt = require('prompt');
+const prompt = require("prompt");
+prompt.start();  // Initialize prompt (this should only be called once!)
 import {Page} from "puppeteer";
 
 export async function asyncPrompt(schema: any) {
@@ -25,19 +26,6 @@ export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
         path: screenshotPath
     });
     fs.writeFileSync(htmlPath, await page.content());
-}
-
-/**
- * Click the element specified by 'selector' by calling its click() method. This is usually better than using
- * Puppeteer's Page.click() because Puppeteer attempts to scroll the page and simulate an actual mouse click.
- * This can cause the click to fail if elements are displayed on top of it (for example popup dialogs).
- * @param page
- * @param selector
- */
-export async function click(page: Page, selector: string) {
-    return page.evaluate((selector) => {
-        document.querySelector(selector).click();
-    }, selector);
 }
 
 export class TimedSet<T> extends Set<T> {
@@ -67,6 +55,5 @@ export class TimedSet<T> extends Set<T> {
 
 export default {
     asyncPrompt,
-    saveScreenshotAndHtml,
-    click
+    saveScreenshotAndHtml
 };

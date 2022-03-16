@@ -2,6 +2,10 @@
   "name": "twitch_drops_bot",
   "version": "1.0.0",
   "description": "A Node.js bot for automatically collecting Twitch drops.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TychoTheTaco/Twitch-Drops-Bot"
+  },
   "main": "dist/index.js",
   "scripts": {
     "clean": "rimraf dist",
@@ -13,18 +17,20 @@
     "updateGames": "node dist/update_games.js",
     "docker:run": "npm run docker:run-linux",
     "docker:run-linux": "docker run --rm -i -t -v ${PWD}:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot",
-    "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot"
+    "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "argparse": "^2.0.1",
-    "axios": "^0.26.0",
+    "axios": "^0.26.1",
     "cli-progress": "^3.10.0",
+    "deep-object-diff": "^1.1.7",
     "dnscache": "^1.0.2",
     "prompt": "^1.2.2",
-    "puppeteer": "^13.4.1",
+    "puppeteer": "^13.5.1",
     "puppeteer-extra": "^3.2.3",
     "puppeteer-extra-plugin-stealth": "^2.9.0",
     "sorted-array-type": "^1.2.1",
@@ -33,6 +39,7 @@
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
+    "husky": "^7.0.0",
     "jest": "^27.5.1",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.1.3",

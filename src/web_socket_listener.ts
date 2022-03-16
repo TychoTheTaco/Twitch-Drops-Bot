@@ -5,6 +5,12 @@ import EventEmitter from 'events';
 import logger from './logger';
 import {CDPSession, Page} from "puppeteer";
 
+export interface UserDropEvents_DropProgress {
+    drop_id: string,
+    current_progress_min: number,
+    required_progress_min: number
+}
+
 class WebSocketListener extends EventEmitter {
 
     #cdp?: CDPSession;
@@ -13,7 +19,7 @@ class WebSocketListener extends EventEmitter {
         return true;
     }
 
-    #topicHandlers: {[key: string] : (message: any) => boolean} = {
+    #topicHandlers: { [key: string]: (message: any) => boolean } = {
         'user-drop-events': message => {
             const messageType = message['type'];
             switch (messageType) {
@@ -120,6 +126,8 @@ class WebSocketListener extends EventEmitter {
                      */
                     const topic = payload['data']['topic'].split('.')[0];
                     const message = JSON.parse(payload['data']['message']);
+
+                    this.emit('message', message);
 
                     // Call topic handler
                     const topicHandler = this.#topicHandlers[topic];

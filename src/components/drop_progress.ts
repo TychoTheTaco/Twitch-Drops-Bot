@@ -3,22 +3,37 @@ import {Page} from "puppeteer";
 import Component from "./component";
 import {Client, TimeBasedDrop, getInventoryDrop} from "../twitch";
 import logger from "../logger";
-import WebSocketListener from "../web_socket_listener";
+import WebSocketListener, {UserDropEvents_DropProgress} from "../web_socket_listener";
 import {NoProgressError} from "../errors";
 
 export default class DropProgressComponent extends Component {
 
     /**
-     * The drop that we are trying to make progress towards. Sometimes when watching a stream, we make progress towards
-     * a different drop than we had intended. This can happen when a game has multiple drop campaigns and we try to
+     * The Drop that we are trying to make progress towards. Sometimes when watching a stream, we make progress towards
+     * a different Drop than we had intended. This can happen when a game has multiple Drop campaigns, and we try to
      * process one, but a different one is currently active.
      * @private
      */
     readonly #targetDrop: TimeBasedDrop | null = null;
 
+    /**
+     * When true, an exception will be thrown if we haven't made any progress for {@link #maxNoProgressMinutes} minutes.
+     * @private
+     */
     readonly #requireProgress: boolean = true;
 
+    /**
+     * When true, exit after claiming a drop.
+     * @private
+     */
     readonly #exitOnClaim: boolean = true;
+
+    /**
+     * If we haven't made any progress in this many minutes, then an exception will be thrown. This only has an effect
+     * when {@link #requireProgress} is true.
+     * @private
+     */
+    readonly #maxNoProgressMinutes: number = 5;
 
     /**
      * The drop that we are currently making progress towards.
@@ -32,6 +47,8 @@ export default class DropProgressComponent extends Component {
     #isDropReadyToClaim: boolean = false;
 
     #shouldStop: boolean = false;
+
+    #pendingWebSocketMessages: UserDropEvents_DropProgress[] = [];
 
     constructor(options?: { targetDrop?: TimeBasedDrop, requireProgress?: boolean, exitOnClaim?: boolean }) {
         super();
@@ -70,15 +87,22 @@ export default class DropProgressComponent extends Component {
             }
         }
 
-        webSocketListener.on('drop-progress', async data => {
+        webSocketListener.on('drop-progress', (data: UserDropEvents_DropProgress) => {
+            this.#pendingWebSocketMessages.push(data);
+        });
+    }
 
-            const dropId = data['drop_id'];
+    async onUpdate(page: Page, twitchClient: Client): Promise<boolean> {
+
+        // Process web socket messages
+        for (const data of this.#pendingWebSocketMessages) {
+            const dropId = data.drop_id;
 
             // Check if the drop is ready to be claimed. This might not be the same drop that we intended to make progress towards
             // since we can make progress towards multiple drops at once.
-            if (data["current_progress_min"] >= data["required_progress_min"]) {
+            if (data.current_progress_min >= data.required_progress_min) {
                 logger.debug("ready to claim! dp");
-                await this.#claimDrop(data["drop_id"], twitchClient);
+                await this.#claimDrop(data.drop_id, twitchClient);
                 this.#shouldStop = true;
             }
 
@@ -89,13 +113,13 @@ export default class DropProgressComponent extends Component {
                 logger.debug('Drop progress message does not match expected drop: ' + this.#currentDrop?.id + ' vs ' + dropId);
 
                 if (!(dropId in this.#currentMinutesWatched)) {
-                    this.#currentMinutesWatched[dropId] = data['current_progress_min'];
-                    this.#lastMinutesWatched[dropId] = data['current_progress_min'];
+                    this.#currentMinutesWatched[dropId] = data.current_progress_min;
+                    this.#lastMinutesWatched[dropId] = data.current_progress_min;
                 }
             }
 
             // Check if we are making progress
-            this.#currentMinutesWatched[dropId] = data['current_progress_min'];
+            this.#currentMinutesWatched[dropId] = data.current_progress_min;
             if (this.#currentMinutesWatched[dropId] > this.#lastMinutesWatched[dropId]) {
                 this.#lastProgressTime[dropId] = new Date().getTime();
                 this.#lastMinutesWatched[dropId] = this.#currentMinutesWatched[dropId];
@@ -123,22 +147,17 @@ export default class DropProgressComponent extends Component {
 
                 }
             }
-        });
-    }
-
-    async onUpdate(page: Page, twitchClient: Client): Promise<boolean> {
-
-        // The maximum amount of time to allow no progress
-        const maxNoProgressTime = 1000 * 60 * 5;
+        }
+        this.#pendingWebSocketMessages = [];
 
         if (this.#currentDrop !== null) {
 
             // Check if we have made progress towards the current drop
             if (this.#requireProgress) {
-                if (new Date().getTime() - this.#lastProgressTime[this.#currentDrop['id']] >= maxNoProgressTime) {
+                if (new Date().getTime() - this.#lastProgressTime[this.#currentDrop.id] >= this.#maxNoProgressMinutes * 60 * 1000) {
 
                     // Maybe we haven't got any updates from the web socket, lets check our inventory
-                    const currentDropId = this.#currentDrop['id'];
+                    const currentDropId = this.#currentDrop.id;
                     const inventory = await twitchClient.getInventory();
                     const inventoryDrop = getInventoryDrop(currentDropId, inventory);
                     if (inventoryDrop) {
@@ -155,10 +174,10 @@ export default class DropProgressComponent extends Component {
                             }
 
                         } else {
-                            throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+                            throw new NoProgressError("No progress was detected in the last " + this.#maxNoProgressMinutes + " minutes!");
                         }
                     } else {
-                        throw new NoProgressError("No progress was detected in the last " + (maxNoProgressTime / 1000 / 60) + " minutes!");
+                        throw new NoProgressError("No progress was detected in the last " + this.#maxNoProgressMinutes + " minutes!");
                     }
                 }
             }
@@ -173,7 +192,7 @@ export default class DropProgressComponent extends Component {
                 }
             }
 
-            if (this.#exitOnClaim && this.#shouldStop){
+            if (this.#exitOnClaim && this.#shouldStop) {
                 this.#shouldStop = false;
                 return true;
             }

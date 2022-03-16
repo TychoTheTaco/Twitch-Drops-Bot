@@ -2,17 +2,9 @@
 
 require("dnscache")({enable: true});
 
-import fs from "fs";
-
 import axios from "axios";
-import {errors, Browser} from "puppeteer";
-
-const {TimeoutError} = errors;
-const prompt = require("prompt");
-prompt.start();  // Initialize prompt (this should only be called once!)
 
 import logger from "./logger";
-import utils from "./utils";
 
 export interface StreamData {
     url: string,
@@ -113,9 +105,17 @@ export interface User {
         title: string
     },
     id: string,
-    isPartner: boolean
+    isPartner: boolean,
+    channel: Channel
 }
 
+export interface Channel {
+    id: string
+}
+
+/**
+ * A client for interacting with the Twitch GQL endpoint.
+ */
 export class Client {
 
     readonly #clientId: string;
@@ -350,57 +350,22 @@ export class Client {
         return data["data"]["user"];
     }
 
-}
-
-/**
- * Check if the specified Drop has been claimed already. A Drop that we haven't claimed, but is expired will also be considered claimed.
- * @param drop
- * @param inventory
- */
-export function isDropClaimed(drop: TimeBasedDrop, inventory: Inventory): boolean {
-
-    // Check campaigns in progress
-    const dropCampaignsInProgress = inventory.dropCampaignsInProgress;
-    if (dropCampaignsInProgress != null) {
-        for (const campaign of dropCampaignsInProgress) {
-            for (const d of campaign.timeBasedDrops) {
-                if (d.id === drop.id) {
-                    if (d.self.isClaimed){
-                        return true;
-                    }
-                    return Date.now() > Date.parse(d.endAt);
+    async getAvailableCampaigns(channelId: string): Promise<TimeBasedDrop[]> {
+        const data = await this.#post({
+            "operationName": "DropsHighlightService_AvailableDrops",
+            "variables": {
+                "channelID": channelId
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "e589e213f16d9b17c6f0a8ccd18bdd6a8a6b78bc9db67a75efd43793884ff4e5"
                 }
             }
-        }
+        });
+        return data["data"]["channel"]["viewerDropCampaigns"];
     }
 
-    // Check claimed drops
-    const gameEventDrops = inventory.gameEventDrops;
-    if (gameEventDrops != null) {
-
-        // Check that we have all the benefits of the drop in our inventory
-        for (const benefitEdge of drop.benefitEdges) {
-            let isBenefitClaimed = false;
-            for (const d of gameEventDrops) {
-                if (d.id === benefitEdge.benefit.id) {
-                    // I haven't found a way to confirm that this specific drop was claimed, but if we get to this point it
-                    // means one of two things: (1) We haven't made any progress towards the campaign, so it does not show up
-                    // in the "dropCampaignsInProgress" section. (2) We have already claimed everything from this campaign.
-                    // In the first case, the drop won't show up here either, so we can just return false. In the second case
-                    // I assume that if we received a drop reward of the same type after this campaign started, that it has
-                    // been claimed.
-                    isBenefitClaimed = Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
-                    break;
-                }
-            }
-            if (!isBenefitClaimed) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -428,219 +393,56 @@ export function getInventoryDrop(dropId: string, inventory: Inventory, campaignI
 }
 
 /**
- * Get the first unclaimed {@link TimeBasedDrop} from the specified {@link DropCampaign}.
- * @param campaignId
- * @param dropCampaignDetails
+ * Check if the specified Drop has been completed already. A Drop is considered completed if we have claimed it or
+ * if it is expired.
+ * @param drop
  * @param inventory
  */
-export function getFirstUnclaimedDrop(campaignId: string, dropCampaignDetails: DropCampaign, inventory: Inventory): TimeBasedDrop | null {
-    // TODO: Not all campaigns have time based drops
-    for (const drop of dropCampaignDetails.timeBasedDrops) {
-
-        // Check if we already claimed this drop
-        if (isDropClaimed(drop, inventory)) {
-            continue;
-        }
-
-        // Check if this drop has ended
-        if (new Date() > new Date(Date.parse(drop.endAt))) {
-            continue;
-        }
-
-        // Check if this drop has started
-        if (new Date() < new Date(Date.parse(drop.startAt))) {
-            continue;
-        }
-
-        return drop;
-    }
-
-    return null;
-}
-
-export function isCampaignCompleted(campaignId: string, dropCampaignDetails: DropCampaign, inventory: Inventory): boolean {
-    // TODO: Not all campaigns have time based drops
-    for (const drop of dropCampaignDetails.timeBasedDrops) {
-        if (!isDropClaimed(drop, inventory)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// todo: move this somewhere else, maybe part of twitch drops bot? use http api to login?
-export async function login(browser: Browser, username?: string, password?: string, headless: boolean = false, timeout?: number) {
-    const page = await browser.newPage();
-    if (timeout) {
-        page.setDefaultTimeout(1000 * timeout);
-    }
-
-    // Throw an error if the page is closed for any reason
-    const onPageClosed = () => {
-        throw new Error("Page closed!");
-    }
-    page.on("close", onPageClosed);
-
-    // Go to login page
-    await page.goto("https://www.twitch.tv/login");
-
-    // Enter username
-    if (username !== undefined) {
-        await page.focus("#login-username");
-        await page.keyboard.type(username);
-    }
-
-    // Enter password
-    if (password !== undefined) {
-        await page.focus("#password-input");
-        await page.keyboard.type(password);
-    }
-
-    // Click login button
-    if (username !== undefined && password !== undefined) {
-        await page.click('[data-a-target="passport-login-button"]');
-    }
-
-    const waitForCookies = async (timeout?: number) => {
-        // Maximum amount of time we should wait for the required cookies to be created. If they haven't been created within this time limit, consider the login a failure.
-        const MAX_WAIT_FOR_COOKIES_SECONDS = timeout ?? 30;
-
-        // Wait until the required cookies have been created
-        const startTime = new Date().getTime();
-        while (true) {
-
-            if (timeout !== 0 && new Date().getTime() - startTime >= 1000 * MAX_WAIT_FOR_COOKIES_SECONDS) {
-                throw new Error("Timed out while waiting for cookies to be created!");
-            }
-
-            const requiredCookies = new Set(["auth-token", "persistent", "login"]);
-            const cookies = await page.cookies();
-            let allExists = true;
-            for (const requiredCookie of requiredCookies) {
-                let exists = false;
-                for (const cookie of cookies) {
-                    if (cookie["name"] === requiredCookie) {
-                        exists = true;
-                        break
+export function isDropCompleted(drop: TimeBasedDrop, inventory: Inventory): boolean {
+    const dropCampaignsInProgress = inventory.dropCampaignsInProgress;
+    if (dropCampaignsInProgress != null) {
+        for (const campaign of dropCampaignsInProgress) {
+            //todo: consider event based drops!
+            for (const d of campaign.timeBasedDrops) {
+                if (d.id === drop.id) {
+                    if (d.self.isClaimed) {
+                        return true;
                     }
+                    return Date.now() > Date.parse(d.endAt);
                 }
-                if (!exists) {
-                    allExists = false;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ *
+ * @param drop
+ * @param inventory
+ */
+/*
+export function areBenefitsInInventory(drop: TimeBasedDrop, inventory: Inventory): boolean {
+    const gameEventDrops = inventory.gameEventDrops;
+    if (gameEventDrops != null) {
+        for (const benefitEdge of drop.benefitEdges) {
+            let isBenefitClaimed = false;
+            for (const d of gameEventDrops) {
+                if (d.id === benefitEdge.benefit.id) {
+                    // I haven't found a way to confirm that this specific drop was claimed, but if we get to this point it
+                    // means one of two things: (1) We haven't made any progress towards the campaign, so it does not show up
+                    // in the "dropCampaignsInProgress" section. (2) We have already claimed everything from this campaign.
+                    // In the first case, the drop won't show up here either, so we can just return false. In the second case
+                    // I assume that if we received a drop reward of the same type after this campaign started, that it has
+                    // been claimed.
+                    isBenefitClaimed = Date.parse(d.lastAwardedAt) > Date.parse(drop.startAt);
                     break;
                 }
             }
-            if (allExists) {
-                break;
+            if (!isBenefitClaimed) {
+                return false;
             }
-
-            logger.info("Waiting for cookies to be created...");
-            await page.waitForTimeout(3000);
         }
     }
-
-    if (headless) {
-        while (true) {
-
-            // Check for email verification code
-            try {
-                logger.info("Checking for email verification...");
-                await page.waitForXPath('//*[contains(text(), "please enter the 6-digit code we sent")]');
-                logger.info("Email verification found.");
-
-                // Prompt user for code
-                const result: any = await utils.asyncPrompt(["code"]);
-                const code = result["code"];
-
-                // Enter code
-                const first_input = await page.waitForXPath("(//input)[1]");
-                if (first_input == null) {
-                    logger.error("first_input was null!");
-                    break
-                }
-                await first_input.click();
-                await page.keyboard.type(code);
-                break;
-            } catch (error) {
-                if (error instanceof TimeoutError) {
-                    logger.info("Email verification not found.");
-                } else {
-                    logger.error(error);
-                }
-            }
-
-            // Check for 2FA code
-            try {
-                logger.info("Checking for 2FA verification...");
-                await page.waitForXPath('//*[contains(text(), "Enter the code found in your authenticator app")]');
-                logger.info("2FA verification found.");
-
-                // Prompt user for code
-                const result: any = await utils.asyncPrompt(["code"]);
-                const code = result["code"];
-
-                // Enter code
-                const first_input = await page.waitForXPath('(//input[@type="text"])');
-                if (first_input == null) {
-                    logger.error("first_input was null!");
-                    break
-                }
-                await first_input.click();
-                await page.keyboard.type(code);
-
-                // Click submit
-                const button = await page.waitForXPath('//button[@target="submit_button"]');
-                if (button == null) {
-                    logger.error("button was null!");
-                    break
-                }
-                await button.click();
-
-                break;
-            } catch (error) {
-                if (error instanceof TimeoutError) {
-                    logger.info("2FA verification not found.");
-                } else {
-                    logger.error(error);
-                }
-            }
-
-            logger.info("No extra verification found!");
-
-            break;
-        }
-
-        // Wait for redirect to main Twitch page. If this times out then there is probably a different type of verification that we haven't checked for.
-        try {
-            await waitForCookies(timeout);
-        } catch (error) {
-            if (error instanceof TimeoutError) {
-                const time = new Date().getTime();
-                const screenshotPath = "failed-login-screenshot-" + time + ".png";
-                const htmlPath = "failed-login-html-" + time + ".html";
-                logger.error("Failed to login. There was probably an extra verification step that this app didn't check for."
-                    + " A screenshot of the page will be saved to " + screenshotPath + ".");
-                await page.screenshot({
-                    fullPage: true,
-                    path: screenshotPath
-                });
-                fs.writeFileSync(htmlPath, await page.content());
-            }
-            throw error;
-        }
-
-    } else {
-        await waitForCookies(0);
-    }
-
-    const cookies = await page.cookies();
-
-    page.off("close", onPageClosed);
-    await page.close();
-
-    return cookies;
-}
-
-export default {
-    Client,
-    login
-}
+    return false;
+}*/
