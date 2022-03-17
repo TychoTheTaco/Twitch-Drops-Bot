@@ -991,10 +991,13 @@ export class TwitchDropsBot {
         }
     }
 
+    #isProgressBarStarted: boolean = false;
+
     #startProgressBar(p = this.#payload) {
-        this.#isFirstOutput = true;
         this.#payload = p;
-        if (this.#progressBar !== null) {
+        if (!this.#isProgressBarStarted && this.#progressBar !== null) {
+            this.#isProgressBarStarted = true;
+            this.#isFirstOutput = true;
             for (let i = 0; i < this.#progressBarHeight; ++i) {
                 process.stdout.write('\n');
             }
@@ -1011,7 +1014,8 @@ export class TwitchDropsBot {
     }
 
     #stopProgressBar(clear: boolean = false) {
-        if (this.#progressBar !== null) {
+        if (this.#isProgressBarStarted) {
+            this.#isProgressBarStarted = false;
             this.#progressBar.stop();
             process.stdout.write(ansiEscape(`${this.#progressBarHeight - 1}B`) + ansiEscape("2K") + ansiEscape(`${this.#progressBarHeight - 1}A`));
         }
@@ -1165,42 +1169,42 @@ export class TwitchDropsBot {
                 return null;
             }
 
-            // Create progress bar
-            this.#progressBar = new cliProgress.SingleBar(
-                {
-                    barsize: 20,
-                    clearOnComplete: true,
-                    stream: process.stdout,
-                    format: (options: any, params: any, payload: any) => {
-                        let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
-
-                        const dropProgressComponent = getComponent(DropProgressComponent);
-                        if (dropProgressComponent !== null && dropProgressComponent.currentDrop !== null) {
-                            const drop = dropProgressComponent.currentDrop;
-                            this.#progressBar.setTotal(drop.requiredMinutesWatched);
-                            result += `${getDropName(drop)} ${BarFormat((dropProgressComponent.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${dropProgressComponent.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
-                        } else {
-                            result += `- No Drops Active -\n`;
-                        }
-
-                        if (this.#isFirstOutput) {
-                            return result;
-                        }
-
-                        return ansiEscape(`${this.#progressBarHeight}A`) + result;
-                    }
-                },
-                cliProgress.Presets.shades_classic
-            );
-            this.#progressBar.on('redraw-post', () => {
-                this.#isFirstOutput = false;
-            });
-
-            this.#viewerCount = await streamPage.getViewersCount();
-            this.#startProgressBar({'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), stream_url: streamUrl});
-
             // Wrap everything in a try/finally block so that we can stop the progress bar at the end
             try {
+
+                // Create progress bar
+                this.#progressBar = new cliProgress.SingleBar(
+                    {
+                        barsize: 20,
+                        clearOnComplete: true,
+                        stream: process.stdout,
+                        format: (options: any, params: any, payload: any) => {
+                            let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
+
+                            const dropProgressComponent = getComponent(DropProgressComponent);
+                            if (dropProgressComponent !== null && dropProgressComponent.currentDrop !== null) {
+                                const drop = dropProgressComponent.currentDrop;
+                                this.#progressBar.setTotal(drop.requiredMinutesWatched);
+                                result += `${getDropName(drop)} ${BarFormat((dropProgressComponent.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${dropProgressComponent.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
+                            } else {
+                                result += `- No Drops Active -\n`;
+                            }
+
+                            if (this.#isFirstOutput) {
+                                return result;
+                            }
+
+                            return ansiEscape(`${this.#progressBarHeight}A`) + result;
+                        }
+                    },
+                    cliProgress.Presets.shades_classic
+                );
+                this.#progressBar.on('redraw-post', () => {
+                    this.#isFirstOutput = false;
+                });
+
+                this.#viewerCount = await streamPage.getViewersCount();
+                this.#startProgressBar({'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), stream_url: streamUrl});
 
                 // Main loop
                 while (true) {
