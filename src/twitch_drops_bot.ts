@@ -365,8 +365,8 @@ export class TwitchDropsBot {
                                 }
                             }
 
-                            logger.info("Campaign data changed: " + JSON.stringify(campaign, null, 4));
-                            logger.info("Campaign data changed: " + JSON.stringify(difference, null, 4));
+                            logger.debug("Campaign data changed: " + JSON.stringify(oldCampaign, null, 4));
+                            logger.debug("Campaign data changed: " + JSON.stringify(difference, null, 4));
                             //todo: check if the drops changed. this is from getcampaigndetails?
                             break;
                         }
@@ -740,7 +740,7 @@ export class TwitchDropsBot {
                         // Ignore
                     } else {
                         logger.error("Error processing campaign");
-                        logger.debug(error);
+                        logger.error(error);
                     }
                 } finally {
                     this.#currentDropCampaignId = null;
@@ -927,12 +927,12 @@ export class TwitchDropsBot {
 
     #onDropRewardClaimed(drop: TimeBasedDrop) {
         logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
+        this.#completedDropIds.add(drop.id);
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
         await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
         this.#onDropRewardClaimed(drop);
-        this.#completedDropIds.add(drop.id);
         //todo: check if campaign is completed
     }
 
@@ -1211,15 +1211,12 @@ export class TwitchDropsBot {
 
                     if (this.#isStreamDown) {
                         this.#isStreamDown = false;
-                        this.#stopProgressBar(true);
-                        await this.#page.goto("about:blank");
                         throw new StreamDownError();
                     }
 
                     // Check if there is a higher priority stream we should be watching
                     if (this.#pendingHighPriority) {
                         this.#pendingHighPriority = false;
-                        this.#stopProgressBar(true);
                         logger.info('Switching to higher priority stream');
                         throw new HighPriorityError();
                     }
