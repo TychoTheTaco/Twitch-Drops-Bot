@@ -102,7 +102,7 @@ export class LoginPage extends TwitchPage {
                                 continue;
                             }
                             logger.info("Resent verification email");
-                            resendCodeButton.click();
+                            await resendCodeButton.click();
                         } else {
                             break;
                         }
