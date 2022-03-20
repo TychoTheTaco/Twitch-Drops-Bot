@@ -2,7 +2,7 @@
 
 import fs from "fs";
 
-import {TimeoutError} from "puppeteer";
+const TimeoutError = require("puppeteer").errors.TimeoutError;
 
 import {TwitchPage} from "./page";
 import logger from "../logger";
