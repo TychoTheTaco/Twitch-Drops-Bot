@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 
 import axios from "axios";
+import {render} from "ink";
+import React from "react";
 
 import logger from './logger';
 import {Client} from './twitch';
@@ -11,6 +13,7 @@ import {StringOption, BooleanOption, IntegerOption, StringListOption} from './op
 import {TwitchDropsBot} from './twitch_drops_bot';
 import {ConfigurationParser} from './configuration_parser';
 import {LoginPage} from "./pages/login";
+import {Application} from "./ui/ui";
 
 // Using puppeteer-extra to add plugins
 import puppeteer from 'puppeteer-extra';
@@ -330,9 +333,20 @@ async function checkVersion() {
         watchStreamsWhenNoDropCampaignsActive: config["watch_streams_when_no_drop_campaigns_active"],
         broadcasterIds: config["broadcasters"]
     });
+
+    const ui = true;
+    if (ui) {
+        setUpUi(bot);
+    }
+
     await bot.start();
 
 })().catch(error => {
     logger.error(error);
     process.exit(1);
 });
+
+function setUpUi(bot: TwitchDropsBot) {
+    delete logger.transports[0];
+    render(<Application bot={bot}/>);
+}

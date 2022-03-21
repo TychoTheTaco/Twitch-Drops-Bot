@@ -1,3 +1,5 @@
+import EventEmitter from "events";
+
 const SortedArray = require("sorted-array-type");
 const WaitNotify = require("wait-notify");
 const cliProgress = require("cli-progress");
@@ -77,7 +79,7 @@ export interface TwitchDropsBotOptions {
     broadcasterIds?: string[]
 }
 
-export class TwitchDropsBot {
+export class TwitchDropsBot extends EventEmitter {
 
     /**
      * A list of game IDs to watch and claim drops for. This list is in order of priority.
@@ -263,6 +265,7 @@ export class TwitchDropsBot {
     readonly #completedDropIds: Set<string> = new Set<string>();
 
     constructor(page: Page, client: Client, options?: TwitchDropsBotOptions) {
+        super();
         this.#page = page;
         this.#twitchClient = client;
 
@@ -428,6 +431,10 @@ export class TwitchDropsBot {
                 }
             }
             logger.debug('Found ' + this.#pendingDropCampaignIds.length + ' pending campaigns.');
+
+            this.emit('pending_drop_campaigns_updated', this.#pendingDropCampaignIds.map((item: string) => {
+                return this.#dropCampaignMap[item];
+            }));
 
             // Check if we are currently working on a drop campaign
             if (this.#currentDropCampaignId !== null) {
