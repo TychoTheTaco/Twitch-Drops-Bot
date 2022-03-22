@@ -15,9 +15,23 @@ function join(items: Array<any>, separator: any) {
 
 interface TableProps {
     data: any[]
+    padding: number
+    title: string,
+    divider: string
+}
+
+interface RowProps {
+    color?: string,
+    bold?: boolean
 }
 
 export class Table extends React.Component<TableProps, any> {
+
+    static defaultProps = {
+        padding: 1,
+        title: undefined,
+        divider: '|'
+    };
 
     render() {
         const header = this.#getKeys(this.props.data);
@@ -31,13 +45,23 @@ export class Table extends React.Component<TableProps, any> {
         }
         const widths = this.#getColumnWidths(columns);
 
-        return <Box flexDirection={"column"} borderStyle={"single"}>
+        return <Box flexDirection={"column"}>
+
+            {this.props.title &&
+                <Text bold>{this.props.title}</Text>
+            }
+
+            {
+                // Header
+                columns.slice(0, 1).map((item: any) => {
+                    return this.#createRow(item, widths, {bold: true});
+                })
+            }
 
             {
                 // Data
-                columns.map((item: any) => {
-                    const key = `row-${sha1(item)}`;
-                    return this.#createRow(item, key, widths);
+                columns.slice(1).map((item: any) => {
+                    return this.#createRow(item, widths, {bold: false});
                 })
             }
 
@@ -57,20 +81,20 @@ export class Table extends React.Component<TableProps, any> {
         return widths;
     }
 
-    #createRow(data: any[], key: any = undefined, widths?: number[]) {
-        const padding: number = 1;
+    #createRow(data: any[], widths?: number[], rp?: RowProps) {
+        const key = `row-${sha1(data)}`;
         const paddingCharacter: string = " ";
-        const paddingString = paddingCharacter.repeat(padding);
+        const paddingString = paddingCharacter.repeat(this.props.padding);
         const columns = [...data].map((item: any, index: number) => {
             const spaces = widths ? Math.max(0, widths[index] - item.length) : 0;
             return <Text>
-                {
-                    paddingString + item + " ".repeat(spaces) + paddingString
-                }
+                {paddingString}
+                <Text color={rp?.color} bold={rp?.bold}>{item + " ".repeat(spaces)}</Text>
+                {paddingString}
             </Text>
         });
         return <Box key={key}>
-            {...join(columns, <Text>|</Text>)}
+            {...join(columns, <Text>{this.props.divider}</Text>)}
         </Box>;
     }
 

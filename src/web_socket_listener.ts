@@ -63,6 +63,9 @@ class WebSocketListener extends EventEmitter {
                     return true;
 
                 case 'points-earned':
+                    this.emit(messageType, message["data"]);
+                    return true;
+
                 case 'reward-redeemed':
                 case 'claim-claimed':
                 case "active-multipliers-updated":

@@ -269,26 +269,6 @@ export class TwitchDropsBot extends EventEmitter {
         this.#page = page;
         this.#twitchClient = client;
 
-        // Intercept logging messages to stop/start the progress bar
-        const onBeforeLogMessage = () => {
-            this.#stopProgressBar();
-        }
-        const onAfterLogMessage = () => {
-            this.#startProgressBar();
-        }
-        for (const level of Object.keys(logger.levels)) {
-            // @ts-ignore
-            const og = logger[level];
-
-            // @ts-ignore
-            logger[level] = (args: any) => {
-                onBeforeLogMessage();
-                const result = og(args);
-                onAfterLogMessage();
-                return result;
-            }
-        }
-
         options?.gameIds?.forEach((id => {
             this.#gameIds.push(id);
         }));
@@ -964,6 +944,7 @@ export class TwitchDropsBot extends EventEmitter {
     #onDropRewardClaimed(drop: TimeBasedDrop) {
         logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
         //this.#completedDropIds.add(drop.id); cant do this - need to make sure claim count = entitlement limit
+        this.emit("drop_claimed", drop);
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
@@ -1027,42 +1008,6 @@ export class TwitchDropsBot extends EventEmitter {
         }
     }
 
-    #isProgressBarStarted: boolean = false;
-
-    #startProgressBar(p = this.#payload) {
-        this.#payload = p;
-        if (!this.#isProgressBarStarted && this.#progressBar !== null) {
-            this.#isProgressBarStarted = true;
-            this.#isFirstOutput = true;
-            for (let i = 0; i < this.#progressBarHeight; ++i) {
-                process.stdout.write('\n');
-            }
-            process.stdout.write(ansiEscape(`${this.#progressBarHeight}A`));
-            this.#progressBar.start(1, 0, p);
-        }
-    }
-
-    #updateProgressBar(p = this.#payload) {
-        this.#payload = p;
-        if (this.#progressBar !== null) {
-            this.#progressBar.update(0, p);
-        }
-    }
-
-    #stopProgressBar(clear: boolean = false) {
-        if (this.#isProgressBarStarted) {
-            this.#isProgressBarStarted = false;
-            this.#progressBar.stop();
-            process.stdout.write(ansiEscape(`${this.#progressBarHeight - 1}B`) + ansiEscape("2K") + ansiEscape(`${this.#progressBarHeight - 1}A`));
-        }
-        if (clear) {
-            this.#progressBar = null;
-            this.#payload = null;
-        }
-    }
-
-    #progressBarHeight: number = 2;
-
     async #watchStreamWrapper(streamUrl: string, components: Component[]) {
 
         const getComponent = <T extends Component>(c: Class<T>): T | null => {
@@ -1081,8 +1026,7 @@ export class TwitchDropsBot extends EventEmitter {
                 this.#onDropRewardClaimed(drop);
             });
             dropProgressComponent.on('drop-data-changed', () => {
-                this.#stopProgressBar();
-                this.#startProgressBar();
+                this.emit("drop_progress_updated", dropProgressComponent.currentDrop);
             });
         }
 
@@ -1130,6 +1074,7 @@ export class TwitchDropsBot extends EventEmitter {
     }
 
     async #watchStream(streamUrl: string, components: Component[]) {
+        const startWatchTime = new Date().getTime();
 
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         const webSocketListener = new WebSocketListener();
@@ -1140,6 +1085,9 @@ export class TwitchDropsBot extends EventEmitter {
         });
         webSocketListener.on('stream-down', message => {
             this.#isStreamDown = true;
+        });
+        webSocketListener.on("points-earned", data => {
+            this.emit("community_points_earned", data);
         });
 
         // Wrap everything in a try/finally block so that we can detach the web socket listener at the end
@@ -1208,39 +1156,9 @@ export class TwitchDropsBot extends EventEmitter {
             // Wrap everything in a try/finally block so that we can stop the progress bar at the end
             try {
 
-                // Create progress bar
-                this.#progressBar = new cliProgress.SingleBar(
-                    {
-                        barsize: 20,
-                        clearOnComplete: true,
-                        stream: process.stdout,
-                        format: (options: any, params: any, payload: any) => {
-                            let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
-
-                            const dropProgressComponent = getComponent(DropProgressComponent);
-                            if (dropProgressComponent !== null && dropProgressComponent.currentDrop !== null) {
-                                const drop = dropProgressComponent.currentDrop;
-                                this.#progressBar.setTotal(drop.requiredMinutesWatched);
-                                result += `${getDropName(drop)} ${BarFormat((dropProgressComponent.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${dropProgressComponent.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
-                            } else {
-                                result += `- No Drops Active -\n`;
-                            }
-
-                            if (this.#isFirstOutput) {
-                                return result;
-                            }
-
-                            return ansiEscape(`${this.#progressBarHeight}A`) + result;
-                        }
-                    },
-                    cliProgress.Presets.shades_classic
-                );
-                this.#progressBar.on('redraw-post', () => {
-                    this.#isFirstOutput = false;
+                this.emit("watch_status_updated", {
+                    stream_url: streamUrl
                 });
-
-                this.#viewerCount = await streamPage.getViewersCount();
-                this.#startProgressBar({'viewers': this.#viewerCount, 'uptime': await streamPage.getUptime(), stream_url: streamUrl});
 
                 // Main loop
                 while (true) {
@@ -1270,16 +1188,26 @@ export class TwitchDropsBot extends EventEmitter {
                         }
                     }
 
-                    this.#updateProgressBar({
+                    this.emit("watch_status_updated", {
                         'viewers': this.#viewerCount,
                         'uptime': await streamPage.getUptime(),
-                        stream_url: streamUrl
+                        stream_url: streamUrl,
+                        watch_time: new Date().getTime() - startWatchTime
                     });
+
+                    const fakeDrop = getComponent(DropProgressComponent)?.currentDrop;
+                    const fd = {
+                        ...fakeDrop,
+                        self: {
+                            currentMinutesWatched: getComponent(DropProgressComponent)?.currentMinutesWatched
+                        }
+                    }
+                    this.emit("drop_progress_updated", fd);
 
                     await this.#page.waitForTimeout(1000);
                 }
             } finally {
-                this.#stopProgressBar(true);
+                this.emit("watch_status_updated", null);
             }
         } finally {
             await webSocketListener.detach();

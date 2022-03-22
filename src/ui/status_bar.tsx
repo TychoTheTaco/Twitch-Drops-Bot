@@ -1,14 +1,58 @@
 import React from "react";
-import {Box, render, Text} from 'ink';
+import {Table} from "./table";
+import {TwitchDropsBot} from "../twitch_drops_bot";
 
-interface StatusBarProps {
-    status: string
+interface StreamStatusBarProps {
+    bot: TwitchDropsBot
 }
 
-export class StatusBar extends React.Component<StatusBarProps, any> {
+interface StreamStatusBarState {
+    stream_url?: string,
+    viewer_count?: number,
+    uptime?: string,
+    watch_time?: number,
+    community_points: number
+}
 
-    render() {
-        return <Text backgroundColor="red">{this.props.status}</Text>
+export class StreamStatusBar extends React.Component<StreamStatusBarProps, StreamStatusBarState> {
+
+    constructor(props: any) {
+        super(props);
+        props.bot.on("watch_status_updated", (stats: any) => {
+            if (!stats) {
+                return;
+            }
+            this.setState({
+                stream_url: stats["stream_url"],
+                viewer_count: stats["viewers"],
+                uptime: stats["uptime"],
+                watch_time: stats["watch_time"]
+            });
+        });
+        props.bot.on("community_points_earned", (data: any) => {
+            this.setState({
+                community_points: data["balance"]["balance"]
+            })
+        })
     }
 
+    render() {
+        return <Table divider={' '} data={[
+            {
+                "Stream URL": this.state?.stream_url ?? "-",
+                "Viewers": this.state?.viewer_count?.toLocaleString() ?? "-",
+                "Uptime": this.state?.uptime ?? "-",
+                "Watch Time": this.state?.watch_time ? formatTime(this.state.watch_time) : "-",
+                "Community Points": this.state?.community_points?.toLocaleString() ?? "-"
+            }
+        ]}/>
+    }
+
+}
+
+function formatTime(time: number) {
+    const seconds = Math.floor((time / 1000) % 60);
+    const minutes = Math.floor((time / 1000 / 60) % 60);
+    const hours = Math.floor((time / 1000 / 60 / 60) % 24);
+    return `${hours}:${minutes.toLocaleString(undefined, {minimumIntegerDigits: 2})}:${seconds.toLocaleString(undefined, {minimumIntegerDigits: 2})}`;
 }

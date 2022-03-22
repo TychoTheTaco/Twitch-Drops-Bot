@@ -23,7 +23,8 @@ I could make a separate interface for each API call but that would get messy ver
 
 export interface Game {
     id: string,
-    displayName: string
+    displayName: string,
+    name: string
 }
 
 export interface DropCampaign {
@@ -51,7 +52,8 @@ export interface TimeBasedDrop {
     benefitEdges: {
         benefit: {
             id: string,
-            name: string
+            name: string,
+            game: Game
         }
     }[],
     startAt: string,
