@@ -106,16 +106,25 @@ if (config['log_level']) {
 
 logger.debug(`git commit hash: ${process.env.GIT_COMMIT_HASH}`);
 
-// Add required browser args
-const requiredBrowserArgs = [
+// Add default browser args
+const defaultBrowserArgs = [
     '--mute-audio',
     '--disable-background-timer-throttling',
     '--disable-backgrounding-occluded-windows',
     '--disable-renderer-backgrounding',
     '--window-size=1920,1080'
 ];
-for (const arg of requiredBrowserArgs) {
-    if (!config['browser_args'].includes(arg)) {
+function getArgNames(args: string[]) {
+    const names: string[] = [];
+    for (const arg of args) {
+        names.push(arg.split("=")[0]);
+    }
+    return names;
+}
+const argNames = getArgNames(config["browser_args"]);
+for (const arg of defaultBrowserArgs) {
+    const argName = arg.split("=")[0];
+    if (!argNames.includes(argName)) {
         config['browser_args'].push(arg);
     }
 }
