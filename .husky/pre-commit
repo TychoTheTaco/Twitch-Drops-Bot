@@ -9,3 +9,7 @@ if ! tsc; then
 	exit 1
 fi
 
+# Run tests
+if ! jest; then
+  exit 1
+fi
