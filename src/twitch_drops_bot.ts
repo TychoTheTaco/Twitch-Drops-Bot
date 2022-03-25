@@ -592,7 +592,7 @@ export class TwitchDropsBot {
         return null;
     }
 
-    async #getNextIdleStreamUrl(): Promise<string | null> {
+    async #getNextPreferredBroadcasterStreamUrl(): Promise<string | null> {
         // Check if any of the preferred broadcasters are online
         for (const broadcasterId of this.#broadcasterIds) {
             if (await this.#twitchClient.isStreamOnline(broadcasterId)) {
@@ -602,6 +602,15 @@ export class TwitchDropsBot {
                 }
                 return streamUrl;
             }
+        }
+        return null;
+    }
+
+    async #getNextIdleStreamUrl(): Promise<string | null> {
+        // Check if any of the preferred broadcasters are online
+        const streamUrl = await this.#getNextPreferredBroadcasterStreamUrl();
+        if (streamUrl !== null) {
+            return streamUrl;
         }
 
         // Check provided game ID list
@@ -667,7 +676,7 @@ export class TwitchDropsBot {
                     logger.info("No drop campaigns active, watching a stream instead.");
 
                     // Choose a stream to watch
-                    let streamUrl = null;
+                    let streamUrl: string | null = null;
                     try {
                         streamUrl = await this.#getNextIdleStreamUrl();
                     } catch (error) {
@@ -693,6 +702,14 @@ export class TwitchDropsBot {
 
                         if (await this.#hasPendingHigherPriorityStream()) {
                             this.#pendingHighPriority = true;
+                        } else {
+                            // Check if a more preferred broadcaster is online
+                            const preferredBroadcasterStreamUrl = await this.#getNextPreferredBroadcasterStreamUrl();
+                            if (preferredBroadcasterStreamUrl !== null) {
+                                if (preferredBroadcasterStreamUrl !== streamUrl) {
+                                    this.#pendingHighPriority = true;
+                                }
+                            }
                         }
 
                         timeout = setTimeout(a, 1000 * 60 * 5);
