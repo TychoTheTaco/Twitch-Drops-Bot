@@ -125,7 +125,28 @@ export class StringListOption extends Option<string[]> {
     }
 
     parse(string: string): string[] {
-        return string.split(',').filter(x => x.length > 0);
+        const items = [];
+        let item = "";
+        let isEscaped = false;
+        for (const c of string) {
+            if (!isEscaped) {
+                if (c === '\\') {
+                    isEscaped = true;
+                    continue;
+                }
+                if (c === ',') {
+                    items.push(item);
+                    item = "";
+                    continue;
+                }
+            }
+            item += c;
+            isEscaped = false;
+        }
+        if (item.length > 0) {
+            items.push(item);
+        }
+        return items.filter((item) => {return item.length > 0});
     }
 
 }
