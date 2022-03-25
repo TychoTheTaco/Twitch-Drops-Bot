@@ -173,7 +173,7 @@ if (config['username']) {
 // Print config without password
 const printableConfig = {...config};
 printableConfig['password'] = config['password'] ? 'present' : undefined;
-logger.info('Using config: ' + JSON.stringify(printableConfig, null, 4));
+logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
 
 async function checkVersion() {
     // The current commit SHA hash comes from the environment variable provided during the docker build

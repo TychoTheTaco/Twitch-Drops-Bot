@@ -315,7 +315,8 @@ export class Client {
                 }
             }
         });
-        return data["data"]["userOrError"]["stream"] !== null;
+        const stream = data["data"]["userOrError"]["stream"];
+        return stream !== null && stream !== undefined;
     }
 
     async getStreamMetadata(channelLogin: string): Promise<User> {
