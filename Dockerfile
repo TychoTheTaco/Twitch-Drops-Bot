@@ -24,9 +24,4 @@ ARG GIT_COMMIT_HASH=""
 
 ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
 
-ENTRYPOINT ["node", "--unhandled-rejections=strict", "/app/dist/index.js", \
-     "--config", \
-     "config.json", \
-     "--browser", "chromium", \
-     "--browser-args=--no-sandbox", \
-     "--headless-login"]
+ENTRYPOINT ["node", "--unhandled-rejections=strict", "/app/dist/index.js"]

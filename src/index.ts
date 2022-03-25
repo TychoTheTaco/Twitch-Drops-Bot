@@ -44,6 +44,10 @@ function areCookiesValid(cookies: any) {
     return isOauthTokenFound;
 }
 
+function isInsideDocker(): boolean {
+    return fs.existsSync("/.dockerenv");
+}
+
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
     new StringOption('--username', {alias: '-u'}),
@@ -114,6 +118,7 @@ const defaultBrowserArgs = [
     '--disable-renderer-backgrounding',
     '--window-size=1920,1080'
 ];
+
 function getArgNames(args: string[]) {
     const names: string[] = [];
     for (const arg of args) {
@@ -121,12 +126,43 @@ function getArgNames(args: string[]) {
     }
     return names;
 }
+
 const argNames = getArgNames(config["browser_args"]);
 for (const arg of defaultBrowserArgs) {
     const argName = arg.split("=")[0];
     if (!argNames.includes(argName)) {
         config['browser_args'].push(arg);
     }
+}
+
+// Check if we are running inside a Docker container
+if (isInsideDocker()){
+
+    const requiredBrowser = "chromium";
+    const actualBrowser = config["browser"];
+    if (actualBrowser !== requiredBrowser) {
+        logger.warn("Overriding browser option because we are inside a docker container!");
+        config["browser"] = requiredBrowser;
+    }
+
+    const requiredHeadlessLogin = true;
+    const actualHeadlessLogin = config["headless_login"];
+    if (actualHeadlessLogin !== requiredHeadlessLogin){
+        logger.warn("Overriding headless_login option because we are inside a docker container!");
+        config["headless_login"] = requiredHeadlessLogin;
+    }
+
+    const requiredBrowserArgs = ["--no-sandbox"]
+    const actualBrowserArgs = config["browser_args"];
+    const actualBrowserArgsNames = getArgNames(actualBrowserArgs);
+    for (const arg of requiredBrowserArgs) {
+        const argName = arg.split("=")[0];
+        if (!actualBrowserArgsNames.includes(argName)) {
+            logger.warn("Adding browser option: " + arg +" because we are inside a docker container!");
+            config["browser_args"].push(arg);
+        }
+    }
+
 }
 
 // Make username lowercase
@@ -137,7 +173,7 @@ if (config['username']) {
 // Print config without password
 const printableConfig = {...config};
 printableConfig['password'] = config['password'] ? 'present' : undefined;
-logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
+logger.info('Using config: ' + JSON.stringify(printableConfig, null, 4));
 
 async function checkVersion() {
     // The current commit SHA hash comes from the environment variable provided during the docker build
