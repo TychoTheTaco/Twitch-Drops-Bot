@@ -11,16 +11,30 @@ interface StreamStatusBarState {
     viewer_count?: number,
     uptime?: string,
     watch_time?: number,
-    community_points: number
+    community_points?: number
 }
 
 export class StreamStatusBar extends React.Component<StreamStatusBarProps, StreamStatusBarState> {
 
     constructor(props: any) {
         super(props);
+        this.state = {
+            stream_url: undefined,
+            viewer_count: undefined,
+            uptime: undefined,
+            watch_time: undefined,
+            community_points: undefined
+        };
         props.bot.on("watch_status_updated", (stats: any) => {
             if (!stats) {
-                return;
+                this.setState({
+                    stream_url: undefined,
+                    viewer_count: undefined,
+                    uptime: undefined,
+                    watch_time: undefined,
+                    community_points: undefined
+                });
+                return;  // todo: clear state
             }
             this.setState({
                 stream_url: stats["stream_url"],
@@ -37,13 +51,13 @@ export class StreamStatusBar extends React.Component<StreamStatusBarProps, Strea
     }
 
     render() {
-        return <Table divider={' '} data={[
+        return <Table title={"Stream Status"} divider={' '} data={[
             {
-                "Stream URL": this.state?.stream_url ?? "-",
-                "Viewers": this.state?.viewer_count?.toLocaleString() ?? "-",
-                "Uptime": this.state?.uptime ?? "-",
-                "Watch Time": this.state?.watch_time ? formatTime(this.state.watch_time) : "-",
-                "Community Points": this.state?.community_points?.toLocaleString() ?? "-"
+                "Stream URL": this.state.stream_url ?? "-",
+                "Viewers": this.state.viewer_count?.toLocaleString() ?? "-",
+                "Uptime": this.state.uptime ?? "-",
+                "Watch Time": this.state.watch_time ? formatTime(this.state.watch_time) : "-",
+                "Channel Points": this.state.community_points?.toLocaleString() ?? "-"
             }
         ]}/>
     }

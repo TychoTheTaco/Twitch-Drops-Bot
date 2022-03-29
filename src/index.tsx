@@ -347,6 +347,6 @@ async function checkVersion() {
 });
 
 function setUpUi(bot: TwitchDropsBot) {
-    delete logger.transports[0];
+    logger.transports[0].silent = true;
     render(<Application bot={bot}/>);
 }

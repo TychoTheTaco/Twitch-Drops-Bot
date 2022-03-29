@@ -296,6 +296,7 @@ export class TwitchDropsBot extends EventEmitter {
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#dropCampaignPollingInterval);
         this.#twitchDropsWatchdog.on('before_update', () => {
             logger.debug('Updating drop campaigns...');
+            this.emit("before_drop_campaigns_updated");
         });
         this.#twitchDropsWatchdog.on('error', (error) => {
             logger.debug("Error checking twitch drops: " + error);
@@ -776,6 +777,8 @@ export class TwitchDropsBot extends EventEmitter {
         // TODO: Implement this
     }*/
 
+    #currentDropCampaignDetails: DropCampaign | null = null;
+
     /**
      * Attempt to make progress towards the specified drop campaign.
      * @param dropCampaignId
@@ -799,6 +802,7 @@ export class TwitchDropsBot extends EventEmitter {
         }
 
         const details = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
+        this.#currentDropCampaignDetails = details;
 
         while (true) {
 
@@ -945,6 +949,7 @@ export class TwitchDropsBot extends EventEmitter {
         logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
         //this.#completedDropIds.add(drop.id); cant do this - need to make sure claim count = entitlement limit
         this.emit("drop_claimed", drop);
+        logger.debug("DROP CLAIMED: " + JSON.stringify(drop, null, 4));
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
@@ -1080,9 +1085,6 @@ export class TwitchDropsBot extends EventEmitter {
         const webSocketListener = new WebSocketListener();
 
         // Set up web socket listener
-        webSocketListener.on('viewcount', count => {
-            this.#viewerCount = count;
-        });
         webSocketListener.on('stream-down', message => {
             this.#isStreamDown = true;
         });
@@ -1188,6 +1190,7 @@ export class TwitchDropsBot extends EventEmitter {
                         }
                     }
 
+                    this.#viewerCount = await streamPage.getViewersCount();
                     this.emit("watch_status_updated", {
                         'viewers': this.#viewerCount,
                         'uptime': await streamPage.getUptime(),
@@ -1196,18 +1199,24 @@ export class TwitchDropsBot extends EventEmitter {
                     });
 
                     const fakeDrop = getComponent(DropProgressComponent)?.currentDrop;
-                    const fd = {
-                        ...fakeDrop,
-                        self: {
-                            currentMinutesWatched: getComponent(DropProgressComponent)?.currentMinutesWatched
+                    if (fakeDrop) {
+                        const fd = {
+                            ...fakeDrop,
+                            campaign: this.#currentDropCampaignDetails,
+                            self: {
+                                currentMinutesWatched: getComponent(DropProgressComponent)?.currentMinutesWatched
+                            }
                         }
+                        this.emit("drop_progress_updated", fd);
+                    } else {
+                        this.emit("drop_progress_updated", null);
                     }
-                    this.emit("drop_progress_updated", fd);
 
                     await this.#page.waitForTimeout(1000);
                 }
             } finally {
                 this.emit("watch_status_updated", null);
+                this.emit("drop_progress_updated", null);
             }
         } finally {
             await webSocketListener.detach();

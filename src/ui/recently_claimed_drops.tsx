@@ -36,8 +36,11 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
     render() {
         let data: any[] = this.state.drops.map((item: TimeBasedDrop) => {
             return {
-                "Time Claimed": this.state.claim_times[item.id].toLocaleString(),
-                "Game": item.campaign.game.displayName,
+                "Time Claimed": this.state.claim_times[item.id].toLocaleString(undefined, {
+                    timeStyle: "short",
+                    dateStyle: "short"
+                }),
+                "Game": item.campaign.game?.displayName ?? "-",
                 "Campaign": item.campaign.name,
                 "Drop": item.name
             };
@@ -51,7 +54,7 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
             }]
         }
         data.reverse();
-        return <Table title={"Recently Claimed Drops"} data={data.slice(0, 3)} divider={' '}/>
+        return <Table title={"Recently Claimed Drops (" + this.state.drops.length + ")"} data={data.slice(0, 3)} divider={' '}/>
     }
 
 }

@@ -14,10 +14,12 @@ function join(items: Array<any>, separator: any) {
 }
 
 interface TableProps {
-    data: any[]
+    header?: { [key: string]: string } | string[],
+    data: { [key: string]: any }[]
     padding: number
     title: string,
-    divider: string
+    divider: string,
+    placeholder: { [key: string]: string } | string
 }
 
 interface RowProps {
@@ -30,16 +32,33 @@ export class Table extends React.Component<TableProps, any> {
     static defaultProps = {
         padding: 1,
         title: undefined,
-        divider: '|'
+        divider: '|',
+        placeholder: '-'
     };
 
+    #getPlaceholder(key: string) {
+        if (typeof this.props.placeholder === 'string') {
+            return this.props.placeholder;
+        }
+        return this.props.placeholder[key];
+    }
+
     render() {
-        const header = this.#getKeys(this.props.data);
+        let header: string[] = [];
+        if (this.props.header) {
+            if (Array.isArray(this.props.header)) {
+                header = this.props.header;
+            } else {
+                // assume object
+            }
+        } else {
+            header = [...this.#getKeys(this.props.data)];
+        }
         const columns = [[...header]];
         for (const item of this.props.data) {
             const column: any[] = [];
             for (const key of header) {
-                column.push(item[key].toString());
+                column.push(item[key] ? item[key].toString() : this.#getPlaceholder(key));
             }
             columns.push(column);
         }
@@ -48,7 +67,7 @@ export class Table extends React.Component<TableProps, any> {
         return <Box flexDirection={"column"}>
 
             {this.props.title &&
-                <Text bold>{this.props.title}</Text>
+                <Text bold color={"blue"}>{this.props.title}</Text>
             }
 
             {

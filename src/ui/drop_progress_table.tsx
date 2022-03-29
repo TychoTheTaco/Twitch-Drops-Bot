@@ -4,32 +4,27 @@ import {TwitchDropsBot} from "../twitch_drops_bot";
 import {TimeBasedDrop} from "../twitch";
 
 interface Props {
-    bot: TwitchDropsBot
+    drop?: TimeBasedDrop
 }
 
 interface State {
-    drop: TimeBasedDrop
+
 }
 
 export class DropProgressTable extends React.Component<Props, State> {
 
     constructor(props: any) {
         super(props);
-        props.bot.on("drop_progress_updated", (drop: TimeBasedDrop) => {
-            this.setState({
-                drop: drop
-            });
-        })
     }
 
     render() {
-        return <Table divider={' '} data={[
+        return <Table title={"Drop Status"} divider={' '} data={[
             {
-                "Game": "-" ?? "-",  // todo
-                "Campaign": "-" ?? "-",  // todo
-                "Drop": this.state?.drop.name ?? "-",
-                "Progress": this.state?.drop ? formatProgress(this.state.drop) : "-",
-                "ETA": this.state?.drop ? getEta(this.state.drop) : "-",
+                "Game": this.props.drop?.campaign.game.displayName ?? "-",
+                "Campaign": this.props.drop?.campaign.name ?? "-",
+                "Drop": this.props.drop?.name ?? "-",
+                "Progress": this.props.drop ? formatProgress(this.props.drop) : "-",
+                "ETA": this.props.drop ? getEta(this.props.drop) : "-",
             }
         ]}/>
     }
