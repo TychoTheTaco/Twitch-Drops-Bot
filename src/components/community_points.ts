@@ -27,7 +27,7 @@ export default class CommunityPointsComponent extends Component {
                 logger.info('Claimed community points!');
             } catch (error) {
                 logger.error('Failed to claim community points!');
-                logger.error(error);
+                logger.debug(error);
             }
         } else if (claimCommunityPointsButton.length > 1) {
             logger.debug("more than 1 claim community points buttons: " + claimCommunityPointsButton.length);

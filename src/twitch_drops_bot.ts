@@ -757,7 +757,7 @@ export class TwitchDropsBot {
                         // Ignore
                     } else {
                         logger.error("Error processing campaign");
-                        logger.error(error);
+                        logger.debug(error);
                     }
                 } finally {
                     this.#currentDropCampaignId = null;
@@ -1086,7 +1086,7 @@ export class TwitchDropsBot {
                 // Ignore
             } else {
                 logger.error("Error watching stream");
-                logger.error(error);
+                logger.debug(error);
                 if (process.env.SAVE_ERROR_SCREENSHOTS?.toLowerCase() === 'true') {
                     await utils.saveScreenshotAndHtml(this.#page, 'error');
                 }
