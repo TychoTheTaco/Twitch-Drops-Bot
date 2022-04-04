@@ -101,7 +101,7 @@ export default class DropProgressComponent extends Component {
             // Check if the drop is ready to be claimed. This might not be the same drop that we intended to make progress towards
             // since we can make progress towards multiple drops at once.
             if (data.current_progress_min >= data.required_progress_min) {
-                logger.debug("ready to claim! dp");
+                logger.debug("ready to claim! dp"); //todo: make sure drop has not been claimed already, sometimes ws messages are delayed
                 await this.#claimDrop(data.drop_id, twitchClient);
                 this.#shouldStop = true;
             }
@@ -135,7 +135,8 @@ export default class DropProgressComponent extends Component {
                         throw new Error('Made progress towards a drop but did not find it in inventory!');
                     }
 
-                    this.#currentDrop = inventoryDrop;
+                    this.#currentDrop = inventoryDrop; //todo: no game displayname ?
+                    logger.debug("new drop: " + JSON.stringify(inventoryDrop, null, 4));
 
                     if (!(this.#currentDrop.id in this.#currentMinutesWatched)) {
                         this.#currentMinutesWatched[this.#currentDrop?.id] = this.#currentDrop?.self.currentMinutesWatched;

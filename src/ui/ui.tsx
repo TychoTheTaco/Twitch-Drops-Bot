@@ -7,29 +7,7 @@ import {StreamStatusBar} from "./status_bar";
 import {RecentlyClaimedDropsTable} from "./recently_claimed_drops";
 import {DropProgressTable} from "./drop_progress_table";
 import {TwitchDropsBot} from "../twitch_drops_bot";
-
-class FullScreenBox extends React.Component<any, any> {
-
-    constructor(props: any) {
-        super(props);
-        const getState = () => {
-            return {
-                rows: process.stdout.rows
-            };
-        }
-        this.state = getState();
-        process.stdout.on('resize', () => {
-            this.setState(getState());
-        })
-    }
-
-    render() {
-        return <Box flexDirection={"column"} borderStyle="round" height={this.state.rows}>
-            {this.props.children}
-        </Box>
-    }
-
-}
+import {FullScreenBox} from "./full_screen_box";
 
 interface Props {
     bot: TwitchDropsBot
@@ -69,15 +47,15 @@ export class Application extends React.Component<Props, State> {
     }
 
     render() {
-        return <Box flexDirection={"column"} borderStyle={"double"} /*width={80} height={24}*/>
+        return <FullScreenBox>
             <StreamStatusBar bot={this.props.bot}/>
             <Box height={1}/>
-            <DropProgressTable drop={this.state.currentDrop}/>
+            <DropProgressTable bot={this.props.bot} dropId={this.state.currentDrop?.id}/>
             <Box height={1}/>
             <DropCampaignsTable bot={this.props.bot} isUpdatingDropCampaigns={this.state.isUpdatingDropCampaigns}/>
             <Box height={1}/>
             <RecentlyClaimedDropsTable bot={this.props.bot}/>
-        </Box>
+        </FullScreenBox>
     }
 
 }

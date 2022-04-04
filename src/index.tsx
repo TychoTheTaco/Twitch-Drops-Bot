@@ -347,6 +347,11 @@ async function checkVersion() {
 });
 
 function setUpUi(bot: TwitchDropsBot) {
+    process.stdout.write("\x1b[?1049h");
+    process.on("exit", () => {
+        process.stdout.write("\x1b[?1049l");
+    });
     logger.transports[0].silent = true;
+
     render(<Application bot={bot}/>);
 }

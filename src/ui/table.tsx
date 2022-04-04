@@ -1,6 +1,7 @@
 import React from "react";
 import {Box, Text} from "ink";
 import {sha1} from "object-hash";
+import stringWidth from "string-width";
 
 function join(items: Array<any>, separator: any) {
     const result: any[] = [];
@@ -67,7 +68,7 @@ export class Table extends React.Component<TableProps, any> {
         return <Box flexDirection={"column"}>
 
             {this.props.title &&
-                <Text bold color={"blue"}>{this.props.title}</Text>
+                <Text bold color={"cyan"}>{this.props.title}</Text>
             }
 
             {
@@ -93,7 +94,7 @@ export class Table extends React.Component<TableProps, any> {
         for (let i = 0; i < columnCount; ++i) {
             let maxWidth = 0;
             for (let j = 0; j < data.length; ++j) {
-                maxWidth = Math.max(maxWidth, data[j][i].length);
+                maxWidth = Math.max(maxWidth, stringWidth(data[j][i]));
             }
             widths.push(maxWidth);
         }
@@ -104,12 +105,14 @@ export class Table extends React.Component<TableProps, any> {
         const key = `row-${sha1(data)}`;
         const paddingCharacter: string = " ";
         const paddingString = paddingCharacter.repeat(this.props.padding);
+        const columnCount = [...data].length;
         const columns = [...data].map((item: any, index: number) => {
+            item = ("" + item).trim();
             const spaces = widths ? Math.max(0, widths[index] - item.length) : 0;
             return <Text>
-                {paddingString}
+                {index > 0 ? paddingString : undefined}
                 <Text color={rp?.color} bold={rp?.bold}>{item + " ".repeat(spaces)}</Text>
-                {paddingString}
+                {index < columnCount - 1 ? paddingString : undefined}
             </Text>
         });
         return <Box key={key}>

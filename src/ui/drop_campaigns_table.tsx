@@ -1,6 +1,6 @@
 import {DropCampaign, Inventory, TimeBasedDrop} from "../twitch";
 import React from "react";
-import { Table } from "./table";
+import {Table} from "./table";
 import {Box, Spacer, Text} from "ink";
 import {TwitchDropsBot} from "../twitch_drops_bot";
 
@@ -21,22 +21,34 @@ function formatTime(time: number): string {
     return `${seconds} second` + (seconds === 1 ? '' : 's');
 }
 
-interface Props {
-    bot: TwitchDropsBot,
-    isUpdatingDropCampaigns: boolean
+enum SortMode {
+    PRIORITY = 0,
+    START_TIME = 1,
+    END_TIME = 2
 }
 
-interface DropCampaignsTableState {
+interface Props {
+    bot: TwitchDropsBot,
+    isUpdatingDropCampaigns: boolean,
+    sortMode: SortMode
+}
+
+interface State {
     campaigns: DropCampaign[],
-    progress: {[key: string]: number},
+    progress: { [key: string]: number },
     lastUpdateTime: Date
 }
 
-export class DropCampaignsTable extends React.Component<Props, DropCampaignsTableState> {
+export class DropCampaignsTable extends React.Component<Props, State> {
 
     static defaultProps = {
-        isUpdatingDropCampaigns: false
+        isUpdatingDropCampaigns: false,
+        sortMode: SortMode.PRIORITY
     };
+
+    readonly #priorityComparator: (a: DropCampaign, b: DropCampaign) => number;
+    readonly #startTimeComparator: (a: DropCampaign, b: DropCampaign) => number;
+    readonly #endTimeComparator: (a: DropCampaign, b: DropCampaign) => number;
 
     constructor(props: any) {
         super(props);
@@ -51,38 +63,83 @@ export class DropCampaignsTable extends React.Component<Props, DropCampaignsTabl
                 lastUpdateTime: new Date()
             });
         });
+        this.#priorityComparator = (a: DropCampaign, b: DropCampaign) => {
+            const indexA = this.state.campaigns.indexOf(a);
+            const indexB = this.state.campaigns.indexOf(b);
+            return indexA - indexB;
+        }
+        this.#startTimeComparator = (a: DropCampaign, b: DropCampaign) => {
+            const statusA = a.status;
+            const statusB = b.status;
+            if (statusA === "UPCOMING" && statusB !== "UPCOMING") {
+                return -1;
+            } else if (statusA !== "UPCOMING" && statusB === "UPCOMING") {
+                return 1;
+            }
+            const startTimeA = Date.parse(a.startAt);
+            const startTimeB = Date.parse(b.startAt);
+            return startTimeA - startTimeB;
+        }
+        this.#endTimeComparator = (a: DropCampaign, b: DropCampaign) => {
+            const statusA = a.status;
+            const statusB = b.status;
+            if (statusA === "ACTIVE" && statusB !== "ACTIVE") {
+                return -1;
+            } else if (statusA !== "ACTIVE" && statusB === "ACTIVE") {
+                return 1;
+            }
+            const startTimeA = Date.parse(a.endAt);
+            const startTimeB = Date.parse(b.endAt);
+            return startTimeA - startTimeB;
+        }
     }
 
     render() {
-        const data = this.state.campaigns.map((item: any, index: number) => {
-            let timeLeft = new Date().getTime() - Date.parse(item.startAt);
-            let timeLeftFormatted = formatTime(Math.abs(timeLeft));
-            if (timeLeft < 0) {
-                timeLeftFormatted = "-" + timeLeftFormatted;
+        const campaigns = [...this.state.campaigns];
+        campaigns.sort(this.#priorityComparator)
+        const data = campaigns.map((item: any) => {
+            let status = "";
+            if (item.status === "UPCOMING") {
+                // We only update campaigns every 15 min, so we have to check if status is upcoming but should be active already
+                const startsIn = Date.parse(item.startAt) - new Date().getTime();
+                if (startsIn < 0) {
+                    status = "Starts soon";
+                } else {
+                    status = `Starts in ${formatTime(startsIn)}`;
+                }
+            } else if (item.status === "ACTIVE") {
+                const endsIn = Date.parse(item.endAt) - new Date().getTime();
+                if (endsIn < 0) {
+                    status = "Ends soon";
+                } else {
+                    status = `Ends in ${formatTime(endsIn)}`
+                }
+            } else {
+                status = item.status;
             }
+
             return {
-                "Priority": index + 1,
+                "Priority": this.state.campaigns.indexOf(item) + 1,
                 "Game": item.game.displayName,
                 "Campaign": item.name,
-                "Status": item.status,
-                "Time Left": timeLeftFormatted,
+                "Status": status,
                 //todo: show progress of next drop
                 //"Drop":  "some drop name",
                 //"Progress": this.#getProgressString()
             };
         });
-        return <Box flexDirection={"column"} width={120}>
+        return <Box flexDirection={"column"}>
             <Box flexDirection={"row"}>
-                <Text color={"blue"} bold>Pending Drop Campaigns ({data.length})</Text>
+                <Text color={"cyan"} bold>Pending Drop Campaigns ({data.length})</Text>
                 <Spacer/>
                 <Text>{this.props.isUpdatingDropCampaigns ? "Updating..." : "Next update in " + formatTime((this.state.lastUpdateTime.getTime() + (1000 * 60 * 15)) - new Date().getTime())}</Text>
             </Box>
-            <Table header={["Priority", "Game", "Campaign", "Status", "Time Left"]} data={data.slice(0, 5)} divider={' '}/>
+            <Table header={["Priority", "Game", "Campaign", "Status"]} data={data.slice(0, 5)} divider={' '}/>
         </Box>;
     }
 
     #getProgressString(id: string) {
-        if (this.state.progress.hasOwnProperty(id)){
+        if (this.state.progress.hasOwnProperty(id)) {
             for (const campaign of this.state.campaigns) {
                 for (const drop of campaign.timeBasedDrops) {
                     if (drop.id == id) {

@@ -9,7 +9,7 @@ interface Props {
 }
 
 interface State {
-    drops: TimeBasedDrop[],
+    dropIds: string[],
     claim_times: { [key: string]: Date }
 }
 
@@ -18,15 +18,15 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
     constructor(props: any) {
         super(props);
         this.state = {
-            drops: [],
+            dropIds: [],
             claim_times: {}
         }
-        props.bot.on("drop_claimed", (drop: TimeBasedDrop) => {
+        props.bot.on("drop_claimed", (id: string) => {
             this.setState((previousState) => {
                 const claim_times = previousState.claim_times;
-                claim_times[drop.id] = new Date();
+                claim_times[id] = new Date();
                 return {
-                    drops: previousState.drops.concat(drop),
+                    dropIds: previousState.dropIds.concat(id),
                     claim_times: claim_times
                 };
             });
@@ -34,15 +34,17 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
     }
 
     render() {
-        let data: any[] = this.state.drops.map((item: TimeBasedDrop) => {
+        let data: any[] = this.state.dropIds.map((id: string) => {
+            const campaign = this.props.bot.getDropCampaignByDropId(id);
+            const drop = this.props.bot.getDropById(id);
             return {
-                "Time Claimed": this.state.claim_times[item.id].toLocaleString(undefined, {
+                "Time Claimed": this.state.claim_times[id].toLocaleString(undefined, {
                     timeStyle: "short",
                     dateStyle: "short"
                 }),
-                "Game": item.campaign.game?.displayName ?? "-",
-                "Campaign": item.campaign.name,
-                "Drop": item.name
+                "Game": campaign?.game?.displayName ?? "-",
+                "Campaign": campaign?.name,
+                "Drop": drop?.name
             };
         });
         if (data.length === 0) {
@@ -54,7 +56,7 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
             }]
         }
         data.reverse();
-        return <Table title={"Recently Claimed Drops (" + this.state.drops.length + ")"} data={data.slice(0, 3)} divider={' '}/>
+        return <Table title={"Recently Claimed Drops (" + this.state.dropIds.length + ")"} data={data.slice(0, 3)} divider={' '}/>
     }
 
 }

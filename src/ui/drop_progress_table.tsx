@@ -2,9 +2,11 @@ import React from "react";
 import {Table} from "./table";
 import {TwitchDropsBot} from "../twitch_drops_bot";
 import {TimeBasedDrop} from "../twitch";
+import {Box, Text} from "ink";
 
 interface Props {
-    drop?: TimeBasedDrop
+    bot: TwitchDropsBot,
+    dropId?: string
 }
 
 interface State {
@@ -13,20 +15,37 @@ interface State {
 
 export class DropProgressTable extends React.Component<Props, State> {
 
-    constructor(props: any) {
-        super(props);
-    }
-
     render() {
-        return <Table title={"Drop Status"} divider={' '} data={[
-            {
-                "Game": this.props.drop?.campaign.game.displayName ?? "-",
-                "Campaign": this.props.drop?.campaign.name ?? "-",
-                "Drop": this.props.drop?.name ?? "-",
-                "Progress": this.props.drop ? formatProgress(this.props.drop) : "-",
-                "ETA": this.props.drop ? getEta(this.props.drop) : "-",
+
+        const drop = this.props.dropId ? this.props.bot.getDropById(this.props.dropId) : null;
+        const campaign = this.props.dropId ? this.props.bot.getDropCampaignByDropId(this.props.dropId) : null;
+
+        let isTwitchAccountLinked = true;
+        if (this.props.dropId) {
+            if (campaign) {
+                isTwitchAccountLinked = campaign?.self.isAccountConnected;
             }
-        ]}/>
+        }
+        return <Box flexDirection={"column"}>
+            <Box flexDirection={"row"}>
+                <Text color={"cyan"} bold>Drop Status</Text>
+                { !isTwitchAccountLinked &&
+                    <Text>
+                        <Text> - </Text>
+                        <Text color={"yellow"} bold>Twitch account not linked!</Text>
+                    </Text>
+                }
+            </Box>
+            <Table divider={' '} data={[
+                {
+                    "Game": campaign?.game.displayName ?? "-",
+                    "Campaign": campaign?.name ?? "-",
+                    "Drop": drop?.name ?? "-",
+                    "Progress": drop ? formatProgress(drop) : "-",
+                    "ETA": drop ? getEta(drop) : "-",
+                }
+            ]}/>
+        </Box>
     }
 
 }

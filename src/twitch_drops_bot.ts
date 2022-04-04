@@ -183,8 +183,8 @@ export class TwitchDropsBot extends EventEmitter {
             return 0;
         }
 
-        const campaignA = this.#getDropCampaignById(a);
-        const campaignB = this.#getDropCampaignById(b);
+        const campaignA = this.getDropCampaignById(a);
+        const campaignB = this.getDropCampaignById(b);
 
         // Sort campaigns based on order of game IDs specified in config
         const indexA = this.#gameIds.indexOf(campaignA.game.id);
@@ -210,6 +210,8 @@ export class TwitchDropsBot extends EventEmitter {
      * @private
      */
     readonly #dropCampaignMap: { [key: string]: DropCampaign } = {};
+    readonly #dropCampaignDetailsMap: { [key: string]: DropCampaign } = {};
+    readonly #inventoryDropMap: { [key: string]: TimeBasedDrop } = {};
 
     #progressBar: any = null;
     #payload: any = null;
@@ -529,6 +531,7 @@ export class TwitchDropsBot extends EventEmitter {
             // Claim the drop if it is ready to be claimed
             /*const inventoryDrop = getInventoryDrop(firstUnclaimedDrop.id, inventory, dropCampaignId);
             if (inventoryDrop !== null) {
+                this.#inventoryDropMap[firstUnclaimedDrop.id] = inventoryDrop;
                 if (isDropReadyToClaim(inventoryDrop)) {
                     try {
                         await this.#claimDropReward(inventoryDrop);
@@ -803,6 +806,9 @@ export class TwitchDropsBot extends EventEmitter {
 
         const details = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
         this.#currentDropCampaignDetails = details;
+        this.#dropCampaignDetailsMap[dropCampaignId] = details;
+
+        logger.debug('working on campaign ' + JSON.stringify(campaign, null, 4));
 
         while (true) {
 
@@ -819,6 +825,7 @@ export class TwitchDropsBot extends EventEmitter {
             const inventory = await this.#twitchClient.getInventory();
             const inventoryDrop = getInventoryDrop(drop.id, inventory, dropCampaignId);
             if (inventoryDrop != null) {
+                this.#inventoryDropMap[drop.id] = inventoryDrop;
                 currentMinutesWatched = inventoryDrop.self.currentMinutesWatched;
                 if (currentMinutesWatched >= inventoryDrop.requiredMinutesWatched) {
                     await this.#claimDropReward(inventoryDrop);
@@ -948,7 +955,7 @@ export class TwitchDropsBot extends EventEmitter {
     #onDropRewardClaimed(drop: TimeBasedDrop) {
         logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
         //this.#completedDropIds.add(drop.id); cant do this - need to make sure claim count = entitlement limit
-        this.emit("drop_claimed", drop);
+        this.emit("drop_claimed", drop.id);
         logger.debug("DROP CLAIMED: " + JSON.stringify(drop, null, 4));
     }
 
@@ -1079,7 +1086,6 @@ export class TwitchDropsBot extends EventEmitter {
     }
 
     async #watchStream(streamUrl: string, components: Component[]) {
-        const startWatchTime = new Date().getTime();
 
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         const webSocketListener = new WebSocketListener();
@@ -1118,6 +1124,8 @@ export class TwitchDropsBot extends EventEmitter {
                 }
                 throw error;
             }
+
+            const startWatchTime = new Date().getTime();
 
             try {
                 // Click "Accept mature content" button
@@ -1226,7 +1234,7 @@ export class TwitchDropsBot extends EventEmitter {
     async #getActiveStreams(campaignId: string, details: DropCampaign) {
         // Get a list of active streams that have drops enabled
         // todo: this only returns 30 streams. if they all get filtered out by the "allow" filter then we should check for more
-        let streams = await this.#twitchClient.getActiveStreams(this.#getDropCampaignById(campaignId).game.displayName, {tags: [StreamTag.DROPS_ENABLED]});
+        let streams = await this.#twitchClient.getActiveStreams(this.getDropCampaignById(campaignId).game.displayName, {tags: [StreamTag.DROPS_ENABLED]});
 
         // Filter out streams that are not in the allowed channels list, if any
         if (details.allow.isEnabled) {
@@ -1246,11 +1254,65 @@ export class TwitchDropsBot extends EventEmitter {
     }
 
     #getDropCampaignFullName(campaignId: string) {
-        const campaign = this.#getDropCampaignById(campaignId);
+        const campaign = this.getDropCampaignById(campaignId);
         return campaign.game.displayName + ' ' + campaign.name;
     }
 
-    #getDropCampaignById(campaignId: string) {
+    getDropCampaignById(campaignId: string): DropCampaign {
         return this.#dropCampaignMap[campaignId];
+    }
+
+    getDropCampaignByDropId(id: string): DropCampaign | null {
+        const find = (campaigns: DropCampaign[]) => {
+            for (const campaign of campaigns) {
+                const timeBasedDrops = campaign.timeBasedDrops;
+                if (timeBasedDrops) {
+                    for (const drop of timeBasedDrops) {
+                        if (drop.id === id) {
+                            return campaign;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        const a = find(Object.values(this.#dropCampaignDetailsMap));
+        if (a) {
+            return a;
+        }
+        return find(Object.values(this.#dropCampaignMap));
+    }
+
+    getDropById(id: string): TimeBasedDrop | null {
+        const find = (campaigns: DropCampaign[]) => {
+            for (const campaign of campaigns) {
+                const timeBasedDrops = campaign.timeBasedDrops;
+                if (timeBasedDrops) {
+                    for (const drop of timeBasedDrops) {
+                        if (drop.id === id) {
+                            return drop;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        const find2 = (drops: TimeBasedDrop[]) => {
+            for (const drop of drops) {
+                if (drop.id === id) {
+                    return drop;
+                }
+            }
+            return null;
+        }
+        const a = find2(Object.values(this.#inventoryDropMap));
+        if (a) {
+            return a;
+        }
+        const b = find(Object.values(this.#dropCampaignDetailsMap));
+        if (b) {
+            return b;
+        }
+        return find(Object.values(this.#dropCampaignMap));
     }
 }

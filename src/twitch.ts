@@ -34,6 +34,7 @@ export interface DropCampaign {
     self: {
         isAccountConnected: boolean
     },
+    startAt: string,
     endAt: string,
     name: string,
     timeBasedDrops: TimeBasedDrop[],
