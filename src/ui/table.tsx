@@ -2,6 +2,7 @@ import React from "react";
 import {Box, Text} from "ink";
 import {sha1} from "object-hash";
 import stringWidth from "string-width";
+import logger from "../logger";
 
 function join(items: Array<any>, separator: any) {
     const result: any[] = [];
@@ -101,14 +102,14 @@ export class Table extends React.Component<TableProps, any> {
         return widths;
     }
 
-    #createRow(data: any[], widths?: number[], rp?: RowProps) {
+    #createRow(data: string[], widths?: number[], rp?: RowProps) {
         const key = `row-${sha1(data)}`;
         const paddingCharacter: string = " ";
         const paddingString = paddingCharacter.repeat(this.props.padding);
         const columnCount = [...data].length;
-        const columns = [...data].map((item: any, index: number) => {
+        const columns = [...data].map((item: string, index: number) => {
             item = ("" + item).trim();
-            const spaces = widths ? Math.max(0, widths[index] - item.length) : 0;
+            const spaces = widths ? Math.max(0, widths[index] - stringWidth(item)) : 0;
             return <Text>
                 {index > 0 ? paddingString : undefined}
                 <Text color={rp?.color} bold={rp?.bold}>{item + " ".repeat(spaces)}</Text>
