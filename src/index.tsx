@@ -6,11 +6,13 @@ import path from 'path';
 import axios from "axios";
 import {render} from "ink";
 import React from "react";
+const cliProgress = require("cli-progress");
+const {BarFormat} = cliProgress.Format;
 
 import logger from './logger';
-import {Client} from './twitch';
+import {Client, TimeBasedDrop} from './twitch';
 import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options';
-import {TwitchDropsBot} from './twitch_drops_bot';
+import {getDropName, TwitchDropsBot} from './twitch_drops_bot';
 import {ConfigurationParser} from './configuration_parser';
 import {LoginPage} from "./pages/login";
 import {Application} from "./ui/ui";
@@ -139,7 +141,7 @@ for (const arg of defaultBrowserArgs) {
 }
 
 // Check if we are running inside a Docker container
-if (isInsideDocker()){
+if (isInsideDocker()) {
 
     const requiredBrowser = "chromium";
     const actualBrowser = config["browser"];
@@ -150,7 +152,7 @@ if (isInsideDocker()){
 
     const requiredHeadlessLogin = true;
     const actualHeadlessLogin = config["headless_login"];
-    if (actualHeadlessLogin !== requiredHeadlessLogin){
+    if (actualHeadlessLogin !== requiredHeadlessLogin) {
         logger.warn("Overriding headless_login option because we are inside a docker container!");
         config["headless_login"] = requiredHeadlessLogin;
     }
@@ -161,7 +163,7 @@ if (isInsideDocker()){
     for (const arg of requiredBrowserArgs) {
         const argName = arg.split("=")[0];
         if (!actualBrowserArgsNames.includes(argName)) {
-            logger.warn("Adding browser option: " + arg +" because we are inside a docker container!");
+            logger.warn("Adding browser option: " + arg + " because we are inside a docker container!");
             config["browser_args"].push(arg);
         }
     }
@@ -334,9 +336,11 @@ async function checkVersion() {
         broadcasterIds: config["broadcasters"]
     });
 
-    const ui = true;
+    const ui = false;
     if (ui) {
-        setUpUi(bot);
+        startUiMode(bot);
+    } else {
+        startProgressBarMode(bot);
     }
 
     await bot.start();
@@ -346,7 +350,124 @@ async function checkVersion() {
     process.exit(1);
 });
 
-function setUpUi(bot: TwitchDropsBot) {
+function startProgressBarMode(bot: TwitchDropsBot) {
+
+    let progressBar: any = null;
+    let payload: any = null;
+    let isFirstOutput: boolean = true;
+
+    let isProgressBarStarted: boolean = false;
+
+    const progressBarHeight: number = 2;
+
+    function ansiEscape(code: string): string {
+        return '\x1B[' + code;
+    }
+
+    const startProgressBar = (p = payload) => {
+        payload = p;
+        if (!isProgressBarStarted && progressBar !== null) {
+            isProgressBarStarted = true;
+            isFirstOutput = true;
+            for (let i = 0; i < progressBarHeight; ++i) {
+                process.stdout.write('\n');
+            }
+            process.stdout.write(ansiEscape(`${progressBarHeight}A`));
+            progressBar.start(1, 0, p);
+        }
+    }
+
+    const updateProgressBar = (p = payload) => {
+        payload = p;
+        if (progressBar !== null) {
+            progressBar.update(0, p);
+        }
+    }
+
+    const stopProgressBar = (clear: boolean = false) => {
+        if (isProgressBarStarted) {
+            isProgressBarStarted = false;
+            progressBar.stop();
+            process.stdout.write(ansiEscape(`${progressBarHeight - 1}B`) + ansiEscape("2K") + ansiEscape(`${progressBarHeight - 1}A`));
+        }
+        if (clear) {
+            progressBar = null;
+            payload = null;
+        }
+    }
+
+    // Intercept logging messages to stop/start the progress bar
+    const onBeforeLogMessage = () => {
+        stopProgressBar();
+    }
+    const onAfterLogMessage = () => {
+        startProgressBar();
+    }
+    for (const level of Object.keys(logger.levels)) {
+        // @ts-ignore
+        const og = logger[level];
+
+        // @ts-ignore
+        logger[level] = (args: any) => {
+            onBeforeLogMessage();
+            const result = og(args);
+            onAfterLogMessage();
+            return result;
+        }
+    }
+
+    let currentDrop: TimeBasedDrop | null = null;
+    let dropId: string | null = null;
+
+    bot.on("drop_progress_updated", (drop => {
+        currentDrop = drop;
+        if (drop !== null && drop.id !== dropId) {
+            dropId = drop.id;
+            stopProgressBar();
+            startProgressBar();
+        }
+    }));
+    bot.on("watch_status_updated", data => {
+        if (!isProgressBarStarted && progressBar === null) {
+            progressBar = new cliProgress.SingleBar(
+                {
+                    barsize: 20,
+                    clearOnComplete: true,
+                    stream: process.stdout,
+                    format: (options: any, params: any, payload: any) => {
+                        let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
+
+                        const drop = currentDrop;
+                        if (drop) {
+                            progressBar.setTotal(drop.requiredMinutesWatched);
+                            result += `${getDropName(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
+                        } else {
+                            result += `- No Drops Active -\n`;
+                        }
+
+                        if (isFirstOutput) {
+                            return result;
+                        }
+
+                        return ansiEscape(`${progressBarHeight}A`) + result;
+                    }
+                },
+                cliProgress.Presets.shades_classic
+            );
+            progressBar.on('redraw-post', () => {
+                isFirstOutput = false;
+            });
+            startProgressBar(data);
+        } else if (data === null) {
+            stopProgressBar(true);
+        } else {
+            updateProgressBar(data);
+        }
+    });
+
+}
+
+function startUiMode(bot: TwitchDropsBot) {
     process.stdout.write("\x1b[?1049h");
     process.on("exit", () => {
         process.stdout.write("\x1b[?1049l");

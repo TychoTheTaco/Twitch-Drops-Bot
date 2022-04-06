@@ -2,9 +2,8 @@ import EventEmitter from "events";
 
 const SortedArray = require("sorted-array-type");
 const WaitNotify = require("wait-notify");
-const cliProgress = require("cli-progress");
-const {BarFormat} = cliProgress.Format;
-const TimeoutError = require("puppeteer").errors.TimeoutError;
+import {errors} from "puppeteer";
+const TimeoutError = errors.TimeoutError;
 import {ElementHandle, Page} from "puppeteer";
 import {detailedDiff} from "deep-object-diff";
 
@@ -62,6 +61,20 @@ function createStreamUrl(broadcasterId: string): string {
 
 function getBroadcasterIdFromUrl(streamUrl: string): string {
     return streamUrl.split("twitch.tv/")[1];
+}
+
+export declare interface TwitchDropsBot {
+    on(event: "before_drop_campaigns_updated"): this;
+    on(event: "pending_drop_campaigns_updated", listener: (campaigns: DropCampaign[]) => void): this;
+    on(event: "drop_claimed", listener: (dropId: string) => void): this;
+    on(event: "drop_progress_updated", listener: (drop: TimeBasedDrop | null) => void): this;
+    on(event: "community_points_earned", listener: (data: any) => void): this;
+    on(event: "watch_status_updated", listener: (data: {
+        viewers?: number,
+        uptime?: string,
+        stream_url?: string,
+        watch_time?: number
+    } | null) => void): this;
 }
 
 export interface TwitchDropsBotOptions {
@@ -212,10 +225,6 @@ export class TwitchDropsBot extends EventEmitter {
     readonly #dropCampaignMap: { [key: string]: DropCampaign } = {};
     readonly #dropCampaignDetailsMap: { [key: string]: DropCampaign } = {};
     readonly #inventoryDropMap: { [key: string]: TimeBasedDrop } = {};
-
-    #progressBar: any = null;
-    #payload: any = null;
-    #isFirstOutput: boolean = true;
 
     #currentDropCampaignId: string | null = null;
 
