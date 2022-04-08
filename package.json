@@ -33,6 +33,7 @@
     "deep-object-diff": "^1.1.7",
     "dnscache": "^1.0.2",
     "ink": "^3.2.0",
+    "lodash": "^4.17.21",
     "object-hash": "^3.0.0",
     "prompt": "^1.2.2",
     "puppeteer": "^13.5.2",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
+    "@types/lodash": "^4.14.181",
     "@types/object-hash": "^2.2.1",
     "@types/react": "^17.0.41",
     "husky": "^7.0.0",

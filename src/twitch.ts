@@ -24,7 +24,8 @@ I could make a separate interface for each API call but that would get messy ver
 export interface Game {
     id: string,
     displayName: string,
-    name: string
+    name: string,
+    boxArtURL: string
 }
 
 export interface DropCampaign {

@@ -1,8 +1,10 @@
 import EventEmitter from "events";
 
+import _ from "lodash";
 const SortedArray = require("sorted-array-type");
 const WaitNotify = require("wait-notify");
 import {errors} from "puppeteer";
+
 const TimeoutError = errors.TimeoutError;
 import {ElementHandle, Page} from "puppeteer";
 import {detailedDiff} from "deep-object-diff";
@@ -63,12 +65,96 @@ function getBroadcasterIdFromUrl(streamUrl: string): string {
     return streamUrl.split("twitch.tv/")[1];
 }
 
+export class Database {
+
+    readonly #dropCampaigns: Map<string, DropCampaign> = new Map<string, DropCampaign>();
+    readonly #drops: Map<string, TimeBasedDrop> = new Map<string, TimeBasedDrop>();
+
+    #getDifference<T extends object>(a: T, b: T): object | null {
+        const difference: any = detailedDiff(a, b);
+        const added = difference["added"];
+        const deleted = difference["deleted"];
+        const updated = difference["updated"];
+        if (Object.keys(added).length > 0 /*|| Object.keys(deleted).length > 0*/ || Object.keys(updated).length > 0) {
+            return {
+                "added": added,
+                "updated": updated
+            };
+        }
+        return null;
+    }
+
+    addOrUpdateDropCampaign(campaign: DropCampaign) {
+        const existingCampaign = this.#dropCampaigns.get(campaign.id);
+        if (existingCampaign) {
+            const difference = this.#getDifference(existingCampaign, campaign);
+            if (difference) {
+                logger.debug("campaign data changed: " + JSON.stringify(difference, (key, value) => {
+                    return typeof value === 'undefined' ? null : value;
+                }, 4));
+            }
+            _.merge(existingCampaign, campaign);
+        } else {
+            this.#dropCampaigns.set(campaign.id, campaign);
+        }
+        const timeBasedDrops = campaign.timeBasedDrops;
+        if (timeBasedDrops) {
+            for (const drop of timeBasedDrops) {
+                this.addOrUpdateDrop(drop);
+            }
+        }
+    }
+
+    addOrUpdateDrop(drop: TimeBasedDrop) {
+        const existingDrop = this.#drops.get(drop.id);
+        if (existingDrop) {
+            const difference = this.#getDifference(existingDrop, drop);
+            if (difference) {
+                logger.debug("drop data changed: " + JSON.stringify(difference, (key, value) => {
+                    return typeof value === 'undefined' ? null : value;
+                }, 4));
+            }
+            _.merge(existingDrop, drop);
+        } else {
+            this.#drops.set(drop.id, drop);
+        }
+    }
+
+    getDropCampaignById(id: string): DropCampaign | null {
+        return this.#dropCampaigns.get(id) ?? null;
+    }
+
+    getDropById(id: string): TimeBasedDrop | null {
+        return this.#drops.get(id) ?? null;
+    }
+
+    getDropCampaignByDropId(id: string): DropCampaign | null {
+        for (const campaign of this.#dropCampaigns.values()) {
+            const timeBasedDrops = campaign.timeBasedDrops;
+            if (timeBasedDrops) {
+                for (const drop of timeBasedDrops) {
+                    if (drop.id === id) {
+                        return campaign;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+}
+
 export declare interface TwitchDropsBot {
     on(event: "before_drop_campaigns_updated"): this;
+
     on(event: "pending_drop_campaigns_updated", listener: (campaigns: DropCampaign[]) => void): this;
+
     on(event: "drop_claimed", listener: (dropId: string) => void): this;
+
     on(event: "drop_progress_updated", listener: (drop: TimeBasedDrop | null) => void): this;
+
     on(event: "community_points_earned", listener: (data: any) => void): this;
+
     on(event: "watch_status_updated", listener: (data: {
         viewers?: number,
         uptime?: string,
@@ -196,8 +282,12 @@ export class TwitchDropsBot extends EventEmitter {
             return 0;
         }
 
-        const campaignA = this.getDropCampaignById(a);
-        const campaignB = this.getDropCampaignById(b);
+        const campaignA = this.#database.getDropCampaignById(a);
+        const campaignB = this.#database.getDropCampaignById(b);
+        if (!(campaignA && campaignB)) {
+            // todo: this never happens
+            return 0;
+        }
 
         // Sort campaigns based on order of game IDs specified in config
         const indexA = this.#gameIds.indexOf(campaignA.game.id);
@@ -218,13 +308,7 @@ export class TwitchDropsBot extends EventEmitter {
     });
     #pendingDropCampaignIdsNotifier = new WaitNotify();
 
-    /**
-     * A mapping of Drop Campaign IDs to Drop Campaigns. This "database" stores the latest information on each Drop Campaign.
-     * @private
-     */
-    readonly #dropCampaignMap: { [key: string]: DropCampaign } = {};
-    readonly #dropCampaignDetailsMap: { [key: string]: DropCampaign } = {};
-    readonly #inventoryDropMap: { [key: string]: TimeBasedDrop } = {};
+    readonly #database: Database = new Database();
 
     #currentDropCampaignId: string | null = null;
 
@@ -279,6 +363,38 @@ export class TwitchDropsBot extends EventEmitter {
         super();
         this.#page = page;
         this.#twitchClient = client;
+
+        const getDropCampaigns = this.#twitchClient.getDropCampaigns.bind(this.#twitchClient);
+        this.#twitchClient.getDropCampaigns = async () => {
+            const campaigns = await getDropCampaigns();
+            for (const campaign of campaigns) {
+                this.#database.addOrUpdateDropCampaign(campaign);
+            }
+            return campaigns;
+        }
+        const getDropCampaignDetails = this.#twitchClient.getDropCampaignDetails.bind(this.#twitchClient);
+        this.#twitchClient.getDropCampaignDetails = async (dropId: string) => {
+            const details = await getDropCampaignDetails(dropId);
+            this.#database.addOrUpdateDropCampaign(details);
+            return details;
+        }
+        const getInventory = this.#twitchClient.getInventory.bind(this.#twitchClient);
+        this.#twitchClient.getInventory = async () => {
+            const inventory = await getInventory();
+            const campaignsInProgress = inventory.dropCampaignsInProgress;
+            if (campaignsInProgress) {
+                for (const campaign of campaignsInProgress) {
+                    this.#database.addOrUpdateDropCampaign(campaign);
+                    const timeBasedDrops = campaign.timeBasedDrops;
+                    if (timeBasedDrops) {
+                        for (const drop of timeBasedDrops) {
+                            this.#database.addOrUpdateDrop(drop);
+                        }
+                    }
+                }
+            }
+            return inventory;
+        }
 
         options?.gameIds?.forEach((id => {
             this.#gameIds.push(id);
@@ -352,35 +468,7 @@ export class TwitchDropsBot extends EventEmitter {
 
                 // Add Drop campaign to database (updating it if it already existed)
                 const dropCampaignId = campaign.id;
-                if (dropCampaignId in this.#dropCampaignMap) {
-                    // Check if the campaign data changed
-                    const oldCampaign = this.#dropCampaignMap[dropCampaignId];
-                    const difference: any = detailedDiff(oldCampaign, campaign);
-                    const added = difference["added"];
-                    const deleted = difference["deleted"];
-                    const updated = difference["updated"];
-                    if (Object.keys(added).length > 0 || Object.keys(deleted).length > 0 || Object.keys(updated).length > 0) {
-                        while (true) {
-
-                            // Check if status changed
-                            const updatedStatus = updated["status"];
-                            if (updatedStatus) {
-                                logger.debug("status changed: " + campaign.id + " from " + oldCampaign.status + " to " + updatedStatus);
-
-                                // Check if this was the only thing that changed
-                                if (Object.keys(added).length == 0 && Object.keys(deleted).length == 0 && Object.keys(updated).length == 1) {
-                                    break;
-                                }
-                            }
-
-                            logger.debug("Campaign data changed: " + JSON.stringify(oldCampaign, null, 4));
-                            logger.debug("Campaign data changed: " + JSON.stringify(difference, null, 4));
-                            //todo: check if the drops changed. this is from getcampaigndetails?
-                            break;
-                        }
-                    }
-                }
-                this.#dropCampaignMap[dropCampaignId] = campaign;
+                this.#database.addOrUpdateDropCampaign(campaign);
 
                 // Add Drops campaigns to the pending campaign queue
                 if (this.#gameIds.length === 0 || this.#gameIds.includes(campaign.game.id) || this.#watchUnlistedGames) {
@@ -425,7 +513,7 @@ export class TwitchDropsBot extends EventEmitter {
             logger.debug('Found ' + this.#pendingDropCampaignIds.length + ' pending campaigns.');
 
             this.emit('pending_drop_campaigns_updated', this.#pendingDropCampaignIds.map((item: string) => {
-                return this.#dropCampaignMap[item];
+                return this.#database.getDropCampaignById(item);
             }));
 
             // Check if we are currently working on a drop campaign
@@ -502,7 +590,11 @@ export class TwitchDropsBot extends EventEmitter {
     async #hasPendingHigherPriorityStream(): Promise<boolean> {
         for (const dropCampaignId of this.#pendingDropCampaignIds) {
 
-            const campaign = this.#dropCampaignMap[dropCampaignId];
+            const campaign = this.#database.getDropCampaignById(dropCampaignId);
+            if (!campaign) {
+                //todo: fatal error
+                continue;
+            }
 
             // Check if we are currently watching this campaign
             if (dropCampaignId === this.#currentDropCampaignId) {
@@ -585,7 +677,11 @@ export class TwitchDropsBot extends EventEmitter {
     #getNextPendingDropCampaignId(): string | null {
         for (const dropCampaignId of this.#pendingDropCampaignIds) {
 
-            const campaign = this.#dropCampaignMap[dropCampaignId];
+            const campaign = this.#database.getDropCampaignById(dropCampaignId);
+            if (!campaign) {
+                //todo: fatal error
+                continue;
+            }
 
             // Check if this drop campaign is active
             if (campaign.status !== 'ACTIVE') {
@@ -636,7 +732,12 @@ export class TwitchDropsBot extends EventEmitter {
 
         // Check pending Drop Campaigns' games
         for (const dropCampaignId of this.#pendingDropCampaignIds) {
-            const streams = await this.#twitchClient.getActiveStreams(this.#dropCampaignMap[dropCampaignId].game.displayName);
+            const campaign = this.#database.getDropCampaignById(dropCampaignId);
+            if (!campaign) {
+                //todo: fatal error
+                continue;
+            }
+            const streams = await this.#twitchClient.getActiveStreams(campaign.game.displayName);
             if (streams.length > 0) {
                 const streamUrl = streams[0].url;
                 if (this.#streamUrlTemporaryBlacklist.has(streamUrl)) {
@@ -802,7 +903,10 @@ export class TwitchDropsBot extends EventEmitter {
         logger.info('Processing campaign: ' + this.#getDropCampaignFullName(dropCampaignId));
         this.#lastDropCampaignAttemptTimes[dropCampaignId] = new Date().getTime();
 
-        const campaign = this.#dropCampaignMap[dropCampaignId];
+        const campaign = this.#database.getDropCampaignById(dropCampaignId);
+        if (!campaign) {
+            throw new Error("missing campaign");
+        }
 
         // Warn the user if the Twitch account is not linked. Users can still earn progress and claim
         // rewards from campaigns that are not linked to their Twitch account (they will still show up
@@ -815,7 +919,7 @@ export class TwitchDropsBot extends EventEmitter {
 
         const details = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
         this.#currentDropCampaignDetails = details;
-        this.#dropCampaignDetailsMap[dropCampaignId] = details;
+        this.#database.addOrUpdateDropCampaign(details);
 
         logger.debug('working on campaign ' + JSON.stringify(campaign, null, 4));
 
@@ -834,7 +938,7 @@ export class TwitchDropsBot extends EventEmitter {
             const inventory = await this.#twitchClient.getInventory();
             const inventoryDrop = getInventoryDrop(drop.id, inventory, dropCampaignId);
             if (inventoryDrop != null) {
-                this.#inventoryDropMap[drop.id] = inventoryDrop;
+                this.#database.addOrUpdateDrop(inventoryDrop);
                 currentMinutesWatched = inventoryDrop.self.currentMinutesWatched;
                 if (currentMinutesWatched >= inventoryDrop.requiredMinutesWatched) {
                     await this.#claimDropReward(inventoryDrop);
@@ -1240,10 +1344,14 @@ export class TwitchDropsBot extends EventEmitter {
         }
     }
 
-    async #getActiveStreams(campaignId: string, details: DropCampaign) {
+    async #getActiveStreams(campaignId: string, details: DropCampaign) { // todo: why we have id and details???
         // Get a list of active streams that have drops enabled
         // todo: this only returns 30 streams. if they all get filtered out by the "allow" filter then we should check for more
-        let streams = await this.#twitchClient.getActiveStreams(this.getDropCampaignById(campaignId).game.displayName, {tags: [StreamTag.DROPS_ENABLED]});
+        const campaign = this.#database.getDropCampaignById(campaignId);
+        if (!campaign) {
+            throw new Error("missing campaign");
+        }
+        let streams = await this.#twitchClient.getActiveStreams(campaign.game.displayName, {tags: [StreamTag.DROPS_ENABLED]});
 
         // Filter out streams that are not in the allowed channels list, if any
         if (details.allow.isEnabled) {
@@ -1263,65 +1371,14 @@ export class TwitchDropsBot extends EventEmitter {
     }
 
     #getDropCampaignFullName(campaignId: string) {
-        const campaign = this.getDropCampaignById(campaignId);
+        const campaign = this.#database.getDropCampaignById(campaignId);
+        if (!campaign) {
+            return "null";
+        }
         return campaign.game.displayName + ' ' + campaign.name;
     }
 
-    getDropCampaignById(campaignId: string): DropCampaign {
-        return this.#dropCampaignMap[campaignId];
-    }
-
-    getDropCampaignByDropId(id: string): DropCampaign | null {
-        const find = (campaigns: DropCampaign[]) => {
-            for (const campaign of campaigns) {
-                const timeBasedDrops = campaign.timeBasedDrops;
-                if (timeBasedDrops) {
-                    for (const drop of timeBasedDrops) {
-                        if (drop.id === id) {
-                            return campaign;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-        const a = find(Object.values(this.#dropCampaignDetailsMap));
-        if (a) {
-            return a;
-        }
-        return find(Object.values(this.#dropCampaignMap));
-    }
-
-    getDropById(id: string): TimeBasedDrop | null {
-        const find = (campaigns: DropCampaign[]) => {
-            for (const campaign of campaigns) {
-                const timeBasedDrops = campaign.timeBasedDrops;
-                if (timeBasedDrops) {
-                    for (const drop of timeBasedDrops) {
-                        if (drop.id === id) {
-                            return drop;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-        const find2 = (drops: TimeBasedDrop[]) => {
-            for (const drop of drops) {
-                if (drop.id === id) {
-                    return drop;
-                }
-            }
-            return null;
-        }
-        const a = find2(Object.values(this.#inventoryDropMap));
-        if (a) {
-            return a;
-        }
-        const b = find(Object.values(this.#dropCampaignDetailsMap));
-        if (b) {
-            return b;
-        }
-        return find(Object.values(this.#dropCampaignMap));
+    getDatabase(): Database {
+        return this.#database;
     }
 }

@@ -17,8 +17,8 @@ export class DropProgressTable extends React.Component<Props, State> {
 
     render() {
 
-        const drop = this.props.dropId ? this.props.bot.getDropById(this.props.dropId) : null;
-        const campaign = this.props.dropId ? this.props.bot.getDropCampaignByDropId(this.props.dropId) : null;
+        const drop = this.props.dropId ? this.props.bot.getDatabase().getDropById(this.props.dropId) : null;
+        const campaign = this.props.dropId ? this.props.bot.getDatabase().getDropCampaignByDropId(this.props.dropId) : null;
 
         let isTwitchAccountLinked = true;
         if (this.props.dropId) {
@@ -51,7 +51,7 @@ export class DropProgressTable extends React.Component<Props, State> {
 }
 
 function getEta(drop: TimeBasedDrop) {
-    const minutesRemaining = drop.requiredMinutesWatched - drop.self.currentMinutesWatched;
+    const minutesRemaining = drop.requiredMinutesWatched - (drop.self?.currentMinutesWatched ?? 0);
     return new Date(new Date().getTime() + minutesRemaining * 60 * 1000).toLocaleTimeString(undefined, {
         hour: "2-digit",
         minute: "2-digit"
@@ -59,5 +59,5 @@ function getEta(drop: TimeBasedDrop) {
 }
 
 function formatProgress(drop: TimeBasedDrop) {
-    return `${drop?.self?.currentMinutesWatched ?? "?"} / ${drop.requiredMinutesWatched} minutes`;
+    return `${drop?.self?.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes`;
 }

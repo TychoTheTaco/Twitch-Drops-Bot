@@ -1,4 +1,3 @@
-import {TimeBasedDrop} from "../twitch";
 import React from "react";
 import {Table} from "./table";
 import {TwitchDropsBot} from "../twitch_drops_bot";
@@ -35,8 +34,8 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
 
     render() {
         let data: any[] = this.state.dropIds.map((id: string) => {
-            const campaign = this.props.bot.getDropCampaignByDropId(id);
-            const drop = this.props.bot.getDropById(id);
+            const campaign = this.props.bot.getDatabase().getDropCampaignByDropId(id);
+            const drop = this.props.bot.getDatabase().getDropById(id);
             return {
                 "Time Claimed": this.state.claim_times[id].toLocaleString(undefined, {
                     timeStyle: "short",

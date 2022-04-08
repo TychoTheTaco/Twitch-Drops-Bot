@@ -336,7 +336,7 @@ async function checkVersion() {
         broadcasterIds: config["broadcasters"]
     });
 
-    const ui = false;
+    const ui = true;
     if (ui) {
         startUiMode(bot);
     } else {

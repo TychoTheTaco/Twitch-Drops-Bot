@@ -6,7 +6,7 @@ interface State {
     columns: number
 }
 
-export class FullScreenBox extends React.Component<any, State> {
+export class FullScreen extends React.Component<any, State> {
 
     constructor(props: any) {
         super(props);
@@ -23,7 +23,7 @@ export class FullScreenBox extends React.Component<any, State> {
     }
 
     render() {
-        return <Box flexDirection={"column"} borderStyle="round" height={this.state.rows - 1} width={this.state.columns}>
+        return <Box height={this.state.rows - 1} width={this.state.columns}>
             {this.props.children}
         </Box>
     }
