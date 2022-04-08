@@ -2,7 +2,7 @@ import React from "react";
 import {Box, Text} from "ink";
 import {sha1} from "object-hash";
 import stringWidth from "string-width";
-import logger from "../logger";
+import { v4 as uuidv4 } from 'uuid';
 
 function join(items: Array<any>, separator: any) {
     const result: any[] = [];
@@ -15,13 +15,14 @@ function join(items: Array<any>, separator: any) {
     return result;
 }
 
-interface TableProps {
+interface Props {
     header?: { [key: string]: string } | string[],
     data: { [key: string]: any }[]
     padding: number
     title: string,
     divider: string,
-    placeholder: { [key: string]: string } | string
+    placeholder: { [key: string]: string } | string,
+    placeholderRowCount: number
 }
 
 interface RowProps {
@@ -29,13 +30,14 @@ interface RowProps {
     bold?: boolean
 }
 
-export class Table extends React.Component<TableProps, any> {
+export class Table extends React.Component<Props, any> {
 
     static defaultProps = {
         padding: 1,
         title: undefined,
         divider: '|',
-        placeholder: '-'
+        placeholder: '-',
+        placeholderRowCount: 1
     };
 
     #getPlaceholder(key: string) {
@@ -56,15 +58,25 @@ export class Table extends React.Component<TableProps, any> {
         } else {
             header = [...this.#getKeys(this.props.data)];
         }
-        const columns = [[...header]];
-        for (const item of this.props.data) {
-            const column: any[] = [];
+
+        const makeRow = (data: any) => {
+            const row: any[] = [];
             for (const key of header) {
-                column.push(item[key] ? item[key].toString() : this.#getPlaceholder(key));
+                row.push(data[key] ? data[key].toString() : this.#getPlaceholder(key));
             }
-            columns.push(column);
+            return row;
         }
-        const widths = this.#getColumnWidths(columns);
+
+        const rows = [[...header]];
+        for (const item of this.props.data) {
+            rows.push(makeRow(item));
+        }
+
+        while (rows.length - 1 < this.props.placeholderRowCount) {
+            rows.push(makeRow({}));
+        }
+
+        const widths = this.#getColumnWidths(rows);
 
         return <Box flexDirection={"column"}>
 
@@ -74,14 +86,14 @@ export class Table extends React.Component<TableProps, any> {
 
             {
                 // Header
-                columns.slice(0, 1).map((item: any) => {
+                rows.slice(0, 1).map((item: any) => {
                     return this.#createRow(item, widths, {bold: true});
                 })
             }
 
             {
                 // Data
-                columns.slice(1).map((item: any) => {
+                rows.slice(1).map((item: any) => {
                     return this.#createRow(item, widths, {bold: false});
                 })
             }
@@ -91,7 +103,7 @@ export class Table extends React.Component<TableProps, any> {
 
     #getColumnWidths(data: string[][]) {
         const widths: number[] = [];
-        const columnCount = this.#getKeys(this.props.data).size;
+        const columnCount = this.#getKeys(data).size;
         for (let i = 0; i < columnCount; ++i) {
             let maxWidth = 0;
             for (let j = 0; j < data.length; ++j) {
@@ -103,7 +115,7 @@ export class Table extends React.Component<TableProps, any> {
     }
 
     #createRow(data: string[], widths?: number[], rp?: RowProps) {
-        const key = `row-${sha1(data)}`;
+        const key = `row-${uuidv4()}`;
         const paddingCharacter: string = " ";
         const paddingString = paddingCharacter.repeat(this.props.padding);
         const columnCount = [...data].length;

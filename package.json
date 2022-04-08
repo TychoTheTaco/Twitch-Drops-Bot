@@ -42,6 +42,7 @@
     "react": "^17.0.2",
     "sorted-array-type": "^1.2.1",
     "string-width": "^4.2.3",
+    "uuid": "^8.3.2",
     "wait-notify": "^1.0.3",
     "winston": "^3.7.2"
   },
@@ -50,6 +51,7 @@
     "@types/lodash": "^4.14.181",
     "@types/object-hash": "^2.2.1",
     "@types/react": "^17.0.41",
+    "@types/uuid": "^8.3.4",
     "husky": "^7.0.0",
     "jest": "^27.5.1",
     "rimraf": "^3.0.2",
