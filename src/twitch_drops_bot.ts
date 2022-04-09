@@ -991,6 +991,7 @@ export class TwitchDropsBot {
 
     // If user specified an increased timeout, use it, otherwise use the default 30 seconds
     async #waitUntilElementRendered(page: Page, element: ElementHandle, timeout: number = 1000 * this.#loadTimeoutSeconds) {
+        logger.debug("waitUntilElementRendered: " + timeout);
         const checkDurationMsecs = 1000;
         const maxChecks = timeout / checkDurationMsecs;
         let lastHTMLSize = 0;
@@ -999,11 +1000,13 @@ export class TwitchDropsBot {
         const minStableSizeIterations = 3;
 
         while (checkCounts++ <= maxChecks) {
+            logger.debug("wait for html: " + checkCounts + " <= " + maxChecks);
             let html: string | undefined = await (await element.getProperty('outerHTML'))?.jsonValue();
             if (!html) {
                 throw new Error('HTML was undefined!');
             }
             let currentHTMLSize = html.length;
+            logger.debug("size: " + currentHTMLSize);
 
             if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
                 countStableSizeIterations++;
@@ -1011,11 +1014,13 @@ export class TwitchDropsBot {
                 countStableSizeIterations = 0;
             }
 
+            logger.debug("iterations: " + countStableSizeIterations + " >= " + minStableSizeIterations);
             if (countStableSizeIterations >= minStableSizeIterations) {
                 break;
             }
 
             lastHTMLSize = currentHTMLSize;
+            logger.debug("wait for page timeout: " + checkDurationMsecs);
             await page.waitForTimeout(checkDurationMsecs);
         }
     }
@@ -1154,6 +1159,7 @@ export class TwitchDropsBot {
 
             const streamPage = new StreamPage(this.#page);
             try {
+                logger.debug("wait for stream page load");
                 await streamPage.waitForLoad();
             } catch (error) {
                 if (error instanceof TimeoutError) {
@@ -1257,18 +1263,21 @@ export class TwitchDropsBot {
                         throw new StreamDownError("url mismatch");
                     }
 
+                    logger.debug("update components");
                     for (const component of components) {
                         if (await component.onUpdate(this.#page, this.#twitchClient)) {
                             return;
                         }
                     }
 
+                    logger.debug("update progress bar");
                     this.#updateProgressBar({
                         'viewers': this.#viewerCount,
                         'uptime': await streamPage.getUptime(),
                         stream_url: streamUrl
                     });
 
+                    logger.debug("wait for timeout");
                     await this.#page.waitForTimeout(1000);
                 }
             } finally {
