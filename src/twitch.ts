@@ -404,12 +404,15 @@ export function isDropCompleted(drop: TimeBasedDrop, inventory: Inventory): bool
     if (dropCampaignsInProgress != null) {
         for (const campaign of dropCampaignsInProgress) {
             //todo: consider event based drops!
-            for (const d of campaign.timeBasedDrops) {
-                if (d.id === drop.id) {
-                    if (d.self.isClaimed) {
-                        return true;
+            const timeBasedDrops = campaign.timeBasedDrops;
+            if (timeBasedDrops) {
+                for (const d of campaign.timeBasedDrops) {
+                    if (d.id === drop.id) {
+                        if (d.self.isClaimed) {
+                            return true;
+                        }
+                        return Date.now() > Date.parse(d.endAt);
                     }
-                    return Date.now() > Date.parse(d.endAt);
                 }
             }
         }

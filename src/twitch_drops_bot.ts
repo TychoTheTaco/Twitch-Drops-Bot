@@ -962,7 +962,7 @@ export class TwitchDropsBot {
 
     #onDropRewardClaimed(drop: TimeBasedDrop) {
         logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
-        this.#completedDropIds.add(drop.id);
+        //this.#completedDropIds.add(drop.id); cant do this - need to make sure claim count = entitlement limit
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
