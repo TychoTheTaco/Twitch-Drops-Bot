@@ -43,19 +43,11 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
                 }),
                 "Game": campaign?.game?.displayName ?? "-",
                 "Campaign": campaign?.name,
-                "Drop": drop?.name
+                "Drop": drop?.name // todo: dow we show drop name or benefit name? twitch website shows benefit name
             };
         });
-        if (data.length === 0) {
-            data = [{
-                "Time Claimed": "-",
-                "Game": "-",
-                "Campaign": "-",
-                "Drop": "-"
-            }]
-        }
         data.reverse();
-        return <Table title={"Recently Claimed Drops (" + this.state.dropIds.length + ")"} data={data.slice(0, 3)} divider={' '}/>
+        return <Table title={"Recently Claimed Drops (" + this.state.dropIds.length + ")"} header={["Time Claimed", "Game", "Campaign", "Drop"]} data={data.slice(0, 3)} divider={' '}/>
     }
 
 }
