@@ -30,6 +30,8 @@ To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
 5) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
 6) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
 
+After updating your install, re-run `npm install .` and `npm run build`.
+
 ### Raspberry Pi
 
 Make sure to install the latest version of Node.js, look at [this link](https://github.com/nodesource/distributions/blob/master/README.md).
