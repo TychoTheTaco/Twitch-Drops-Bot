@@ -922,40 +922,34 @@ export class TwitchDropsBot {
                 return streams[0].url;
             }
 
-            while (true) {
+            const streamUrl = await getStreamToWatch();
 
-                const streamUrl = await getStreamToWatch();
+            if (streamUrl === null) {
+                throw new NoStreamsError();
+            }
 
-                if (streamUrl === null) {
-                    throw new NoStreamsError();
+            if (!(await this.#hasDropsAvailable(streamUrl, dropCampaignId))) {
+                logger.warn("This stream has no available Drops. This is likely because you already completed this campaign");
+                return;
+            }
+
+            const dropProgressComponent = new DropProgressComponent({targetDrop: drop});
+
+            const components: Component[] = [
+                dropProgressComponent,
+                new CommunityPointsComponent()
+            ]
+
+            // Watch first stream
+            logger.info('Watching stream: ' + streamUrl);
+            try {
+                await this.#watchStreamWrapper(streamUrl, components);
+            } catch (error) {
+                if (error instanceof NoProgressError) {
+                    logger.warn(error.message);
+                } else if (error instanceof HighPriorityError) {
+                    throw error;
                 }
-
-                if (!(await this.#hasDropsAvailable(streamUrl, dropCampaignId))) {
-                    logger.warn("This stream has no available Drops. This is likely because you already completed this campaign");
-                    return;
-                }
-
-                const dropProgressComponent = new DropProgressComponent({targetDrop: drop});
-
-                const components: Component[] = [
-                    dropProgressComponent,
-                    new CommunityPointsComponent()
-                ]
-
-                // Watch first stream
-                logger.info('Watching stream: ' + streamUrl);
-                try {
-                    await this.#watchStreamWrapper(streamUrl, components);
-                } catch (error) {
-                    if (error instanceof NoProgressError) {
-                        logger.warn(error.message);
-                    } else if (error instanceof HighPriorityError) {
-                        throw error;
-                    }
-                    continue;
-                }
-
-                break;
             }
         }
     }
