@@ -70,6 +70,12 @@ function updateGames(campaigns: any[]) {
         gamesPath,
         'Name,ID\r\n' + toWrite + '\r\n',
         {encoding: 'utf-8'});
+    const oldSet = new Set(oldGames);
+    for (const game of games) {
+        if (!oldSet.has(game)) {
+            logger.info(`New game found: ${game.join(',')}`);
+        }
+    }
     logger.info('Games list updated');
 }
 
