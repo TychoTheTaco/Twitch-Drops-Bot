@@ -149,3 +149,11 @@ Below is a list of all available options.
 ### Update Games List
 
 If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
+
+## Troubleshooting
+
+`Error watching stream`
+
+When this happens, its usually because the stream page did not load fast enough. It's normal for this to happen occasionally, but if it happens often, it might be due to a slow or unstable network connection. This can also happen if you're using a low-power system such as a Raspberry Pi.
+
+Try increasing `load_timeout_secs` to `60` or `90`.  
