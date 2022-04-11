@@ -44,9 +44,15 @@ function areCookiesValid(cookies: any) {
 function updateGames(campaigns: any[]) {
     logger.info('Parsing games...');
     const gamesPath = './games.csv'
-    const oldGames = fs
-        .readFileSync(gamesPath, {encoding: 'utf-8'})
-        .split('\r\n')
+    const oldGamesRaw = fs
+        .readFileSync(gamesPath, {encoding: 'utf-8'});
+    let lineEndRead = '\r\n';
+    if (!oldGamesRaw.includes('\r\n') && oldGamesRaw.includes('\n')) {
+        lineEndRead = '\n';
+        logger.info('File games.csv contains LF instead of CRLF line endings. Will write as CRLF.');
+    }
+    const oldGames = oldGamesRaw
+        .split(lineEndRead)
         .slice(1)  // Ignore header row
         .filter(game => !!game)
         .map(game => game.split(','));
