@@ -148,4 +148,4 @@ Below is a list of all available options.
 
 ### Update Games List
 
-If you want to update the list of games found in `games.csv`, just run `npm run updateGames`.
+If you want to update the list of games found in `games.csv`, just run `npm run updateGames` or `npm run u`.
