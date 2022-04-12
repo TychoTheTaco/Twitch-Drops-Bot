@@ -19,6 +19,19 @@ import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedErro
 
 type Class<T> = { new(...args: any[]): T };
 
+process.stdout.on("close", () => {
+    logger.debug("stdout on close");
+});
+process.stdout.on("drain", () => {
+    logger.debug("stdout on drain");
+});
+process.stdout.on("error", (error) => {
+    logger.debug("stdout on error: " + JSON.stringify(error, null, 4));
+});
+process.stdout.on("finish", () => {
+    logger.debug("stdout on finish");
+});
+
 /**
  * Check if a Drop is ready to claim.
  * @param drop
@@ -274,6 +287,11 @@ export class TwitchDropsBot {
             this.#startProgressBar();
         }
         for (const level of Object.keys(logger.levels)) {
+
+            if (level === "debug") {
+                continue;
+            }
+
             // @ts-ignore
             const og = logger[level];
 
@@ -991,6 +1009,7 @@ export class TwitchDropsBot {
 
     // If user specified an increased timeout, use it, otherwise use the default 30 seconds
     async #waitUntilElementRendered(page: Page, element: ElementHandle, timeout: number = 1000 * this.#loadTimeoutSeconds) {
+        logger.debug("waitUntilElementRendered: " + timeout);
         const checkDurationMsecs = 1000;
         const maxChecks = timeout / checkDurationMsecs;
         let lastHTMLSize = 0;
@@ -999,11 +1018,13 @@ export class TwitchDropsBot {
         const minStableSizeIterations = 3;
 
         while (checkCounts++ <= maxChecks) {
+            logger.debug("wait for html: " + checkCounts + " <= " + maxChecks);
             let html: string | undefined = await (await element.getProperty('outerHTML'))?.jsonValue();
             if (!html) {
                 throw new Error('HTML was undefined!');
             }
             let currentHTMLSize = html.length;
+            logger.debug("size: " + currentHTMLSize);
 
             if (lastHTMLSize !== 0 && currentHTMLSize === lastHTMLSize) {
                 countStableSizeIterations++;
@@ -1011,11 +1032,13 @@ export class TwitchDropsBot {
                 countStableSizeIterations = 0;
             }
 
+            logger.debug("iterations: " + countStableSizeIterations + " >= " + minStableSizeIterations);
             if (countStableSizeIterations >= minStableSizeIterations) {
                 break;
             }
 
             lastHTMLSize = currentHTMLSize;
+            logger.debug("wait for page timeout: " + checkDurationMsecs);
             await page.waitForTimeout(checkDurationMsecs);
         }
     }
@@ -1038,6 +1061,7 @@ export class TwitchDropsBot {
     #updateProgressBar(p = this.#payload) {
         this.#payload = p;
         if (this.#progressBar !== null) {
+            logger.debug("updating with payload: " + JSON.stringify(p));
             this.#progressBar.update(0, p);
         }
     }
@@ -1154,6 +1178,7 @@ export class TwitchDropsBot {
 
             const streamPage = new StreamPage(this.#page);
             try {
+                logger.debug("wait for stream page load");
                 await streamPage.waitForLoad();
             } catch (error) {
                 if (error instanceof TimeoutError) {
@@ -1230,6 +1255,17 @@ export class TwitchDropsBot {
                 );
                 this.#progressBar.on('redraw-post', () => {
                     this.#isFirstOutput = false;
+                    logger.debug("pb-on-redraw-post");
+                });
+                this.#progressBar.on("update", () => {
+                    logger.debug("pb-on-update");
+                });
+                this.#progressBar.on("start", () => {
+                    logger.debug("pb-on-start");
+                });
+                this.#progressBar.on("redraw-pre", () => {
+                    // @ts-ignore
+                    logger.debug("pb-on-redraw-pre: wl:" + process.stdout.writableLength + " wnd: " + process.stdout.writableNeedDrain);
                 });
 
                 this.#viewerCount = await streamPage.getViewersCount();
@@ -1257,18 +1293,22 @@ export class TwitchDropsBot {
                         throw new StreamDownError("url mismatch");
                     }
 
+                    logger.debug("update components");
                     for (const component of components) {
                         if (await component.onUpdate(this.#page, this.#twitchClient)) {
+                            logger.debug("returned");
                             return;
                         }
                     }
 
+                    logger.debug("update progress bar");
                     this.#updateProgressBar({
                         'viewers': this.#viewerCount,
                         'uptime': await streamPage.getUptime(),
                         stream_url: streamUrl
                     });
 
+                    logger.debug("wait for timeout");
                     await this.#page.waitForTimeout(1000);
                 }
             } finally {
