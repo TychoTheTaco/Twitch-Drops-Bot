@@ -2,11 +2,25 @@
 
 import fs from "fs";
 
+const prompt = require("prompt");
+prompt.start();  // Initialize prompt (this should only be called once!)
+
 const TimeoutError = require("puppeteer").errors.TimeoutError;
 
 import {TwitchPage} from "./page";
 import logger from "../logger";
 import utils from "../utils";
+
+async function asyncPrompt(schema: any) {
+    return new Promise((resolve, reject) => {
+        prompt.get(schema, (error: any, result: any) => {
+            if (error) {
+                reject(error);
+            }
+            resolve(result);
+        });
+    });
+}
 
 export class LoginPage extends TwitchPage {
 
@@ -92,7 +106,7 @@ export class LoginPage extends TwitchPage {
                     while (true) {
                         // Prompt for input
                         console.log("Enter the code from the email or 'r' to resend the email.")
-                        const result: any = await utils.asyncPrompt(["code"]);
+                        const result: any = await asyncPrompt(["code"]);
                         code = result["code"];
                         if (code === 'r') {
                             // Resend
@@ -132,7 +146,7 @@ export class LoginPage extends TwitchPage {
                     logger.info("2FA verification found.");
 
                     // Prompt user for code
-                    const result: any = await utils.asyncPrompt(["code"]);
+                    const result: any = await asyncPrompt(["code"]);
                     const code = result["code"];
 
                     // Enter code

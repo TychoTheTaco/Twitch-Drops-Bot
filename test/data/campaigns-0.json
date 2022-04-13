@@ -1,0 +1,1877 @@
+[
+    {
+        "id": "6df388b6-520f-4b83-a4c2-7919bbfef147",
+        "name": "April CC Showcase",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "27546",
+            "displayName": "World of Tanks",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/27546-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-04T16:57:46Z",
+        "endAt": "2022-05-02T10:20:00Z",
+        "detailsURL": "https://worldoftanks.com/en/content/guide/general/guide-to-twitch-drops/",
+        "accountLinkURL": "https://na.wargaming.net/personal/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "64a8ce87-f178-4f2f-8267-4b232dd2e548",
+        "name": "One Year Celebration Part 2",
+        "owner": {
+            "id": "8f59238f-5c80-4caf-8474-4748095dda96",
+            "name": "Invisible Walls",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "515486",
+            "displayName": "First Class Trouble",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/515486_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-16T00:00:00Z",
+        "endAt": "2022-04-23T00:00:00Z",
+        "detailsURL": "https://drops.firstclasstrouble.com/",
+        "accountLinkURL": "https://drops.firstclasstrouble.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "8beb2258-da1e-4ab7-b738-d7addbe65e59",
+        "name": "KO City Season 5, Week 8",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-19T12:00:00Z",
+        "endAt": "2022-04-26T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "9e952e52-d1cd-4545-9903-e30ea31908fb",
+        "name": "April Weekly Watchers",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "27546",
+            "displayName": "World of Tanks",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/27546-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-05T10:20:00Z",
+        "endAt": "2022-04-29T10:20:00Z",
+        "detailsURL": "https://worldoftanks.com/en/content/docs/weekly-watcher-drops/",
+        "accountLinkURL": "https://na.wargaming.net/personal/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "45984db5-cb1c-4483-9cda-cccfd6844088",
+        "name": "Official KO City S5W11",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-05-10T12:00:00Z",
+        "endAt": "2022-05-17T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "6557e268-369c-405c-9e4d-2a6afb38c881",
+        "name": "WoT NA Birthday Drops",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "27546",
+            "displayName": "World of Tanks",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/27546-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T10:20:00Z",
+        "endAt": "2022-04-15T10:20:00Z",
+        "detailsURL": "https://worldoftanks.com/en/content/guide/general/guide-to-twitch-drops/",
+        "accountLinkURL": "https://na.wargaming.net/personal/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "48da83ee-cbe7-4700-8d60-8d257bfc35a3",
+        "name": "FGS 22 - eSerieA Finals",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1869092879",
+            "displayName": "FIFA 22",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1869092879_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-12T15:00:00Z",
+        "endAt": "2022-04-13T20:00:00Z",
+        "detailsURL": "https://help.ea.com/en/help/fifa/ea-sports-fifa-and-twitch/",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "c8e5c941-ba30-453f-8ce2-5b928561fd6e",
+        "name": "International Recaps",
+        "owner": {
+            "id": "e8dbecb8-428b-43c6-ae8f-f94ee1c632d0",
+            "name": "ZeniMax Online Studios",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "65654",
+            "displayName": "The Elder Scrolls Online",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/65654_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-19T10:00:00Z",
+        "endAt": "2022-04-21T20:30:00Z",
+        "detailsURL": "https://www.elderscrollsonline.com/en-us/news/post/61913",
+        "accountLinkURL": "https://account.elderscrollsonline.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "58bd96d0-f92f-41fb-b492-a9cf036b7a3e",
+        "name": "World Bass Drops",
+        "owner": {
+            "id": "026e2491-7cdb-487a-878c-1115501db154",
+            "name": "Fishing Planet LLC",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "491117",
+            "displayName": "Fishing Planet",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/491117_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T15:00:00Z",
+        "endAt": "2022-04-15T23:00:00Z",
+        "detailsURL": "https://twitch.fishingplanet.com/",
+        "accountLinkURL": "https://forum.fishingplanet.com/index.php?/topic/26259-steam-ps-meet-the-new-drop-campaign-world-bass-drops/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "b261024e-dba1-4a29-80d4-b662cd1c432e",
+        "name": "(Daily) Lando's Survival Kit Drops II",
+        "owner": {
+            "id": "3346bf0d-5179-4a89-b760-13e1581dfd12",
+            "name": "Pearl Abyss",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "386821",
+            "displayName": "Black Desert",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/386821_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-06T12:00:00Z",
+        "endAt": "2022-04-20T09:00:00Z",
+        "detailsURL": "https://www.naeu.playblackdesert.com/News/Detail?groupContentNo=2937",
+        "accountLinkURL": "https://account.pearlabyss.com/Account/SNSLink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "68ddb4aa-9ca3-4939-8a75-9d426ce35d3f",
+        "name": "ERC Spring DROPS!",
+        "owner": {
+            "id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+            "name": "Nimble Neuron Games",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "512864",
+            "displayName": "Eternal Return",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/512864_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T10:00:00Z",
+        "endAt": "2022-04-14T15:00:00Z",
+        "detailsURL": "https://twitch.playeternalreturn.com",
+        "accountLinkURL": "https://twitch.playeternalreturn.com",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "6fb692c8-940e-4b28-bfeb-f5e42f7a843e",
+        "name": "Partner Drops 4/11",
+        "owner": {
+            "id": "417c83f8-80bc-400e-9cde-0c3289ee0a47",
+            "name": "NetEase",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "515474",
+            "displayName": "Naraka: Bladepoint",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/515474_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T08:53:40Z",
+        "endAt": "2022-04-17T15:00:00Z",
+        "detailsURL": "https://www.narakathegame.com/news/official/20210811/32172_965755.html",
+        "accountLinkURL": "https://www.narakathegame.com/news/official/20210811/32172_965755.html",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "ecf151f5-d6d5-463d-87b3-68e40013c596",
+        "name": "R6S - Regional League - Stage 1 2022 - Week 6",
+        "owner": {
+            "id": "59d4f6c2-36bc-4c3f-83c8-f8d9936dc75b",
+            "name": "Ubisoft",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "460630",
+            "displayName": "Tom Clancy's Rainbow Six Siege",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/460630-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-18T15:00:00Z",
+        "endAt": "2022-04-25T05:00:00Z",
+        "detailsURL": "https://www.ubisoft.com/help/article/000065532",
+        "accountLinkURL": "https://drops-register.ubi.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "599e8e84-095e-49bf-ba55-1db46911090c",
+        "name": "Eternal Return League DROPS!",
+        "owner": {
+            "id": "bac7ec48-b5ec-4bdf-9f91-2491adda1c66",
+            "name": "Nimble Neuron Games",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "512864",
+            "displayName": "Eternal Return",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/512864_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-10T05:00:00Z",
+        "endAt": "2022-04-13T14:59:00Z",
+        "detailsURL": "https://twitch.playeternalreturn.com",
+        "accountLinkURL": "https://twitch.playeternalreturn.com",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "bf5f7cdf-428b-449f-83d9-974e28fe7767",
+        "name": "Paladins Drops 22.2 Wk 3",
+        "owner": {
+            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+            "name": "Hi-Rez Studios",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "491115",
+            "displayName": "Paladins",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/491115-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-05T12:00:00Z",
+        "endAt": "2022-04-12T12:00:00Z",
+        "detailsURL": "https://www.paladins.com/news/twitch-drops-guide-and-faq",
+        "accountLinkURL": "https://my.hirezstudios.com",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "7ff13f25-d916-4d48-8fc5-0dc9676c9283",
+        "name": "Crimson Plague & Edge Set",
+        "owner": {
+            "id": "246dc007-9e20-4cc4-abe8-fe7c7039885a",
+            "name": "Amazon Games",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "493597",
+            "displayName": "New World",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/493597_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-31T14:30:00Z",
+        "endAt": "2022-04-25T15:00:00Z",
+        "detailsURL": "https://www.newworld.com/twitch-drops",
+        "accountLinkURL": "https://www.newworld.com/twitch-drops",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "4e016ae9-c521-4b7c-933a-5572f733cd1f",
+        "name": "Goose Goose Duck - Dhalucard",
+        "owner": {
+            "id": "820bef20-6b4b-4349-bbe3-4fa8613edbb3",
+            "name": "Gaggle Studios, Inc.",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "14333696",
+            "displayName": "Goose Goose Duck",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/14333696_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-29T17:30:00Z",
+        "endAt": "2022-04-26T17:30:00Z",
+        "detailsURL": "https://gaggle.fun/dashboard/account-linking",
+        "accountLinkURL": "https://gaggle.fun/dashboard/account-linking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "4db93128-3d4c-4893-af14-b1f3537c6753",
+        "name": "Official KO City S5W2",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-05-17T12:00:00Z",
+        "endAt": "2022-05-24T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "85afb22d-01e3-4ae0-8bd3-d2ff5285c3a7",
+        "name": "KO City Season 5, Week 10",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-05-03T12:00:00Z",
+        "endAt": "2022-05-10T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "32481796-bfba-4835-af9b-6119e16b86e2",
+        "name": "Official KO City S5W6",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-05T12:00:00Z",
+        "endAt": "2022-04-12T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "53519e69-cff8-4a60-a061-9f30efe5b1a7",
+        "name": "Game Pass Open Series",
+        "owner": {
+            "id": "ad299ac0-f1a5-417d-881d-952c9aed00e9",
+            "name": "Microsoft",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "506416",
+            "displayName": "Halo Infinite",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/506416_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-04-09T08:00:00Z",
+        "endAt": "2022-04-11T08:00:00Z",
+        "detailsURL": "https://www.halowaypoint.com/esports",
+        "accountLinkURL": "https://www.halowaypoint.com/settings/linked-accounts",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "5b817fba-1b4c-43e6-861e-74182dc813ae",
+        "name": "R6S - Regional League - Stage 1 2022 - Week 5",
+        "owner": {
+            "id": "59d4f6c2-36bc-4c3f-83c8-f8d9936dc75b",
+            "name": "Ubisoft",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "460630",
+            "displayName": "Tom Clancy's Rainbow Six Siege",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/460630-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T15:00:00Z",
+        "endAt": "2022-04-18T05:00:00Z",
+        "detailsURL": "https://www.ubisoft.com/help/article/000065532",
+        "accountLinkURL": "https://drops-register.ubi.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "16f1c23f-161e-4dbf-8897-aa40dae8581f",
+        "name": "Official KO City S5W8",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-19T12:00:00Z",
+        "endAt": "2022-04-26T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "eabbf395-2e04-4888-b8f1-9321610755c0",
+        "name": "EU: Monthly Drops 12",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "27546",
+            "displayName": "World of Tanks",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/27546-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-18T05:00:00Z",
+        "endAt": "2022-04-25T05:00:00Z",
+        "detailsURL": "https://worldoftanks.eu/en/news/live-streams/monthly-twitch-drops-april-2022/",
+        "accountLinkURL": "https://worldoftanks.eu/en/content/guide/twitch-drops/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "09d707b9-2767-4479-b294-ff2c45b2191d",
+        "name": "LATAM League Part 1",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "27546",
+            "displayName": "World of Tanks",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/27546-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-09T19:00:00Z",
+        "endAt": "2022-04-18T19:00:00Z",
+        "detailsURL": "https://worldoftanks.com/en/content/guide/general/guide-to-twitch-drops/",
+        "accountLinkURL": "https://na.wargaming.net/personal/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "a70ac78a-1a76-41d2-9888-5a4d49cab22a",
+        "name": "Dungeons 7 Campaign",
+        "owner": {
+            "id": "8babeabc-1861-40ff-8bea-33686b3b7c19",
+            "name": "Stream Captain",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "511230",
+            "displayName": "Stream Raiders",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/511230_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-13T18:00:00Z",
+        "endAt": "2022-04-18T18:00:00Z",
+        "detailsURL": "https://www.streamraiders.com/drops",
+        "accountLinkURL": "https://www.streamraiders.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "d411c0ae-f2dd-44ab-98db-e7db302733d1",
+        "name": "High Isle Chapter Preview",
+        "owner": {
+            "id": "e8dbecb8-428b-43c6-ae8f-f94ee1c632d0",
+            "name": "ZeniMax Online Studios",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "65654",
+            "displayName": "The Elder Scrolls Online",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/65654_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-14T20:00:00Z",
+        "endAt": "2022-04-14T21:30:00Z",
+        "detailsURL": "https://www.elderscrollsonline.com/en-us/news/post/61913",
+        "accountLinkURL": "https://account.elderscrollsonline.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "2e8c60b9-6ad4-451d-a660-5f20a18e74a5",
+        "name": "Easter 2022 Event",
+        "owner": {
+            "id": "d5cde4b6-4ef9-42fb-9b69-711cceb3b129",
+            "name": "Fredaikis",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "66432",
+            "displayName": "Infestation: Survivor Stories",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/66432_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-15T10:00:00Z",
+        "endAt": "2022-04-18T10:00:00Z",
+        "detailsURL": "https://help.twitch.tv/s/article/mission-based-drops",
+        "accountLinkURL": "https://playnewz.com/twitchlink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "e3cad219-7bf1-4fb0-87c5-130e2393abdb",
+        "name": "SMITE 9.3 Week 4",
+        "owner": {
+            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+            "name": "Hi-Rez Studios",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "32507",
+            "displayName": "SMITE",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/32507-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-12T12:00:00Z",
+        "endAt": "2022-04-19T12:00:00Z",
+        "detailsURL": "https://www.smitegame.com/news/season-8-viewer-points-guide-and-faq/",
+        "accountLinkURL": "https://my.hirezstudios.com",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "916e9018-1a93-453b-ae8a-b583df4d63bd",
+        "name": "Official KO City S5W10",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-05-03T12:00:00Z",
+        "endAt": "2022-05-10T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "8a622b4f-3f34-4b2a-9aee-4f23e17e4216",
+        "name": "Junkyard Tuesdays #14",
+        "owner": {
+            "id": "7065cc13-2c7e-449e-86e2-8840a957712d",
+            "name": "Yendis Entertainment Pty LTD",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "508391",
+            "displayName": "Krunker",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/508391_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-26T05:00:00Z",
+        "endAt": "2022-04-27T05:00:00Z",
+        "detailsURL": "https://krunker.io/twitch/info",
+        "accountLinkURL": "https://krunker.io/twitch/auth",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "5504f4a2-7a8e-42e8-aa3e-aee58a4e0644",
+        "name": "One Year Celebration",
+        "owner": {
+            "id": "8f59238f-5c80-4caf-8474-4748095dda96",
+            "name": "Invisible Walls",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "515486",
+            "displayName": "First Class Trouble",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/515486_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-08T00:00:00Z",
+        "endAt": "2022-04-16T00:00:00Z",
+        "detailsURL": "https://drops.firstclasstrouble.com/",
+        "accountLinkURL": "https://drops.firstclasstrouble.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "7200c1fb-af7a-4c07-846c-4cb5d735b18a",
+        "name": "Official KO City S5W9",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-26T12:00:00Z",
+        "endAt": "2022-05-03T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "5eb0cd42-eef8-412b-bf89-a6ace6108758",
+        "name": "Lando's Survival Kit Drops",
+        "owner": {
+            "id": "3346bf0d-5179-4a89-b760-13e1581dfd12",
+            "name": "Pearl Abyss",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "386821",
+            "displayName": "Black Desert",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/386821_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-06T12:00:00Z",
+        "endAt": "2022-04-20T09:00:00Z",
+        "detailsURL": "https://www.naeu.playblackdesert.com/News/Detail?groupContentNo=2937",
+        "accountLinkURL": "https://account.pearlabyss.com/Account/SNSLink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "da03fc6f-fe64-4b18-ba79-f86ee426a731",
+        "name": "GGD 03/25/2022-04/22/2022",
+        "owner": {
+            "id": "820bef20-6b4b-4349-bbe3-4fa8613edbb3",
+            "name": "Gaggle Studios, Inc.",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "14333696",
+            "displayName": "Goose Goose Duck",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/14333696_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-25T19:00:00Z",
+        "endAt": "2022-04-22T19:00:00Z",
+        "detailsURL": "https://gaggle.fun/dashboard/account-linking",
+        "accountLinkURL": "https://gaggle.fun/dashboard/account-linking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "eaead573-8911-4ebc-98e9-26769183acc7",
+        "name": "\"Battle of Stalingrad\" Twitch Drops 3",
+        "owner": {
+            "id": "7522fdb9-5b5e-447e-a54c-af67adb0a660",
+            "name": "Gaijin Network",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "505257",
+            "displayName": "Enlisted",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/505257_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-04-08T15:00:00Z",
+        "endAt": "2022-04-11T13:00:00Z",
+        "detailsURL": "https://enlisted.net/en/news/show/292-twitch-drops-this-weekend-en/#!/",
+        "accountLinkURL": "https://gss.gaijin.net/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "c1e62bfd-7923-4a40-953b-1abdb73290c7",
+        "name": "Crowfall April 2022 Twitch Drop",
+        "owner": {
+            "id": "09d0eb84-6bf9-4b86-8884-c26c6a75b28d",
+            "name": "Monumental",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "489956",
+            "displayName": "Crowfall",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/489956_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-01T17:00:00Z",
+        "endAt": "2022-04-28T07:00:00Z",
+        "detailsURL": "https://crowfall.com/twitch",
+        "accountLinkURL": "https://crowfall.com/account/twitch-management",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "65eacaba-0c39-4f5e-99de-e0efbd326bca",
+        "name": "Junkyard Tuesdays #12",
+        "owner": {
+            "id": "7065cc13-2c7e-449e-86e2-8840a957712d",
+            "name": "Yendis Entertainment Pty LTD",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "508391",
+            "displayName": "Krunker",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/508391_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-12T05:00:00Z",
+        "endAt": "2022-04-13T05:00:00Z",
+        "detailsURL": "https://krunker.io/twitch/info",
+        "accountLinkURL": "https://krunker.io/twitch/auth",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "94d81157-1a49-4a8e-984d-f418febf8423",
+        "name": "SMITE 9.3 Week 3",
+        "owner": {
+            "id": "51a157a0-674a-4863-b120-7bb6ee2466a8",
+            "name": "Hi-Rez Studios",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "32507",
+            "displayName": "SMITE",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/32507-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-05T12:00:00Z",
+        "endAt": "2022-04-12T12:00:00Z",
+        "detailsURL": "https://www.smitegame.com/news/season-8-viewer-points-guide-and-faq/",
+        "accountLinkURL": "https://my.hirezstudios.com",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "04a20092-fe5c-4d25-a571-f185b4e982ad",
+        "name": "Easter 2022 Event Part 2",
+        "owner": {
+            "id": "d5cde4b6-4ef9-42fb-9b69-711cceb3b129",
+            "name": "Fredaikis",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "491289",
+            "displayName": "Infestation: The New Z",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/491289_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-22T10:00:00Z",
+        "endAt": "2022-04-25T10:00:00Z",
+        "detailsURL": "https://help.twitch.tv/s/article/mission-based-drops",
+        "accountLinkURL": "https://playnewz.com/twitchlink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "0765972e-22e2-4bab-b9b5-037db7843796",
+        "name": "Scavengers Keeper Drop",
+        "owner": {
+            "id": "324c6c37-4df4-477c-a727-9f9a57cef12e",
+            "name": "Improbable",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "504726",
+            "displayName": "Scavengers",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/504726_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-23T17:00:00Z",
+        "endAt": "2022-04-17T23:30:00Z",
+        "detailsURL": "https://www.playscavengers.com/en/news/watch-and-earn",
+        "accountLinkURL": "https://accounts.improbable.io/auth/account",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "eaa72ba0-7ff7-4d47-8b4b-9623d069aa64",
+        "name": "KO City Season 5, Week 12",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-05-17T12:00:00Z",
+        "endAt": "2022-05-24T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "09df0515-c100-4e65-ba79-5acb4a4ee8a9",
+        "name": "(Daily) Lando's Survival Kit Drops I",
+        "owner": {
+            "id": "3346bf0d-5179-4a89-b760-13e1581dfd12",
+            "name": "Pearl Abyss",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "386821",
+            "displayName": "Black Desert",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/386821_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-06T12:00:00Z",
+        "endAt": "2022-04-20T09:00:00Z",
+        "detailsURL": "https://www.naeu.playblackdesert.com/News/Detail?groupContentNo=2937",
+        "accountLinkURL": "https://account.pearlabyss.com/Account/SNSLink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "bab961b2-c509-4401-aec8-5829c8c55025",
+        "name": "Pre-launch",
+        "owner": {
+            "id": "209d1866-cf8e-429d-90b8-8349fdf4edd2",
+            "name": "Frontier Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "2047407036",
+            "displayName": "Warhammer 40,000: Chaos Gate - Daemonhunters",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/2047407036_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-13T00:00:00Z",
+        "endAt": "2022-05-06T23:30:00Z",
+        "detailsURL": "https://twitch.frontierstore.net/",
+        "accountLinkURL": "https://twitch.frontierstore.net/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "b0172b54-819f-404d-b079-5b03568f6234",
+        "name": "Easter 2022 Event Part 2",
+        "owner": {
+            "id": "d5cde4b6-4ef9-42fb-9b69-711cceb3b129",
+            "name": "Fredaikis",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "516316",
+            "displayName": "Infestation: Battle Royale",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/516316_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-22T10:00:00Z",
+        "endAt": "2022-04-25T10:00:00Z",
+        "detailsURL": "https://help.twitch.tv/s/article/mission-based-drops",
+        "accountLinkURL": "https://playnewz.com/twitchlink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "28244e29-cefe-4167-842d-d80fbe919684",
+        "name": "EU: Monthly Drops 11",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "27546",
+            "displayName": "World of Tanks",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/27546-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T05:00:00Z",
+        "endAt": "2022-04-18T05:00:00Z",
+        "detailsURL": "https://worldoftanks.eu/en/news/live-streams/monthly-twitch-drops-april-2022/",
+        "accountLinkURL": "https://worldoftanks.eu/en/content/guide/twitch-drops/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "2cb7fc6c-b155-48fb-bb6b-a1383a8d2423",
+        "name": "Official Channel Weekly Drop",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "32502",
+            "displayName": "World of Warships",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/32502_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-17T15:00:00Z",
+        "endAt": "2022-04-14T02:00:00Z",
+        "detailsURL": "https://worldofwarships.eu/news/general-news/stream-rewards-0112/",
+        "accountLinkURL": "https://worldofwarships.eu/content/twitch-connect/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "bacf49ee-bf7b-4fa7-be83-a62180299af4",
+        "name": "Early Access Twich Drops",
+        "owner": {
+            "id": "bb7e189c-cf0c-459e-a9b6-73291d391c6c",
+            "name": "ThumbAge Co., Ltd.",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1312352364",
+            "displayName": "Crowz",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1312352364_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-31T03:00:00Z",
+        "endAt": "2022-04-13T03:00:00Z",
+        "detailsURL": "https://www.playcrowz.com/twitchdrops",
+        "accountLinkURL": "https://www.playcrowz.com/twitchdrops",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "d321670d-5542-4e0d-af9b-782591b7bf51",
+        "name": "Ducks Float For Charity",
+        "owner": {
+            "id": "8f59238f-5c80-4caf-8474-4748095dda96",
+            "name": "Invisible Walls",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "515486",
+            "displayName": "First Class Trouble",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/515486_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-06T00:00:00Z",
+        "endAt": "2022-04-13T00:00:00Z",
+        "detailsURL": "https://drops.firstclasstrouble.com",
+        "accountLinkURL": "https://drops.firstclasstrouble.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "6d2593f4-590f-40b4-9fdc-8c10946d99e0",
+        "name": "Beta Access",
+        "owner": {
+            "id": "5be3251a-2592-4a35-a458-ccedc607f82b",
+            "name": "YAGER",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "470840663",
+            "displayName": "The Cycle: Frontier",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/470840663_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-16T18:00:00Z",
+        "endAt": "2022-04-13T17:00:00Z",
+        "detailsURL": "https://rewards.thecycle.game/",
+        "accountLinkURL": "https://rewards.thecycle.game/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "7e9d57b9-550f-4c46-ac0b-9cdb8832aebf",
+        "name": "KO City Season 5, Week 11",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-05-10T12:00:00Z",
+        "endAt": "2022-05-17T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "1940df3b-eab7-4726-a645-898ad01ef03b",
+        "name": "[J] Paragons Launch Campaign #2",
+        "owner": {
+            "id": "0610676e-4a72-493a-9b41-bcd0bcb6a39a",
+            "name": "Conqueror's Blade",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "498523",
+            "displayName": "Conqueror's Blade",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/498523-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-07T09:09:00Z",
+        "endAt": "2022-04-13T12:00:00Z",
+        "detailsURL": "https://conqblade.com/news/2272",
+        "accountLinkURL": "https://conqblade.com/promo/twitchregionselect/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "7d4ff867-7f7c-40ae-ad84-f176f4eaf582",
+        "name": "KO City Season 5, Week 6",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-05T12:00:00Z",
+        "endAt": "2022-04-12T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "54546a7f-8402-429d-bdf4-9c47434b0152",
+        "name": "High Isle Chapter Preview",
+        "owner": {
+            "id": "e8dbecb8-428b-43c6-ae8f-f94ee1c632d0",
+            "name": "ZeniMax Online Studios",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "65654",
+            "displayName": "The Elder Scrolls Online",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/65654_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-14T20:00:00Z",
+        "endAt": "2022-04-14T21:30:00Z",
+        "detailsURL": "https://www.elderscrollsonline.com/en-us/news/post/61913",
+        "accountLinkURL": "https://account.elderscrollsonline.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "be17b177-d0c2-4798-8bb4-d47343762c67",
+        "name": "Monster Chicken Royale Partner Drops",
+        "owner": {
+            "id": "2986fad1-6d72-43b0-8a18-c3c313414ab4",
+            "name": "PUBG Corp",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "493057",
+            "displayName": "PUBG: BATTLEGROUNDS",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/493057-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-04-01T07:00:00Z",
+        "endAt": "2022-04-11T07:00:00Z",
+        "detailsURL": "https://accounts.krafton.com",
+        "accountLinkURL": "https://accounts.krafton.com",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "1367c1a2-f26c-41ef-b2e4-3caee952e868",
+        "name": "Official KO City S5W7",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-12T12:00:00Z",
+        "endAt": "2022-04-19T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "978fe085-81ca-4bf7-9366-e82b9a1f6235",
+        "name": "Junkyard Tuesdays #13",
+        "owner": {
+            "id": "7065cc13-2c7e-449e-86e2-8840a957712d",
+            "name": "Yendis Entertainment Pty LTD",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "508391",
+            "displayName": "Krunker",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/508391_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-19T05:00:00Z",
+        "endAt": "2022-04-20T05:00:00Z",
+        "detailsURL": "https://krunker.io/twitch/info",
+        "accountLinkURL": "https://krunker.io/twitch/auth",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "0a60667f-5f56-4bae-a6de-b07721bcbb86",
+        "name": "KO City Season 5, Week 9",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-26T12:00:00Z",
+        "endAt": "2022-05-03T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "52a194a9-08f4-44c4-b49c-0e5fd9407737",
+        "name": "Affiliate PT 4/4-11",
+        "owner": {
+            "id": "a1a51d5a-233d-41c3-9acd-a03bdab35159",
+            "name": "Out of the Park Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1886157643",
+            "displayName": "Out of the Park Baseball 22",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1886157643_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-04-04T08:00:00Z",
+        "endAt": "2022-04-11T08:00:00Z",
+        "detailsURL": "https://forums.ootpdevelopments.com/showthread.php?t=323654",
+        "accountLinkURL": "https://challenge.ootpdevelopments.com/twitch",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "4123ea90-416c-4915-92a1-30d828288fc6",
+        "name": "Hearthstone Voyage to the Sunken City",
+        "owner": {
+            "id": "9620a89d-b07c-4160-a851-ae832fa6985e",
+            "name": "Blizzard",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "138585",
+            "displayName": "Hearthstone",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/138585_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-04-11T16:00:00Z",
+        "endAt": "2022-04-12T01:00:00Z",
+        "detailsURL": "https://us.battle.net/support/en/article/66385",
+        "accountLinkURL": "https://www.twitch.tv/settings/connections",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "1b56a599-f7de-466e-a3ec-e4585429b0eb",
+        "name": "KO City Season 5, Week 7",
+        "owner": {
+            "id": "fa395b5e-cadd-47d9-989d-fe511aa3dbb1",
+            "name": "Electronic Arts",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1924769596",
+            "displayName": "Knockout City",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1924769596-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-12T12:00:00Z",
+        "endAt": "2022-04-19T12:00:00Z",
+        "detailsURL": "https://www.ea.com/games/knockout-city",
+        "accountLinkURL": "https://ea.com/twitchlinking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "4fee9ce9-2050-4008-a616-5ac1f48439c5",
+        "name": "[J] Paragons Daily #2",
+        "owner": {
+            "id": "0610676e-4a72-493a-9b41-bcd0bcb6a39a",
+            "name": "Conqueror's Blade",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "498523",
+            "displayName": "Conqueror's Blade",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/498523-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-24T09:06:14Z",
+        "endAt": "2022-04-13T12:00:00Z",
+        "detailsURL": "https://conqblade.com/news/2272",
+        "accountLinkURL": "https://conqblade.com/promo/twitchregionselect/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "d157e848-b49b-4a75-9d13-58b80f3a7e06",
+        "name": "Spring - April 2022",
+        "owner": {
+            "id": "209d1866-cf8e-429d-90b8-8349fdf4edd2",
+            "name": "Frontier Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "80607",
+            "displayName": "Elite: Dangerous",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/80607_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-07T00:01:00Z",
+        "endAt": "2022-04-30T23:59:00Z",
+        "detailsURL": "https://twitch.frontierstore.net/",
+        "accountLinkURL": "https://twitch.frontierstore.net/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "d16fed14-db13-492f-a02a-1e2b7e1db908",
+        "name": "Official 4/11-18",
+        "owner": {
+            "id": "a1a51d5a-233d-41c3-9acd-a03bdab35159",
+            "name": "Out of the Park Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1886157643",
+            "displayName": "Out of the Park Baseball 22",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1886157643_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T08:00:00Z",
+        "endAt": "2022-04-18T08:00:00Z",
+        "detailsURL": "https://forums.ootpdevelopments.com/showthread.php?t=323654",
+        "accountLinkURL": "https://challenge.ootpdevelopments.com/twitch",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "83984c54-af73-4923-be06-404bb602b214",
+        "name": "Update 0.11.2: Part 2",
+        "owner": {
+            "id": "6948a129-2c6d-4d88-9444-6b96918a19f8",
+            "name": "Wargaming",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "32502",
+            "displayName": "World of Warships",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/32502_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-03-31T16:00:00Z",
+        "endAt": "2022-04-14T02:00:00Z",
+        "detailsURL": "https://worldofwarships.eu/news/general-news/stream-rewards-0112/",
+        "accountLinkURL": "https://worldofwarships.eu/content/twitch-connect/",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "dd880d9c-08d4-4e20-a1d5-a8b63d095b4d",
+        "name": "Affiliate PT 4/11-18",
+        "owner": {
+            "id": "a1a51d5a-233d-41c3-9acd-a03bdab35159",
+            "name": "Out of the Park Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1886157643",
+            "displayName": "Out of the Park Baseball 22",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1886157643_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-11T08:00:00Z",
+        "endAt": "2022-04-18T08:00:00Z",
+        "detailsURL": "https://forums.ootpdevelopments.com/showthread.php?t=323654",
+        "accountLinkURL": "https://challenge.ootpdevelopments.com/twitch",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "818c3d94-564d-4663-8aef-50905eb00476",
+        "name": "Easter 2022 Event",
+        "owner": {
+            "id": "d5cde4b6-4ef9-42fb-9b69-711cceb3b129",
+            "name": "Fredaikis",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "491289",
+            "displayName": "Infestation: The New Z",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/491289_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-15T10:00:00Z",
+        "endAt": "2022-04-18T10:00:00Z",
+        "detailsURL": "https://help.twitch.tv/s/article/mission-based-drops",
+        "accountLinkURL": "https://playnewz.com/twitchlink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "4f0f2ba3-5c47-4a54-a3cd-918610e991a4",
+        "name": "Easter 2022 Event",
+        "owner": {
+            "id": "d5cde4b6-4ef9-42fb-9b69-711cceb3b129",
+            "name": "Fredaikis",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "516316",
+            "displayName": "Infestation: Battle Royale",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/516316_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-15T10:00:00Z",
+        "endAt": "2022-04-18T10:00:00Z",
+        "detailsURL": "https://help.twitch.tv/s/article/mission-based-drops",
+        "accountLinkURL": "https://playnewz.com/twitchlink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "2e150805-a00b-4fbd-9a3b-7bcd1f8f064a",
+        "name": "Riders Republic - ZLAN TSHIRT",
+        "owner": {
+            "id": "59d4f6c2-36bc-4c3f-83c8-f8d9936dc75b",
+            "name": "Ubisoft",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "633127529",
+            "displayName": "Riders Republic",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/633127529_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-04-08T10:00:00Z",
+        "endAt": "2022-04-11T10:00:00Z",
+        "detailsURL": "https://drops-register.ubi.com/",
+        "accountLinkURL": "https://drops-register.ubi.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "6d93fd3f-512e-4827-bc1e-3da3ae774655",
+        "name": "GGD Golden Hours Apr. 12!",
+        "owner": {
+            "id": "820bef20-6b4b-4349-bbe3-4fa8613edbb3",
+            "name": "Gaggle Studios, Inc.",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "14333696",
+            "displayName": "Goose Goose Duck",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/14333696_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-12T18:30:00Z",
+        "endAt": "2022-04-13T04:00:00Z",
+        "detailsURL": "https://gaggle.fun/dashboard/account-linking",
+        "accountLinkURL": "https://gaggle.fun/dashboard/account-linking",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "70c8ea95-54fd-4fc8-8dbd-b74c76aa3c28",
+        "name": "Anno 1800 - Seeds of Change",
+        "owner": {
+            "id": "59d4f6c2-36bc-4c3f-83c8-f8d9936dc75b",
+            "name": "Ubisoft",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "498638",
+            "displayName": "Anno 1800",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/498638-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-08T09:00:00Z",
+        "endAt": "2022-04-20T22:00:00Z",
+        "detailsURL": "https://anno-union.com/twitch-drops-seeds-of-change/",
+        "accountLinkURL": "https://drops-register.ubi.com/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "9bc54f9a-e965-4cbd-84eb-22354a89e8bb",
+        "name": "Purple Newcomer Bundle",
+        "owner": {
+            "id": "209d1866-cf8e-429d-90b8-8349fdf4edd2",
+            "name": "Frontier Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "80607",
+            "displayName": "Elite: Dangerous",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/80607_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "ACTIVE",
+        "startAt": "2022-04-07T00:01:00Z",
+        "endAt": "2022-04-28T23:30:00Z",
+        "detailsURL": "https://twitch.frontierstore.net/",
+        "accountLinkURL": "https://twitch.frontierstore.net/",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "396bbf3e-108c-446f-8f6a-fb67ad6259d8",
+        "name": "Official 3/21-4/11",
+        "owner": {
+            "id": "a1a51d5a-233d-41c3-9acd-a03bdab35159",
+            "name": "Out of the Park Developments",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "1886157643",
+            "displayName": "Out of the Park Baseball 22",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/1886157643_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "EXPIRED",
+        "startAt": "2022-03-21T08:00:00Z",
+        "endAt": "2022-04-11T08:00:00Z",
+        "detailsURL": "https://forums.ootpdevelopments.com/showthread.php?t=323654",
+        "accountLinkURL": "https://challenge.ootpdevelopments.com/twitch",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "4cb59c29-c6cc-40d2-8105-bc7e052970b2",
+        "name": "Prime Time #304",
+        "owner": {
+            "id": "ede84f2f-2e8e-47bf-b260-43d2185bb458",
+            "name": "Digital Extremes",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "66170",
+            "displayName": "Warframe",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/66170_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-13T19:00:00Z",
+        "endAt": "2022-04-15T00:30:00Z",
+        "detailsURL": "https://forums.warframe.com/topic/1304937-community-stream-schedule-april-11-april-15/",
+        "accountLinkURL": "https://www.warframe.com/user",
+        "self": {
+            "isAccountConnected": true,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    },
+    {
+        "id": "16a4a59e-9481-4ebe-9837-ac4592b5c7bb",
+        "name": "Easter 2022 Event Part 2",
+        "owner": {
+            "id": "d5cde4b6-4ef9-42fb-9b69-711cceb3b129",
+            "name": "Fredaikis",
+            "__typename": "Organization"
+        },
+        "game": {
+            "id": "66432",
+            "displayName": "Infestation: Survivor Stories",
+            "boxArtURL": "https://static-cdn.jtvnw.net/ttv-boxart/66432_IGDB-120x160.jpg",
+            "__typename": "Game"
+        },
+        "status": "UPCOMING",
+        "startAt": "2022-04-22T10:00:00Z",
+        "endAt": "2022-04-25T10:00:00Z",
+        "detailsURL": "https://help.twitch.tv/s/article/mission-based-drops",
+        "accountLinkURL": "https://playnewz.com/twitchlink",
+        "self": {
+            "isAccountConnected": false,
+            "__typename": "DropCampaignSelfEdge"
+        },
+        "__typename": "DropCampaign"
+    }
+]

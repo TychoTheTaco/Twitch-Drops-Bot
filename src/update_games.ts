@@ -8,6 +8,7 @@ import {Client} from './twitch';
 import {StringOption, BooleanOption, StringListOption} from './options';
 import {ConfigurationParser} from './configuration_parser';
 import {LoginPage} from "./pages/login";
+import {updateGames} from "./utils";
 
 // Using puppeteer-extra to add plugins
 import puppeteer from 'puppeteer-extra';
@@ -39,44 +40,6 @@ function areCookiesValid(cookies: any) {
         }
     }
     return isOauthTokenFound;
-}
-
-function updateGames(campaigns: any[]) {
-    logger.info('Parsing games...');
-    const gamesPath = './games.csv'
-    const oldGamesRaw = fs
-        .readFileSync(gamesPath, {encoding: 'utf-8'});
-    let lineEndRead = '\r\n';
-    if (!oldGamesRaw.includes('\r\n') && oldGamesRaw.includes('\n')) {
-        lineEndRead = '\n';
-        logger.info('File games.csv contains LF instead of CRLF line endings. Will write as CRLF.');
-    }
-    const oldGames = oldGamesRaw
-        .split(lineEndRead)
-        .slice(1)  // Ignore header row
-        .filter(game => !!game)
-        .map(game => game.split(','));
-    const newGames = [
-        ...oldGames,
-        ...campaigns.map(campaign => [campaign['game']['displayName'], campaign['game']['id']])
-    ];
-    const games = newGames
-        .filter((game, index) => newGames.findIndex(g => g[1] === game[1]) >= index)
-        .sort((a, b) => a[0].localeCompare(b[0]));
-    const toWrite = games
-        .map(game => game.join(','))
-        .join('\r\n');
-    fs.writeFileSync(
-        gamesPath,
-        'Name,ID\r\n' + toWrite + '\r\n',
-        {encoding: 'utf-8'});
-    const oldSet = new Set(oldGames);
-    for (const game of games) {
-        if (!oldSet.has(game)) {
-            logger.info(`New game found: ${game.join(',')}`);
-        }
-    }
-    logger.info('Games list updated');
 }
 
 // Options defined here can be configured in either the config file or as command-line arguments

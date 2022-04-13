@@ -2,20 +2,12 @@
 
 import fs from 'fs';
 
-const prompt = require("prompt");
-prompt.start();  // Initialize prompt (this should only be called once!)
 import {Page} from "puppeteer";
-
-export async function asyncPrompt(schema: any) {
-    return new Promise((resolve, reject) => {
-        prompt.get(schema, (error: any, result: any) => {
-            if (error) {
-                reject(error);
-            }
-            resolve(result);
-        });
-    });
-}
+import {DropCampaign} from "./twitch";
+import logger from "./logger";
+import {parse} from "csv-parse/sync";
+import {stringify} from "csv-stringify/sync";
+import path from "path";
 
 export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
     const time = new Date().getTime();
@@ -53,7 +45,88 @@ export class TimedSet<T> extends Set<T> {
     }
 }
 
+export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./games.csv", destinationPath: string = sourcePath) {
+    logger.info('Parsing games...');
+
+    // Read games from source file
+    let oldGames = [];
+    if (fs.existsSync(sourcePath)) {
+        // Read data from file as string
+        let oldGamesRaw = fs.readFileSync(sourcePath, {encoding: "utf-8"});
+
+        // Detect and replace line endings
+        if (oldGamesRaw.includes('\r\n')) {
+            logger.info('File games.csv contains CRLF line endings. Will replace with LF.');
+            oldGamesRaw = oldGamesRaw.replace(/\r\n/g, '\n');
+        }
+
+        // Parse string into list of columns
+        oldGames = parse(oldGamesRaw, {
+            from_line: 2, // Skip header
+            skip_empty_lines: true
+        });
+    }
+
+    // @ts-ignore
+    const oldNameToIdMap = new Map<string, string>(oldGames);
+    // @ts-ignore
+    const oldIdToNameMap = new Map<string, string>(oldGames.map(game => game.reverse()));
+
+    // Create list of [name, id] for new games
+    const newGames = campaigns.map(campaign => [campaign['game']['displayName'], campaign['game']['id']]);
+
+    const newIdToNameMap = new Map<string, string>();
+
+    // Add all old games
+    for (const item of oldIdToNameMap) {
+        newIdToNameMap.set(item[0], item[1]);
+    }
+
+    for (const game of newGames) {
+        const [newName, newId] = game;
+
+        const oldName = oldIdToNameMap.get(newId);
+        const oldId = oldNameToIdMap.get(newName);
+
+        if (oldName === undefined && oldId === undefined) { // Game did not exist
+            logger.info("Found new game: " + game);
+        } else if (oldName && !oldId) {
+            if (newIdToNameMap.get(newId) !== newName) {
+                logger.info("Found new name for game: " + oldName + " -> " + newName);
+            }
+        } else if (!oldName && oldId) {
+            if (newIdToNameMap.has(oldId)) {
+                logger.info("Found new ID for game: " + newName + " " + oldId + " -> " + newId);
+                // @ts-ignore
+                newIdToNameMap.delete(oldId);
+            }
+        } else if (oldName === newName && oldId == newId) {
+            // same data
+        } else {
+            logger.info("interesting: " + oldName + " vs " + newName + "   " + oldId + " vs " + newId)
+        }
+
+        newIdToNameMap.set(newId, newName);
+    }
+
+    //
+    const games = [...newIdToNameMap.entries()]
+        .map(game => [game[1], game[0]])
+        .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const toWrite = stringify(games);
+
+    const destDir = path.dirname(destinationPath);
+    if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir);
+    }
+
+    fs.writeFileSync(
+        destinationPath,
+        'Name,ID\n' + toWrite);
+    logger.info('Games list updated');
+}
+
 export default {
-    asyncPrompt,
     saveScreenshotAndHtml
 };
