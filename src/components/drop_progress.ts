@@ -96,7 +96,6 @@ export default class DropProgressComponent extends Component {
 
         // Process web socket messages
         for (const data of this.#pendingWebSocketMessages) {
-            logger.debug("pending messages: " + this.#pendingWebSocketMessages.length);
             const dropId = data.drop_id;
 
             // Check if the drop is ready to be claimed. This might not be the same drop that we intended to make progress towards
