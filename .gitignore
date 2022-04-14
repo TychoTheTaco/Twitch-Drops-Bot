@@ -13,3 +13,6 @@ log-*.txt
 
 # Build Output
 dist
+
+# Dev utils
+utils
