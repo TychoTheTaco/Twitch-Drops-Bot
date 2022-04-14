@@ -19,19 +19,6 @@ import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedErro
 
 type Class<T> = { new(...args: any[]): T };
 
-process.stdout.on("close", () => {
-    logger.debug("stdout on close");
-});
-process.stdout.on("drain", () => {
-    logger.debug("stdout on drain");
-});
-process.stdout.on("error", (error) => {
-    logger.debug("stdout on error: " + JSON.stringify(error, null, 4));
-});
-process.stdout.on("finish", () => {
-    logger.debug("stdout on finish");
-});
-
 /**
  * Check if a Drop is ready to claim.
  * @param drop
@@ -287,11 +274,6 @@ export class TwitchDropsBot {
             this.#startProgressBar();
         }
         for (const level of Object.keys(logger.levels)) {
-
-            if (level === "debug") {
-                continue;
-            }
-
             // @ts-ignore
             const og = logger[level];
 
@@ -1061,7 +1043,6 @@ export class TwitchDropsBot {
     #updateProgressBar(p = this.#payload) {
         this.#payload = p;
         if (this.#progressBar !== null) {
-            logger.debug("updating with payload: " + JSON.stringify(p));
             this.#progressBar.update(0, p);
         }
     }
@@ -1255,17 +1236,6 @@ export class TwitchDropsBot {
                 );
                 this.#progressBar.on('redraw-post', () => {
                     this.#isFirstOutput = false;
-                    logger.debug("pb-on-redraw-post");
-                });
-                this.#progressBar.on("update", () => {
-                    logger.debug("pb-on-update");
-                });
-                this.#progressBar.on("start", () => {
-                    logger.debug("pb-on-start");
-                });
-                this.#progressBar.on("redraw-pre", () => {
-                    // @ts-ignore
-                    logger.debug("pb-on-redraw-pre: wl:" + process.stdout.writableLength + " wnd: " + process.stdout.writableNeedDrain);
                 });
 
                 this.#viewerCount = await streamPage.getViewersCount();
@@ -1296,7 +1266,6 @@ export class TwitchDropsBot {
                     logger.debug("update components");
                     for (const component of components) {
                         if (await component.onUpdate(this.#page, this.#twitchClient)) {
-                            logger.debug("returned");
                             return;
                         }
                     }
