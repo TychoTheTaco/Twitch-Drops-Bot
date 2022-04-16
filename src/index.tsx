@@ -6,16 +6,18 @@ import path from 'path';
 import axios from "axios";
 import {render} from "ink";
 import React from "react";
-const cliProgress = require("cli-progress");
+import cliProgress from "cli-progress";
+
 const {BarFormat} = cliProgress.Format;
 
-import logger from './logger';
-import {Client, TimeBasedDrop} from './twitch';
-import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options';
-import {getDropName, TwitchDropsBot} from './twitch_drops_bot';
-import {ConfigurationParser} from './configuration_parser';
-import {LoginPage} from "./pages/login";
-import {Application} from "./ui/ui";
+
+import logger from './logger.js';
+import {Client, TimeBasedDrop} from './twitch.js';
+import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options.js';
+import {getDropName, TwitchDropsBot} from './twitch_drops_bot.js';
+import {ConfigurationParser} from './configuration_parser.js';
+import {LoginPage} from "./pages/login.js";
+import {Application} from "./ui/ui.js";
 
 // Using puppeteer-extra to add plugins
 import puppeteer from 'puppeteer-extra';
@@ -338,7 +340,7 @@ async function checkVersion() {
 
     const ui = true;
     if (ui) {
-        startUiMode(bot);
+        startUiMode(bot, config['username']);
     } else {
         startProgressBarMode(bot);
     }
@@ -467,12 +469,12 @@ function startProgressBarMode(bot: TwitchDropsBot) {
 
 }
 
-function startUiMode(bot: TwitchDropsBot) {
+function startUiMode(bot: TwitchDropsBot, username: string) {
     process.stdout.write("\x1b[?1049h");
     process.on("exit", () => {
         process.stdout.write("\x1b[?1049l");
     });
     logger.transports[0].silent = true;
 
-    render(<Application bot={bot}/>);
+    render(<Application bot={bot} username={username}/>);
 }

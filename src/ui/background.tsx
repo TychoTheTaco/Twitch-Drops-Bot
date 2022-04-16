@@ -10,7 +10,7 @@ interface State {
 }
 
 export class Background extends React.Component<Props, State> {
-    private myRef: React.RefObject<unknown>;
+    private readonly myRef: React.RefObject<unknown>;
 
     constructor(props: Props) {
         super(props);

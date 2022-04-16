@@ -2,14 +2,14 @@
 
 import fs from "fs";
 
-const prompt = require("prompt");
+import prompt from "prompt";
 prompt.start();  // Initialize prompt (this should only be called once!)
 
-const TimeoutError = require("puppeteer").errors.TimeoutError;
+import puppeteer from "puppeteer";
+const TimeoutError = puppeteer.errors.TimeoutError;
 
-import {TwitchPage} from "./page";
-import logger from "../logger";
-import utils from "../utils";
+import {TwitchPage} from "./page.js";
+import logger from "../logger.js";
 
 async function asyncPrompt(schema: any) {
     return new Promise((resolve, reject) => {

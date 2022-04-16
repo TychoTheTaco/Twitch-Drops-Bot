@@ -2,7 +2,7 @@
 
 import EventEmitter from 'events';
 
-import logger from './logger';
+import logger from './logger.js';
 import {CDPSession, Page} from "puppeteer";
 
 export interface UserDropEvents_DropProgress {

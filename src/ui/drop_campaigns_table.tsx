@@ -1,8 +1,8 @@
-import {DropCampaign, Inventory, TimeBasedDrop} from "../twitch";
+import {DropCampaign, Inventory, TimeBasedDrop} from "../twitch.js";
 import React from "react";
-import {Table} from "./table";
+import {Table} from "./table.js";
 import {Box, Spacer, Text} from "ink";
-import {TwitchDropsBot} from "../twitch_drops_bot";
+import {TwitchDropsBot} from "../twitch_drops_bot.js";
 
 function formatTime(time: number): string {
     const days = Math.floor(time / 1000 / 60 / 60 / 24);

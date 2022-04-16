@@ -1,24 +1,27 @@
 import EventEmitter from "events";
 
 import _ from "lodash";
-const SortedArray = require("sorted-array-type");
-const WaitNotify = require("wait-notify");
-import {errors} from "puppeteer";
+// @ts-ignore
+import SortedArray from "sorted-array-type";
+// @ts-ignore
+import WaitNotify from "wait-notify";
+import puppeteer from "puppeteer";
+const {errors} = puppeteer;
 
 const TimeoutError = errors.TimeoutError;
 import {ElementHandle, Page} from "puppeteer";
 import {detailedDiff} from "deep-object-diff";
 
-import Component from "./components/component";
-import DropProgressComponent from "./components/drop_progress";
-import CommunityPointsComponent from "./components/community_points";
-import WebSocketListener from "./web_socket_listener";
-import {TwitchDropsWatchdog} from "./watchdog";
-import {StreamPage} from "./pages/stream";
-import utils, {TimedSet} from './utils';
-import logger from "./logger";
-import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted} from "./twitch";
-import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors";
+import Component from "./components/component.js";
+import DropProgressComponent from "./components/drop_progress.js";
+import CommunityPointsComponent from "./components/community_points.js";
+import WebSocketListener from "./web_socket_listener.js";
+import {TwitchDropsWatchdog} from "./watchdog.js";
+import {StreamPage} from "./pages/stream.js";
+import utils, {TimedSet} from './utils.js';
+import logger from "./logger.js";
+import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted} from "./twitch.js";
+import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors.js";
 
 type Class<T> = { new(...args: any[]): T };
 
@@ -27,10 +30,10 @@ type Class<T> = { new(...args: any[]): T };
  * @param drop
  */
 function isDropReadyToClaim(drop: TimeBasedDrop): boolean {
-    if (!drop.self.isClaimed) {
-        return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
+    if (drop.self.isClaimed) {
+        return false;
     }
-    return false;
+    return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
 }
 
 export function getDropName(drop: TimeBasedDrop): string {
@@ -145,7 +148,7 @@ export class Database {
 }
 
 export declare interface TwitchDropsBot {
-    on(event: "before_drop_campaigns_updated"): this;
+    on(event: "before_drop_campaigns_updated", listener: () => void): this;
 
     on(event: "pending_drop_campaigns_updated", listener: (campaigns: DropCampaign[]) => void): this;
 
@@ -451,7 +454,7 @@ export class TwitchDropsBot extends EventEmitter {
                                     await this.#claimDropReward(drop);
                                 } catch (error) {
                                     logger.error("Failed to claim drop reward");
-                                    logger.debug(error);
+                                    logger.debug(error); //todo: print drop
                                 }
                             }
                         }
@@ -1055,6 +1058,7 @@ export class TwitchDropsBot extends EventEmitter {
             logger.info('Watching stream: ' + streamUrl);
             try {
                 await this.#watchStreamWrapper(streamUrl, components);
+                //todo: update campaign info when we claim a drop
             } catch (error) {
                 if (error instanceof NoProgressError) {
                     logger.warn(error.message);
@@ -1069,10 +1073,10 @@ export class TwitchDropsBot extends EventEmitter {
         logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
         //this.#completedDropIds.add(drop.id); cant do this - need to make sure claim count = entitlement limit
         this.emit("drop_claimed", drop.id);
-        logger.debug("DROP CLAIMED: " + JSON.stringify(drop, null, 4));
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
+        logger.debug("claimDropReward: " + JSON.stringify(drop, null, 4));
         await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
         this.#onDropRewardClaimed(drop);
         //todo: check if campaign is completed

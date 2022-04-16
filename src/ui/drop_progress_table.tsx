@@ -1,7 +1,7 @@
 import React from "react";
-import {Table} from "./table";
-import {TwitchDropsBot} from "../twitch_drops_bot";
-import {TimeBasedDrop} from "../twitch";
+import {Table} from "./table.js";
+import {TwitchDropsBot} from "../twitch_drops_bot.js";
+import {getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
 import {Box, Text} from "ink";
 
 interface Props {
@@ -40,7 +40,7 @@ export class DropProgressTable extends React.Component<Props, State> {
                 {
                     "Game": campaign?.game.displayName ?? "-",
                     "Campaign": campaign?.name ?? "-",
-                    "Drop": drop?.name ?? "-",
+                    "Drop": drop ? getDropBenefitNames(drop) : "-",
                     "Progress": drop ? formatProgress(drop) : "-",
                     "ETA": drop ? getEta(drop) : "-",
                 }

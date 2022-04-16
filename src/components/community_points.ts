@@ -1,10 +1,10 @@
 import {Page} from "puppeteer";
 
-import Component from "./component";
-import {Client} from "../twitch";
-import WebSocketListener from "../web_socket_listener";
-import logger from "../logger";
-import {StreamPage} from "../pages/stream";
+import Component from "./component.js";
+import {Client} from "../twitch.js";
+import WebSocketListener from "../web_socket_listener.js";
+import logger from "../logger.js";
+import {StreamPage} from "../pages/stream.js";
 
 export default class CommunityPointsComponent extends Component {
 

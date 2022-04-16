@@ -1,10 +1,10 @@
 import {Page} from "puppeteer";
 
-import Component from "./component";
-import {Client, TimeBasedDrop, getInventoryDrop} from "../twitch";
-import logger from "../logger";
-import WebSocketListener, {UserDropEvents_DropProgress} from "../web_socket_listener";
-import {NoProgressError} from "../errors";
+import Component from "./component.js";
+import {Client, TimeBasedDrop, getInventoryDrop} from "../twitch.js";
+import logger from "../logger.js";
+import WebSocketListener, {UserDropEvents_DropProgress} from "../web_socket_listener.js";
+import {NoProgressError} from "../errors.js";
 
 export default class DropProgressComponent extends Component {
 

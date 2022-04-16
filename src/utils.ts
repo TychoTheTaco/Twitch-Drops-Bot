@@ -3,11 +3,11 @@
 import fs from 'fs';
 
 import {Page} from "puppeteer";
-import {DropCampaign} from "./twitch";
-import logger from "./logger";
+import {DropCampaign} from "./twitch.js";
 import {parse} from "csv-parse/sync";
 import {stringify} from "csv-stringify/sync";
 import path from "path";
+import logger from "./logger.js";
 
 export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
     const time = new Date().getTime();

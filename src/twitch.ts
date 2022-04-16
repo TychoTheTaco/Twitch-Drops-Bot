@@ -1,10 +1,12 @@
 "use strict";
 
-require("dnscache")({enable: true});
+// @ts-ignore
+import dnscache from "dnscache";
+dnscache({enable: true});
 
 import axios from "axios";
 
-import logger from "./logger";
+import logger from "./logger.js";
 
 export interface StreamData {
     url: string,
@@ -422,6 +424,17 @@ export function isDropCompleted(drop: TimeBasedDrop, inventory: Inventory): bool
         }
     }
     return false;
+}
+
+export function getDropBenefitNames(drop: TimeBasedDrop): string {
+    let result = "";
+    for (let i = 0; i < drop.benefitEdges.length; ++i) {
+        result += drop.benefitEdges[i].benefit.name;
+        if (i < drop.benefitEdges.length - 1) {
+            result += ", ";
+        }
+    }
+    return result;
 }
 
 /**

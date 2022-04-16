@@ -1,6 +1,7 @@
 import React from "react";
-import {Table} from "./table";
-import {TwitchDropsBot} from "../twitch_drops_bot";
+import {Table} from "./table.js";
+import {TwitchDropsBot} from "../twitch_drops_bot.js";
+import {getDropBenefitNames} from "../twitch.js";
 
 
 interface Props {
@@ -43,7 +44,7 @@ export class RecentlyClaimedDropsTable extends React.Component<Props, State> {
                 }),
                 "Game": campaign?.game?.displayName ?? "-",
                 "Campaign": campaign?.name,
-                "Drop": drop?.name // todo: dow we show drop name or benefit name? twitch website shows benefit name
+                "Drop": drop ? getDropBenefitNames(drop) : "-"
             };
         });
         data.reverse();

@@ -3,12 +3,12 @@
 import fs from 'fs';
 import path from 'path';
 
-import logger from './logger';
-import {Client} from './twitch';
-import {StringOption, BooleanOption, StringListOption} from './options';
-import {ConfigurationParser} from './configuration_parser';
-import {LoginPage} from "./pages/login";
-import {updateGames} from "./utils";
+import logger from './logger.js';
+import {Client} from './twitch.js';
+import {StringOption, BooleanOption, StringListOption} from './options.js';
+import {ConfigurationParser} from './configuration_parser.js';
+import {LoginPage} from "./pages/login.js";
+import {updateGames} from "./utils.js";
 
 // Using puppeteer-extra to add plugins
 import puppeteer from 'puppeteer-extra';

@@ -1,6 +1,6 @@
 import React from "react";
-import {Table} from "./table";
-import {TwitchDropsBot} from "../twitch_drops_bot";
+import {Table} from "./table.js";
+import {TwitchDropsBot} from "../twitch_drops_bot.js";
 
 interface StreamStatusBarProps {
     bot: TwitchDropsBot

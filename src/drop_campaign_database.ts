@@ -1,4 +1,4 @@
-import {DropCampaign} from "./twitch";
+import {DropCampaign} from "./twitch.js";
 
 class DropCampaignDatabase {
 

@@ -1,7 +1,7 @@
 "use strict";
 
-import logger from "../logger";
-import {TwitchPage} from "./page";
+import logger from "../logger.js";
+import {TwitchPage} from "./page.js";
 
 export class StreamPage extends TwitchPage {
 

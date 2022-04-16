@@ -2,6 +2,7 @@
   "name": "twitch_drops_bot",
   "version": "1.0.0",
   "description": "A Node.js bot for automatically collecting Twitch drops.",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/TychoTheTaco/Twitch-Drops-Bot"
@@ -12,7 +13,7 @@
     "compile": "tsc --pretty",
     "compile:watch": "tsc --watch",
     "build": "npm run clean && npm run compile",
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "start": "node dist/index.js",
     "updateGames": "node dist/update_games.js",
     "u": "node dist/update_games.js",
@@ -35,7 +36,11 @@
     "ink": "^3.2.0",
     "lodash": "^4.17.21",
     "object-hash": "^3.0.0",
+    "pidtree": "^0.5.0",
+    "pidusage": "^3.0.0",
+    "pidusage-tree": "^2.0.5",
     "prompt": "^1.2.2",
+    "ps-list": "^8.1.0",
     "puppeteer": "^13.5.2",
     "puppeteer-extra": "^3.2.3",
     "puppeteer-extra-plugin-stealth": "^2.9.0",
@@ -47,9 +52,13 @@
     "winston": "^3.7.2"
   },
   "devDependencies": {
+    "@types/argparse": "^2.0.10",
+    "@types/cli-progress": "^3.9.2",
     "@types/jest": "^27.4.1",
     "@types/lodash": "^4.14.181",
     "@types/object-hash": "^2.2.1",
+    "@types/pidusage": "^2.0.2",
+    "@types/prompt": "^1.1.2",
     "@types/react": "^17.0.41",
     "@types/uuid": "^8.3.4",
     "husky": "^7.0.0",

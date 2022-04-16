@@ -1,18 +1,19 @@
 import React from "react";
 import {Box, Newline, render, Spacer, Text} from 'ink';
-import {DropCampaign, TimeBasedDrop} from "../twitch";
-import {Table} from "./table";
-import {DropCampaignsTable} from "./drop_campaigns_table";
-import {StreamStatusBar} from "./stream_status_table";
-import {RecentlyClaimedDropsTable} from "./recently_claimed_drops";
-import {DropProgressTable} from "./drop_progress_table";
-import {TwitchDropsBot} from "../twitch_drops_bot";
-import {FullScreen} from "./full_screen";
-import {StatusBar} from "./status_bar";
-import {ControlBar} from "./control_bar";
+import {DropCampaign, TimeBasedDrop} from "../twitch.js";
+import {Table} from "./table.js";
+import {DropCampaignsTable} from "./drop_campaigns_table.js";
+import {StreamStatusBar} from "./stream_status_table.js";
+import {RecentlyClaimedDropsTable} from "./recently_claimed_drops.js";
+import {DropProgressTable} from "./drop_progress_table.js";
+import {TwitchDropsBot} from "../twitch_drops_bot.js";
+import {FullScreen} from "./full_screen.js";
+import {StatusBar} from "./status_bar.js";
+import {ControlBar} from "./control_bar.js";
 
 interface Props {
-    bot: TwitchDropsBot
+    bot: TwitchDropsBot,
+    username: string
 }
 
 interface State {
@@ -22,7 +23,7 @@ interface State {
 
 export class Application extends React.Component<Props, State> {
 
-    constructor(props: any) {
+    constructor(props: Props) {
         super(props);
         this.state = {
             currentDrop: undefined,
@@ -30,9 +31,9 @@ export class Application extends React.Component<Props, State> {
         };
 
         // Drop Progress Table
-        props.bot.on("drop_progress_updated", (drop?: TimeBasedDrop) => {
+        props.bot.on("drop_progress_updated", (drop: TimeBasedDrop | null) => {
             this.setState({
-                currentDrop: drop
+                currentDrop: drop ?? undefined
             });
         });
 
@@ -50,8 +51,9 @@ export class Application extends React.Component<Props, State> {
 
     render() {
         return <FullScreen>
-            <Box flexDirection={"column"} borderStyle="round" width={"100%"} height={"100%"}>
-                <StatusBar bot={this.props.bot}/>
+            <Box flexDirection={"column"} width={"100%"} height={"100%"}>
+                <StatusBar bot={this.props.bot} username={this.props.username}/>
+                <Box height={1}/>
                 <StreamStatusBar bot={this.props.bot}/>
                 <Box height={1}/>
                 <DropProgressTable bot={this.props.bot} dropId={this.state.currentDrop?.id}/>

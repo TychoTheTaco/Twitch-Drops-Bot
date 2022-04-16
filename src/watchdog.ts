@@ -1,7 +1,7 @@
 "use strict";
 
 import {EventEmitter} from "events";
-import {Client, DropCampaign} from "./twitch";
+import {Client, DropCampaign} from "./twitch.js";
 
 export class TwitchDropsWatchdog extends EventEmitter {
 
