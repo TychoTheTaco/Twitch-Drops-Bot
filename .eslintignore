@@ -1,0 +1,6 @@
+# Ignore all files
+/*
+
+# Lint only these files
+!src
+!test

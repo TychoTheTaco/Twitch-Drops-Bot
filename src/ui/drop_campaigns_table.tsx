@@ -1,4 +1,4 @@
-import {DropCampaign, Inventory, TimeBasedDrop} from "../twitch.js";
+import {DropCampaign} from "../twitch.js";
 import React from "react";
 import {Table} from "./table.js";
 import {Box, Spacer, Text} from "ink";

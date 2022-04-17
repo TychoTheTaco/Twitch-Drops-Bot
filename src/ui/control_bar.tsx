@@ -1,6 +1,6 @@
 import React from "react";
 import {TwitchDropsBot} from "../twitch_drops_bot.js";
-import {Box, measureElement, Text} from "ink";
+import {Text} from "ink";
 import {Background} from "./background.js";
 
 interface Props {

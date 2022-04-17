@@ -1,6 +1,5 @@
 import React from "react";
 import {Box, Text} from "ink";
-import {sha1} from "object-hash";
 import stringWidth from "string-width";
 import { v4 as uuidv4 } from 'uuid';
 

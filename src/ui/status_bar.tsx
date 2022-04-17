@@ -1,6 +1,6 @@
 import React from "react";
 import {TwitchDropsBot} from "../twitch_drops_bot.js";
-import {Box, Text} from "ink";
+import {Text} from "ink";
 import {Background} from "./background.js";
 import pidusage from "pidusage";
 import pidtree from "pidtree";

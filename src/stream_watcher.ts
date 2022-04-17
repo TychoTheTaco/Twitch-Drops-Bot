@@ -5,7 +5,7 @@ import {Client, TimeBasedDrop} from "./twitch.js";
 import WebSocketListener from "./web_socket_listener.js";
 import logger from "./logger.js";
 import {StreamPage} from "./pages/stream.js";
-import {HighPriorityError, StreamDownError, StreamLoadFailedError} from "./errors.js";
+import {StreamDownError, StreamLoadFailedError} from "./errors.js";
 
 interface StreamWatcherOptions {
 

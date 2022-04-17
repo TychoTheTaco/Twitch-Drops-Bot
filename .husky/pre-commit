@@ -4,6 +4,14 @@
 # Needed to find tsc
 PATH=$PATH:node_modules/.bin
 
+# Check for unused dependencies
+node tools/check-unused-dependencies.js
+
+# Check of linter errors
+if ! eslint . --ext js,ts,jsx,tsx; then
+  exit 1
+fi
+
 # Compile
 if ! tsc; then
 	exit 1

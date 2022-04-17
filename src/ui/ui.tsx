@@ -1,7 +1,6 @@
 import React from "react";
-import {Box, Newline, render, Spacer, Text} from 'ink';
+import {Box, Spacer} from 'ink';
 import {DropCampaign, TimeBasedDrop} from "../twitch.js";
-import {Table} from "./table.js";
 import {DropCampaignsTable} from "./drop_campaigns_table.js";
 import {StreamStatusBar} from "./stream_status_table.js";
 import {RecentlyClaimedDropsTable} from "./recently_claimed_drops.js";
