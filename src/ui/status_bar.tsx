@@ -79,7 +79,7 @@ export class StatusBar extends React.Component<Props, State> {
 
 function byteCountToString(bytes: number): string {
     if (bytes < 1024) {
-        return `${bytes} b`;
+        return `${bytes} B`;
     }
     const KiB = bytes / 1024;
     if (KiB < 1024) {

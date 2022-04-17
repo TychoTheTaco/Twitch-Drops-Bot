@@ -5,7 +5,7 @@ import _ from "lodash";
 import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
-import puppeteer from "puppeteer";
+import puppeteer, {Browser} from "puppeteer";
 const {errors} = puppeteer;
 
 const TimeoutError = errors.TimeoutError;
@@ -362,7 +362,37 @@ export class TwitchDropsBot extends EventEmitter {
      */
     readonly #completedDropIds: Set<string> = new Set<string>();
 
-    constructor(page: Page, client: Client, options?: TwitchDropsBotOptions) {
+    static async create(browser: Browser, cookies: any, options?: TwitchDropsBotOptions): Promise<TwitchDropsBot> {
+        // Get some data from the cookies
+        let oauthToken: string | undefined = undefined;
+        let channelLogin: string | undefined = undefined;
+        for (const cookie of cookies) {
+            switch (cookie['name']) {
+                case 'auth-token':  // OAuth token
+                    oauthToken = cookie['value'];
+                    break;
+
+                case 'persistent':  // "channelLogin" Used for "DropCampaignDetails" operation
+                    channelLogin = cookie['value'].split('%3A')[0];
+                    break;
+            }
+        }
+
+        if (!oauthToken || !channelLogin) {
+            throw new Error("Invalid cookies!");
+        }
+
+        // Seems to be the default hard-coded client ID
+        // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
+        const client = new Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
+
+        const page = await browser.newPage();
+        await page.setCookie(...cookies);
+
+        return new TwitchDropsBot(page, client, options);
+    }
+
+    private constructor(page: Page, client: Client, options?: TwitchDropsBotOptions) {
         super();
         this.#page = page;
         this.#twitchClient = client;

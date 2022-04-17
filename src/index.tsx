@@ -12,7 +12,7 @@ const {BarFormat} = cliProgress.Format;
 
 
 import logger from './logger.js';
-import {Client, TimeBasedDrop} from './twitch.js';
+import {TimeBasedDrop} from './twitch.js';
 import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options.js';
 import {getDropName, TwitchDropsBot} from './twitch_drops_bot.js';
 import {ConfigurationParser} from './configuration_parser.js';
@@ -215,19 +215,18 @@ async function checkVersion() {
         executablePath: config['browser'],
         args: config['browser_args']
     });
-    const page = await browser.newPage();
 
     // Automatically stop this program if the browser or page is closed
     browser.on('disconnected', onBrowserOrPageClosed);
-    page.on('close', onBrowserOrPageClosed);
 
     // Check if we have saved cookies
     let cookiesPath = config['cookies_path'] || (config['username'] ? `./cookies-${config['username']}.json` : null);
     let requireLogin = false;
+    let cookies = null;
     if (fs.existsSync(cookiesPath)) {
 
         // Load cookies
-        const cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
+        cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
 
         // Make sure these cookies are valid
         if (areCookiesValid(cookies)) {
@@ -240,7 +239,6 @@ async function checkVersion() {
 
             // Restore cookies from previous session
             logger.info('Restoring cookies from last session.');
-            await page.setCookie(...cookies);
 
         } else {
 
@@ -257,7 +255,6 @@ async function checkVersion() {
         requireLogin = true;
     }
 
-    let cookies = null;
     if (requireLogin) {
         logger.info('Logging in...');
 
@@ -280,7 +277,6 @@ async function checkVersion() {
 
         const loginPage = new LoginPage(await loginBrowser.newPage());
         cookies = await loginPage.login(config['username'], config['password'], config['headless_login'], config['load_timeout_secs']);
-        await page.setCookie(...cookies);
 
         if (needNewBrowser) {
             await loginBrowser.close();
@@ -288,18 +284,8 @@ async function checkVersion() {
     }
 
     // Get some data from the cookies
-    let oauthToken: string | undefined = undefined;
-    let channelLogin: string | undefined = undefined;
-    for (const cookie of await page.cookies('https://www.twitch.tv')) {
+    for (const cookie of cookies) {
         switch (cookie['name']) {
-            case 'auth-token':  // OAuth token
-                oauthToken = cookie['value'];
-                break;
-
-            case 'persistent':  // "channelLogin" Used for "DropCampaignDetails" operation
-                channelLogin = cookie['value'].split('%3A')[0];
-                break;
-
             case 'login':
                 config['username'] = cookie['value'];
                 logger.info('Logged in as ' + cookie['value']);
@@ -307,23 +293,14 @@ async function checkVersion() {
         }
     }
 
-    if (!oauthToken || !channelLogin) {
-        logger.error('Invalid cookies!');
-        process.exit(1);
-    }
-
     // Save cookies
     if (requireLogin) {
         cookiesPath = `./cookies-${config['username']}.json`;
-        fs.writeFileSync(cookiesPath, JSON.stringify(cookies));
+        fs.writeFileSync(cookiesPath, JSON.stringify(cookies, null, 4));
         logger.info('Saved cookies to ' + cookiesPath);
     }
 
-    // Seems to be the default hard-coded client ID
-    // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-    const twitchClient = new Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
-
-    const bot = new TwitchDropsBot(page, twitchClient, {
+    const bot = await TwitchDropsBot.create(browser, cookies, {
         gameIds: config['games'],
         failedStreamBlacklistTimeout: config['failed_stream_timeout'],
         failedStreamRetryCount: config['failed_stream_retry'],
