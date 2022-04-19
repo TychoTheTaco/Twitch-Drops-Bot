@@ -36,21 +36,6 @@ function isDropReadyToClaim(drop: TimeBasedDrop): boolean {
     return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
 }
 
-export function getDropName(drop: TimeBasedDrop): string {
-    let dropName = "";
-    for (let i = 0; i < drop.benefitEdges.length; ++i) {
-        if (i > 0) {
-            dropName += ", ";
-        }
-        dropName += drop.benefitEdges[i].benefit.name;
-    }
-    return dropName;
-}
-
-function ansiEscape(code: string): string {
-    return '\x1B[' + code;
-}
-
 function hasDropsEnabledTag(tags: Tag[]): boolean {
     for (const tag of tags) {
         if (tag.id === StreamTag.DROPS_ENABLED) {
@@ -164,6 +149,10 @@ export declare interface TwitchDropsBot {
         stream_url?: string,
         watch_time?: number
     } | null) => void): this;
+
+    on(event: "start_watching_stream", listener: (streamUrl: string) => void): this;
+
+    on(event: "stop_watching_stream", listener: (watchTimeMs: number) => void): this;
 }
 
 export interface TwitchDropsBotOptions {
@@ -1100,7 +1089,6 @@ export class TwitchDropsBot extends EventEmitter {
     }
 
     #onDropRewardClaimed(drop: TimeBasedDrop) {
-        logger.info(ansiEscape("32m") + "Claimed drop: " + getDropName(drop) + ansiEscape("39m"));
         //this.#completedDropIds.add(drop.id); cant do this - need to make sure claim count = entitlement limit
         this.emit("drop_claimed", drop.id);
     }
@@ -1191,6 +1179,7 @@ export class TwitchDropsBot extends EventEmitter {
 
         const startWatchTime = new Date().getTime();
         try {
+            this.emit("start_watching_stream", streamUrl);
             await this.#watchStream(streamUrl, components);
         } catch (error) {
             if (error instanceof HighPriorityError) {
@@ -1228,7 +1217,7 @@ export class TwitchDropsBot extends EventEmitter {
             // Re-throw the error
             throw error;
         } finally {
-            logger.info(ansiEscape("36m") + "Watched stream for " + Math.floor((new Date().getTime() - startWatchTime) / 1000 / 60) + " minutes" + ansiEscape("39m"));
+            this.emit("stop_watching_stream", new Date().getTime() - startWatchTime);
         }
     }
 

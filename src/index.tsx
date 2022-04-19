@@ -12,9 +12,9 @@ const {BarFormat} = cliProgress.Format;
 
 
 import logger from './logger.js';
-import {TimeBasedDrop} from './twitch.js';
+import {getDropBenefitNames, TimeBasedDrop} from './twitch.js';
 import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options.js';
-import {getDropName, TwitchDropsBot} from './twitch_drops_bot.js';
+import {TwitchDropsBot} from './twitch_drops_bot.js';
 import {ConfigurationParser} from './configuration_parser.js';
 import {LoginPage} from "./pages/login.js";
 import {Application} from "./ui/ui.js";
@@ -315,7 +315,7 @@ async function checkVersion() {
         broadcasterIds: config["broadcasters"]
     });
 
-    const ui = true;
+    const ui = false;
     if (ui) {
         startUiMode(bot, config['username']);
     } else {
@@ -337,7 +337,7 @@ function startProgressBarMode(bot: TwitchDropsBot) {
 
     let isProgressBarStarted: boolean = false;
 
-    const progressBarHeight: number = 2;
+    const progressBarHeight: number = 3;
 
     function ansiEscape(code: string): string {
         return '\x1B[' + code;
@@ -367,7 +367,9 @@ function startProgressBarMode(bot: TwitchDropsBot) {
         if (isProgressBarStarted) {
             isProgressBarStarted = false;
             progressBar.stop();
-            process.stdout.write(ansiEscape(`${progressBarHeight - 1}B`) + ansiEscape("2K") + ansiEscape(`${progressBarHeight - 1}A`));
+            for (let i = 0; i < progressBarHeight - 1; ++i) {
+                process.stdout.write(ansiEscape(`1B`) + ansiEscape("2K") + ansiEscape(`1A`));
+            }
         }
         if (clear) {
             progressBar = null;
@@ -419,9 +421,15 @@ function startProgressBarMode(bot: TwitchDropsBot) {
                         const drop = currentDrop;
                         if (drop) {
                             progressBar.setTotal(drop.requiredMinutesWatched);
-                            result += `${getDropName(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
+                            const campaign = bot.getDatabase().getDropCampaignByDropId(drop.id);
+                            if (campaign) {
+                                result += `${ansiEscape("36m")}${campaign.game.name ?? campaign.game.displayName}${ansiEscape("39m")} | ${ansiEscape("35m")}${campaign.name}${ansiEscape("39m")}\n`;
+                            } else {
+                                result += '\n'
+                            }
+                            result += `${getDropBenefitNames(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
                         } else {
-                            result += `- No Drops Active -\n`;
+                            result += `- No Drops Active -\n\n`;
                         }
 
                         if (isFirstOutput) {
@@ -442,6 +450,16 @@ function startProgressBarMode(bot: TwitchDropsBot) {
         } else {
             updateProgressBar(data);
         }
+    });
+    bot.on("drop_claimed", (dropId: string) => {
+        const drop = bot.getDatabase().getDropById(dropId);
+        if (!drop) {
+            return;
+        }
+        logger.info(ansiEscape("32m") + "Claimed drop: " + getDropBenefitNames(drop) + ansiEscape("39m"));
+    });
+    bot.on("stop_watching_stream", (watchTimeMs: number) => {
+        logger.info(ansiEscape("36m") + "Watched stream for " + Math.floor(watchTimeMs / 1000 / 60) + " minutes" + ansiEscape("39m"));
     });
 
 }
