@@ -150,3 +150,15 @@ export class StringListOption extends Option<string[]> {
     }
 
 }
+
+export class JsonOption<T> extends Option<T> {
+
+    constructor(name: string, optional?: { defaultValue?: (() => T) | T; }) {
+        super(name, optional);
+    }
+
+    parse(string: string): T {
+        return JSON.parse(string) as T;
+    }
+
+}

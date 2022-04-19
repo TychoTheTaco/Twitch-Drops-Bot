@@ -13,7 +13,7 @@ const {BarFormat} = cliProgress.Format;
 
 import logger from './logger.js';
 import {getDropBenefitNames, TimeBasedDrop} from './twitch.js';
-import {StringOption, BooleanOption, IntegerOption, StringListOption} from './options.js';
+import {StringOption, BooleanOption, IntegerOption, StringListOption, JsonOption} from './options.js';
 import {TwitchDropsBot} from './twitch_drops_bot.js';
 import {ConfigurationParser} from './configuration_parser.js';
 import {LoginPage} from "./pages/login.js";
@@ -102,7 +102,8 @@ const options = [
     new BooleanOption("--attempt-impossible-campaigns", false, {defaultValue: true}),
     new BooleanOption("--watch-streams-when-no-drop-campaigns-active", true, {alias: "-wswndca"}),
     new StringListOption("--broadcasters"),
-    new BooleanOption("--do-version-check", false, {defaultValue: true})
+    new BooleanOption("--do-version-check", false, {defaultValue: true}),
+    new JsonOption<{ enabled: boolean }>("--tui", {defaultValue: {enabled: false}})
 ];
 
 // Parse arguments
@@ -315,8 +316,7 @@ async function checkVersion() {
         broadcasterIds: config["broadcasters"]
     });
 
-    const ui = false;
-    if (ui) {
+    if (config["tui"]["enabled"]) {
         startUiMode(bot, config['username']);
     } else {
         startProgressBarMode(bot);
