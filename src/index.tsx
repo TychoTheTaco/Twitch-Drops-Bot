@@ -1,5 +1,6 @@
 import fs from 'fs';
-import path from 'path';
+import path from "node:path";
+import {fileURLToPath} from "node:url";
 
 import axios from "axios";
 import {render} from "ink";
@@ -27,8 +28,13 @@ import {compareVersionString} from "./utils.js";
 puppeteer.use(StealthPlugin());
 
 // Load version number from package.json
-const pkg = JSON.parse(fs.readFileSync("package.json", {encoding: "utf-8"}));
-const VERSION = pkg["version"] ?? "unknown";
+let VERSION = "unknown";
+try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "package.json"), {encoding: "utf-8"}));
+    VERSION = pkg["version"] ?? "unknown";
+} catch (error) {
+    logger.error("Cannot read version");
+}
 
 function onBrowserOrPageClosed() {
     logger.info('Browser was disconnected or tab was closed! Exiting...');

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - dev
 jobs:
   build-docker:
     name: Build and release Docker image

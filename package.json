@@ -1,6 +1,6 @@
 {
   "name": "twitch_drops_bot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Node.js bot for automatically collecting Twitch drops.",
   "type": "module",
   "repository": {
