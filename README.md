@@ -55,7 +55,21 @@ A sample config file looks like this:
     "headless": true,
     "headless_login": false,
     "interval": 15,
-    "browser_args": []
+    "load_timeout_secs": 30,
+    "failed_stream_retry": 3,
+    "failed_stream_timeout": 30,
+    "browser_args": [],
+    "watch_unlisted_games": false,
+    "hide_video": false,
+    "show_account_not_linked_warning": true,
+    "ignored_games": [],
+    "attempt_impossible_campaigns": true,
+    "watch_streams_when_no_drop_campaigns_active": false,
+    "broadcasters": [],
+    "do_version_check": true,
+    "tui": {
+        "enabled": false
+    }
 }
 ```
 
@@ -147,6 +161,10 @@ Below is a list of all available options.
 `‑-do-version-check` | `do_version_check` Check for a new version on startup.
 
 - Default: `true`
+
+`tui` Changes text-based user interface (TUI) options. This should be in JSON format.
+
+- `enabled`: boolean - When `true`, enables a text-based interface for the bot. NOTE: THIS IS AN EXPERIMENTAL FEATURE
 
 ### Update Games List
 
