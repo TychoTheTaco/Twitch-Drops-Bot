@@ -1,14 +1,14 @@
 import React from "react";
 import {TwitchDropsBot} from "../twitch_drops_bot.js";
-import {Text} from "ink";
-import {Background} from "./background.js";
+import {Box, Text} from "ink";
 import pidusage from "pidusage";
 import pidtree from "pidtree";
 import * as os from "os";
 
 interface Props {
     bot: TwitchDropsBot,
-    username?: string
+    username?: string,
+    version: string
 }
 
 interface State {
@@ -28,7 +28,7 @@ export class StatusBar extends React.Component<Props, State> {
     }
 
     render() {
-        return <Background color={"blackBright"}>
+        return <Box>
             {
                 this.props.username &&
                 <Text>Logged in as {this.props.username}</Text>
@@ -37,7 +37,9 @@ export class StatusBar extends React.Component<Props, State> {
             <Text>CPU: {Math.round(this.state.cpu)}%</Text>
             <Text> | </Text>
             <Text>MEM: {byteCountToString(this.state.memory)}</Text>
-        </Background>
+            <Text> | </Text>
+            <Text>Version: {this.props.version}</Text>
+        </Box>
     }
 
     componentDidMount() {

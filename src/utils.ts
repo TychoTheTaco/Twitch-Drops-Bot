@@ -20,6 +20,21 @@ export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
     fs.writeFileSync(htmlPath, await page.content());
 }
 
+export function compareVersionString(a: string, b: string): -1 | 0 | 1 {
+    const numbersA = a.split(/\D+/g).filter(value => value.length > 0).map(value => parseInt(value));
+    const numbersB = b.split(/\D+/g).filter(value => value.length > 0).map(value => parseInt(value));
+    for (let i = 0; i < Math.max(numbersA.length, numbersB.length); ++i) {
+        const numberA = numbersA.at(i) ?? 0;
+        const numberB = numbersB.at(i) ?? 0;
+        if (numberA < numberB) {
+            return -1;
+        } else if (numberA > numberB) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 export class TimedSet<T> extends Set<T> {
 
     readonly #timeout: number;

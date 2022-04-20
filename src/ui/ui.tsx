@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Spacer} from 'ink';
+import {Box} from 'ink';
 import {DropCampaign, TimeBasedDrop} from "../twitch.js";
 import {DropCampaignsTable} from "./drop_campaigns_table.js";
 import {StreamStatusBar} from "./stream_status_table.js";
@@ -8,11 +8,11 @@ import {DropProgressTable} from "./drop_progress_table.js";
 import {TwitchDropsBot} from "../twitch_drops_bot.js";
 import {FullScreen} from "./full_screen.js";
 import {StatusBar} from "./status_bar.js";
-import {ControlBar} from "./control_bar.js";
 
 interface Props {
     bot: TwitchDropsBot,
-    username: string
+    username: string,
+    version: string
 }
 
 interface State {
@@ -51,7 +51,7 @@ export class Application extends React.Component<Props, State> {
     render() {
         return <FullScreen>
             <Box flexDirection={"column"} width={"100%"} height={"100%"}>
-                <StatusBar bot={this.props.bot} username={this.props.username}/>
+                <StatusBar bot={this.props.bot} username={this.props.username} version={this.props.version}/>
                 <Box height={1}/>
                 <StreamStatusBar bot={this.props.bot}/>
                 <Box height={1}/>
@@ -60,8 +60,6 @@ export class Application extends React.Component<Props, State> {
                 <DropCampaignsTable bot={this.props.bot} isUpdatingDropCampaigns={this.state.isUpdatingDropCampaigns}/>
                 <Box height={1}/>
                 <RecentlyClaimedDropsTable bot={this.props.bot}/>
-                <Spacer/>
-                <ControlBar bot={this.props.bot}/>
             </Box>
         </FullScreen>
     }

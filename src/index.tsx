@@ -1,5 +1,3 @@
-"use strict";
-
 import fs from 'fs';
 import path from 'path';
 
@@ -24,8 +22,13 @@ import puppeteer from 'puppeteer-extra';
 
 // Add stealth plugin
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import {compareVersionString} from "./utils.js";
 
 puppeteer.use(StealthPlugin());
+
+// Load version number from package.json
+const pkg = JSON.parse(fs.readFileSync("package.json", {encoding: "utf-8"}));
+const VERSION = pkg["version"] ?? "unknown";
 
 function onBrowserOrPageClosed() {
     logger.info('Browser was disconnected or tab was closed! Exiting...');
@@ -184,6 +187,21 @@ printableConfig['password'] = config['password'] ? 'present' : undefined;
 logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
 
 async function checkVersion() {
+
+    interface Release {
+        tag_name: string
+    }
+
+    // Get the latest release version
+    const releases = (await axios.get("https://api.github.com/repos/tychothetaco/twitch-drops-bot/releases")).data as Release[];
+    for (const release of releases) {
+        const tag = release.tag_name;
+        if (compareVersionString(VERSION, tag) == -1) {
+            logger.warn("A newer release of Twitch-Drops-Bot is available on GitHub! " + VERSION + " -> " + tag);
+            return;
+        }
+    }
+
     // The current commit SHA hash comes from the environment variable provided during the docker build
     const currentCommitSha = process.env.GIT_COMMIT_HASH;
 
@@ -471,5 +489,5 @@ function startUiMode(bot: TwitchDropsBot, username: string) {
     });
     logger.transports[0].silent = true;
 
-    render(<Application bot={bot} username={username}/>);
+    render(<Application bot={bot} username={username} version={VERSION}/>);
 }
