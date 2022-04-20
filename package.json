@@ -43,7 +43,7 @@
     "puppeteer-extra-plugin-stealth": "^2.9.0",
     "react": "^17.0.2",
     "sorted-array-type": "^1.2.1",
-    "string-width": "^4.2.3",
+    "string-width": "^5.1.2",
     "uuid": "^8.3.2",
     "wait-notify": "^1.0.3",
     "winston": "^3.7.2"
