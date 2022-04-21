@@ -1,6 +1,6 @@
 # Twitch Drops Bot
 
-This is a Node.js bot that uses [Puppeteer](https://github.com/puppeteer/puppeteer) to automatically watch Twitch streams and claim drop rewards.
+A Node.js bot that uses [Puppeteer](https://github.com/puppeteer/puppeteer) to automatically watch Twitch streams and claim drop rewards.
 
 ## Getting Started
 
@@ -8,7 +8,17 @@ The recommended way of using this bot is to use [Docker](https://www.docker.com/
 
 ### Docker
 
-Pull the latest image with `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest`.
+#### Tags
+
+`latest` - The latest development version. This includes all commits from the `dev` branch.
+
+`latest-release` - The latest release version. This includes all commits from the `master` branch.
+
+`vX.X.X` - Specific release versions.
+
+#### Pull the image
+
+Pull the latest release image with `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest-release`.
 
 #### Starting the container
 
@@ -23,7 +33,7 @@ To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
 
 ### Non-Docker Setup
 
-1) Install [Node.js](https://nodejs.org/) (Requires version 14+)
+1) Install [Node.js](https://nodejs.org/) (Requires version 16+)
 2) Install [Google Chrome](https://www.google.com/chrome/)
 3) Install this package: `npm install .`
 4) Build the app: `npm run build`
