@@ -8,11 +8,13 @@ import {DropProgressTable} from "./drop_progress_table.js";
 import {TwitchDropsBot} from "../twitch_drops_bot.js";
 import {FullScreen} from "./full_screen.js";
 import {StatusBar} from "./status_bar.js";
+import {Config} from "../index.js";
 
 interface Props {
     bot: TwitchDropsBot,
     username: string,
-    version: string
+    version: string,
+    config: Config
 }
 
 interface State {
@@ -51,7 +53,7 @@ export class Application extends React.Component<Props, State> {
     render() {
         return <FullScreen>
             <Box flexDirection={"column"} width={"100%"} height={"100%"}>
-                <StatusBar bot={this.props.bot} username={this.props.username} version={this.props.version}/>
+                <StatusBar bot={this.props.bot} username={this.props.username} currentReleaseVersion={this.props.version} config={this.props.config} currentDevVersion={process.env.GIT_COMMIT_HASH}/>
                 <Box height={1}/>
                 <StreamStatusBar bot={this.props.bot}/>
                 <Box height={1}/>

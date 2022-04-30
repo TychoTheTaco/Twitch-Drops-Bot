@@ -9,6 +9,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
+    "prepare": "husky install",
     "clean": "rimraf dist",
     "compile": "tsc --pretty",
     "compile:watch": "tsc --watch",
@@ -16,11 +17,13 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "start": "node dist/index.js",
     "updateGames": "node dist/update_games.js",
-    "u": "node dist/update_games.js",
+    "u": "npm run updateGames",
     "docker:run": "npm run docker:run-linux",
-    "docker:run-linux": "docker run --rm -i -t -v ${PWD}:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot",
-    "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot",
-    "prepare": "husky install"
+    "dr":  "npm run docker:run",
+    "docker:run-linux": "docker run --rm -i -t -v ${PWD}:/app/data --sig-proxy=false",
+    "drl":  "npm run docker:run-linux",
+    "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false",
+    "drw":  "npm run docker:run-windows"
   },
   "keywords": [],
   "author": "",
@@ -43,7 +46,7 @@
     "puppeteer-extra-plugin-stealth": "^2.9.0",
     "react": "^17.0.2",
     "sorted-array-type": "^1.2.1",
-    "string-width": "^4.2.3",
+    "string-width": "^5.1.2",
     "uuid": "^8.3.2",
     "wait-notify": "^1.0.3",
     "winston": "^3.7.2"

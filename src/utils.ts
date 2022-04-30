@@ -1,12 +1,12 @@
-'use strict';
-
-import fs from 'fs';
+import fs from "node:fs"
+import path from "node:path";
 
 import {Page} from "puppeteer";
-import {DropCampaign} from "./twitch.js";
 import {parse} from "csv-parse/sync";
 import {stringify} from "csv-stringify/sync";
-import path from "path";
+import axios from "axios";
+
+import {DropCampaign} from "./twitch.js";
 import logger from "./logger.js";
 
 export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
@@ -18,6 +18,20 @@ export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
         path: screenshotPath
     });
     fs.writeFileSync(htmlPath, await page.content());
+}
+
+export async function getLatestReleaseVersion(): Promise<string> {
+    interface Release {
+        tag_name: string
+    }
+    const releases = (await axios.get("https://api.github.com/repos/tychothetaco/twitch-drops-bot/releases")).data as Release[];
+    return releases[0].tag_name;
+}
+
+export async function getLatestDevelopmentVersion(): Promise<string> {
+    const result = await axios.get("https://api.github.com/repos/tychothetaco/twitch-drops-bot/branches/dev");
+    const data = result.data;
+    return data["commit"]["sha"];
 }
 
 export function compareVersionString(a: string, b: string): -1 | 0 | 1 {

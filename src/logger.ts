@@ -1,5 +1,3 @@
-'use strict';
-
 import {transports, createLogger, format} from 'winston';
 
 // Set up logger
@@ -22,10 +20,6 @@ const logger = createLogger({
                 colors: {info: "white", warn: "yellow", error: "red"},
                 all: true
             })
-        }),
-        new transports.File({
-            filename: `log-${new Date().getTime()}.txt`,
-            level: 'debug'
         })
     ]
 });

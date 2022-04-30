@@ -20,6 +20,7 @@ export class ConfigurationParser {
     parse(): object {
 
         // todo: add a validation/transform step
+        // todo: parse json like: setting.sub_setting=x
 
         // Parse arguments
         const parser = new ArgumentParser();

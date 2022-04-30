@@ -76,9 +76,12 @@ A sample config file looks like this:
     "attempt_impossible_campaigns": true,
     "watch_streams_when_no_drop_campaigns_active": false,
     "broadcasters": [],
-    "do_version_check": true,
     "tui": {
         "enabled": false
+    },
+    "updates": {
+        "type": "release",
+        "enabled": true
     }
 }
 ```
@@ -130,10 +133,6 @@ Below is a list of all available options.
 
 - Default: `cookies‑<username>.json`
 
-`‑‑log‑level <level>` | `log_level` The log level to display in the console. All log levels are still logged to the log file. Using a level lower than `info` may cause the progress bar to get messed up.
-
-- Default: `info`
-
 `‑‑show‑account‑not‑linked‑warning` | `show_account_not_linked_warning` Show a warning if your Twitch account is not linked to a Drop Campaign.
 
 - Alias: `-sanlw`
@@ -168,13 +167,21 @@ Below is a list of all available options.
 
 `‑-broadcasters` | `broadcasters` A list of broadcasters (streamers) usernames that the bot should watch when it is idle (no Drop Campaigns active). This list is in order of priority.
 
-`‑-do-version-check` | `do_version_check` Check for a new version on startup.
-
-- Default: `true`
-
 `tui` Changes text-based user interface (TUI) options. This should be in JSON format.
 
-- `enabled`: boolean - When `true`, enables a text-based interface for the bot. NOTE: THIS IS AN EXPERIMENTAL FEATURE
+- `enabled`: boolean - When `true`, enables a text-based interface for the bot. NOTE: THIS IS AN EXPERIMENTAL FEATURE.
+
+`updates` Changes update check settings. This should be in JSON format.
+
+- `enabled`: boolean - When `true` (default), the bot will check for updates once per day.
+- `type`: string - Determines which type of update to be notified of.
+  - `"dev"` - Notify about updates for new development versions and release versions of the bot.
+  - `"release""` - (default) Only notify for new release versions of the bot.
+
+`logging`
+- `enabled`:
+- `file`:
+- `level`: The level of logging to write to the log file.
 
 ### Update Games List
 

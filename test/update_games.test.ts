@@ -12,7 +12,7 @@ function cleanup() {
 }
 
 beforeAll(() => {
-    cleanup(); // todo: disable log file and console output
+    cleanup(); // todo: disable logger console output
 })
 
 afterAll(() => {

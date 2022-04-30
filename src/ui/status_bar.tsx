@@ -4,17 +4,25 @@ import {Box, Text} from "ink";
 import pidusage from "pidusage";
 import pidtree from "pidtree";
 import * as os from "os";
+import {Config} from "../index.js";
+import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "../utils.js";
+import logger from "../logger.js";
 
 interface Props {
     bot: TwitchDropsBot,
     username?: string,
-    version: string
+    currentReleaseVersion: string,
+    currentDevVersion?: string,
+    config: Config
 }
 
 interface State {
-    timeoutId?: NodeJS.Timeout
+    usageTimeoutId?: NodeJS.Timeout
     cpu: number,
-    memory: number
+    memory: number,
+    updateCheckTimeoutId?: NodeJS.Timeout,
+    latestReleaseVersion: string,
+    latestDevVersion?: string
 }
 
 export class StatusBar extends React.Component<Props, State> {
@@ -23,7 +31,9 @@ export class StatusBar extends React.Component<Props, State> {
         super(props);
         this.state = {
             cpu: 0,
-            memory: 0
+            memory: 0,
+            latestReleaseVersion: props.currentReleaseVersion,
+            latestDevVersion: props.currentDevVersion
         };
     }
 
@@ -38,21 +48,40 @@ export class StatusBar extends React.Component<Props, State> {
             <Text> | </Text>
             <Text>MEM: {byteCountToString(this.state.memory)}</Text>
             <Text> | </Text>
-            <Text>Version: {this.props.version}</Text>
+            <Text>Version: {this.#getFullVersionString()}</Text>
+            {
+                (this.props.currentReleaseVersion !== this.state.latestReleaseVersion || this.props.currentDevVersion !== this.state.latestDevVersion) &&
+                <Text color={"greenBright"}> ▲ {this.#getFullVersionString()}</Text>
+            }
         </Box>
     }
 
     componentDidMount() {
-        this.#update();
-    }
-
-    componentWillUnmount() {
-        if (this.state.timeoutId) {
-            clearTimeout(this.state.timeoutId);
+        this.#updateUsage();
+        if (this.props.config.updates.enabled) {
+            this.#doVersionCheck();
         }
     }
 
-    #update() {
+    componentWillUnmount() {
+        if (this.state.usageTimeoutId) {
+            clearTimeout(this.state.usageTimeoutId);
+        }
+        if (this.state.updateCheckTimeoutId) {
+            clearTimeout(this.state.updateCheckTimeoutId);
+        }
+    }
+
+    #getFullVersionString(): string {
+        let result = this.props.currentReleaseVersion;
+        const dev = this.props.currentDevVersion;
+        if (this.props.config.updates.type === "dev" && dev) {
+            result += `.${dev.slice(0, 5)}`;
+        }
+        return result;
+    }
+
+    #updateUsage() {
         (async () => {
             const processes = await pidtree(process.pid, {root: true});
             let cpu = 0;
@@ -72,7 +101,50 @@ export class StatusBar extends React.Component<Props, State> {
             });
         })().finally(() => {
             this.setState({
-                timeoutId: setTimeout(this.#update.bind(this), 10000)
+                usageTimeoutId: setTimeout(this.#updateUsage.bind(this), 10000)
+            })
+        });
+    }
+
+    #doVersionCheck() {
+        logger.debug("Checking for updates...");
+        (async () => {
+
+            // Get the latest release version
+            const latest = await getLatestReleaseVersion();
+            logger.debug("latest release version: " + latest);
+            if (compareVersionString(this.props.currentReleaseVersion, latest) === -1) {
+                this.setState({
+                    latestReleaseVersion: latest
+                });
+            }
+
+            if (this.props.config.updates.type === "dev") {
+                // The current commit SHA hash comes from the environment variable provided during the docker build
+                const currentCommitSha = this.props.currentDevVersion;
+
+                // If the current commit SHA hash is undefined, then we are likely not running from a docker container
+                if (currentCommitSha === undefined) {
+                    return;
+                }
+
+                const latestCommitSha = await getLatestDevelopmentVersion();
+                logger.debug("latest dev version: " + latestCommitSha);
+
+                // Warn the user if the current version is different from the latest version
+                if (currentCommitSha !== latestCommitSha) {
+                    this.setState({
+                        latestDevVersion: latestCommitSha
+                    });
+                }
+            }
+        })().catch((error) => {
+            logger.debug("Failed to check latest version");
+            logger.debug(error);
+        }).finally(() => {
+            logger.debug("Done checking for updates");
+            this.setState({
+                updateCheckTimeoutId: setTimeout(this.#doVersionCheck.bind(this), 1000 * 60 * 60 * 24)
             })
         });
     }

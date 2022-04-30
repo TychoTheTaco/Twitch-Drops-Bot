@@ -8,9 +8,21 @@ if [ -z "${personalAccessToken}" ]; then
 	exit 1
 fi
 
-tag=$2
-if [ -z "${tag}" ]; then
-	echo "Missing version tag!"
+versionTag=$2
+if [ -z "${versionTag}" ]; then
+	echo "Missing version versionTag!"
+	exit 1
+fi
+
+# Make sure the version code has been updated
+response=$(curl -s https://api.github.com/repos/tychothetaco/twitch-drops-bot/releases?per_page=1)
+latestVersion=$(echo "$response" | grep '"tag_name": "v\([0-9]\+\.\)\+[0-9]\+"' | grep -o 'v[0-9|\.]\+')
+if [ -z "$latestVersion" ]; then
+	echo "Failed to get latest version!"
+	echo "$response"
+fi
+if [ "$latestVersion" = "$versionTag" ]; then
+	echo "Current version matches latest version! Did you forget to update the version number in package.json?"
 	exit 1
 fi
 
@@ -34,7 +46,7 @@ confirm() {
 	esac
 }
 
-echo "About to build and push: $tag"
+echo "About to build and push version $versionTag"
 if ! confirm; then
 	echo "Aborted by user."
 	exit 2
@@ -43,7 +55,7 @@ fi
 # Build and push docker image
 docker buildx build \
 	--platform linux/amd64,linux/arm64/v8,linux/arm/v7 \
-	--tag ghcr.io/tychothetaco/twitch-drops-bot:"$tag" \
+	--tag ghcr.io/tychothetaco/twitch-drops-bot:"$versionTag" \
 	--tag ghcr.io/tychothetaco/twitch-drops-bot:latest-release \
 	--build-arg GIT_COMMIT_HASH="$hash" \
 	--output type=registry \

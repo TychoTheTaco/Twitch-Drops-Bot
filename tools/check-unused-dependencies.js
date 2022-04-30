@@ -15,4 +15,4 @@ depcheck(root, {}).then((unused) => {
     process.exit(1);
 }).finally(() => {
     process.exit(0);
-})
+});

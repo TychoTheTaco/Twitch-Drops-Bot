@@ -33,6 +33,9 @@ function isDropReadyToClaim(drop: TimeBasedDrop): boolean {
     if (drop.self.isClaimed) {
         return false;
     }
+    if (!drop.self.dropInstanceID) {
+        return false;
+    }
     return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
 }
 
@@ -75,12 +78,6 @@ export class Database {
     addOrUpdateDropCampaign(campaign: DropCampaign) {
         const existingCampaign = this.#dropCampaigns.get(campaign.id);
         if (existingCampaign) {
-            const difference = this.#getDifference(existingCampaign, campaign);
-            if (difference) {
-                logger.debug("campaign data changed: " + JSON.stringify(difference, (key, value) => {
-                    return typeof value === 'undefined' ? null : value;
-                }, 4));
-            }
             _.merge(existingCampaign, campaign);
         } else {
             this.#dropCampaigns.set(campaign.id, campaign);
@@ -96,12 +93,6 @@ export class Database {
     addOrUpdateDrop(drop: TimeBasedDrop) {
         const existingDrop = this.#drops.get(drop.id);
         if (existingDrop) {
-            const difference = this.#getDifference(existingDrop, drop);
-            if (difference) {
-                logger.debug("drop data changed: " + JSON.stringify(difference, (key, value) => {
-                    return typeof value === 'undefined' ? null : value;
-                }, 4));
-            }
             _.merge(existingDrop, drop);
         } else {
             this.#drops.set(drop.id, drop);
@@ -473,7 +464,8 @@ export class TwitchDropsBot extends EventEmitter {
                                     await this.#claimDropReward(drop);
                                 } catch (error) {
                                     logger.error("Failed to claim drop reward");
-                                    logger.debug(error); //todo: print drop
+                                    logger.debug(error);
+                                    logger.debug(JSON.stringify(drop, null, 4));
                                 }
                             }
                         }
@@ -576,11 +568,28 @@ export class TwitchDropsBot extends EventEmitter {
         return true;
     }
 
+    #arePreconditionDropsClaimed(drop: TimeBasedDrop, inventory: Inventory): boolean {
+        const preconditionDrops = drop.preconditionDrops;
+        if (preconditionDrops) {
+            for (const d of preconditionDrops) {
+                const preconditionDrop = getInventoryDrop(d.id, inventory);
+                if (preconditionDrop) {
+                    if (!preconditionDrop.self.isClaimed) {
+                        return false;
+                    }
+                } else {
+                    logger.warn("unknown precondition drop: " + d.id);
+                }
+            }
+        }
+        return true;
+    }
+
     /**
      * Get the first unclaimed {@link TimeBasedDrop} from the specified {@link DropCampaign}.
      * @param dropCampaignDetails
      */
-    #getFirstUnclaimedDrop(dropCampaignDetails: DropCampaign): TimeBasedDrop | null {
+    #getFirstUnclaimedDrop(dropCampaignDetails: DropCampaign, inventory: Inventory): TimeBasedDrop | null {
         // TODO: Not all campaigns have time based drops
         for (const drop of dropCampaignDetails.timeBasedDrops) {
 
@@ -596,6 +605,11 @@ export class TwitchDropsBot extends EventEmitter {
 
             // Check if this drop has started
             if (new Date() < new Date(Date.parse(drop.startAt))) {
+                continue;
+            }
+
+            if (!this.#arePreconditionDropsClaimed(drop, inventory)) {
+                logger.debug("precondition drop not claimed");
                 continue;
             }
 
@@ -645,8 +659,17 @@ export class TwitchDropsBot extends EventEmitter {
                 continue;
             }
 
+            let inventory = null;
+            try {
+                inventory = await this.#twitchClient.getInventory();
+            } catch (error) {
+                logger.error("Failed to get inventory");
+                logger.debug(error);
+                continue;
+            }
+
             // Find the first drop that we haven't claimed yet
-            const firstUnclaimedDrop = this.#getFirstUnclaimedDrop(details);
+            const firstUnclaimedDrop = this.#getFirstUnclaimedDrop(details, inventory);
             if (firstUnclaimedDrop === null) {
                 continue;
             }
@@ -945,9 +968,16 @@ export class TwitchDropsBot extends EventEmitter {
 
         logger.debug('working on campaign ' + JSON.stringify(campaign, null, 4));
 
+        // Reset failed stream counts
+        for (const streamUrl of Object.getOwnPropertyNames(this.#failedStreamUrlCounts)) {
+            delete this.#failedStreamUrlCounts[streamUrl];
+        }
+
         while (true) {
 
-            const drop = this.#getFirstUnclaimedDrop(details);
+            const inventory = await this.#twitchClient.getInventory();
+
+            const drop = this.#getFirstUnclaimedDrop(details, inventory);
             if (drop === null) {
                 logger.info('no active drops');
                 break;
@@ -957,7 +987,6 @@ export class TwitchDropsBot extends EventEmitter {
             let currentMinutesWatched = 0;
 
             // Check if this drop is ready to be claimed
-            const inventory = await this.#twitchClient.getInventory();
             const inventoryDrop = getInventoryDrop(drop.id, inventory, dropCampaignId);
             if (inventoryDrop != null) {
                 this.#database.addOrUpdateDrop(inventoryDrop);
@@ -976,11 +1005,6 @@ export class TwitchDropsBot extends EventEmitter {
                     logger.warn('impossible drop! remaining campaign time (minutes): ' + remainingDropActiveTimeMinutes + ' required watch time (minutes): ' + remainingWatchTimeMinutes);
                     break;
                 }
-            }
-
-            // Reset failed stream counts
-            for (const streamUrl of Object.getOwnPropertyNames(this.#failedStreamUrlCounts)) {
-                delete this.#failedStreamUrlCounts[streamUrl];
             }
 
             const getStreamToWatch = async () => {
