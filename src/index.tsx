@@ -380,6 +380,9 @@ async function main() {
         }));
     }
 
+    // Log the current time
+    logger.debug("current system time: " + new Date());
+
     // todo: move this into a validation step in the config parser
     if (!["release", "dev"].includes(config.updates.type)) {
         logger.error("Invalid update type: " + config.updates.type);

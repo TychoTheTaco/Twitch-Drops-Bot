@@ -10,7 +10,6 @@ const {errors} = puppeteer;
 
 const TimeoutError = errors.TimeoutError;
 import {ElementHandle, Page} from "puppeteer";
-import {detailedDiff} from "deep-object-diff";
 
 import Component from "./components/component.js";
 import DropProgressComponent from "./components/drop_progress.js";
@@ -34,6 +33,7 @@ function isDropReadyToClaim(drop: TimeBasedDrop): boolean {
         return false;
     }
     if (!drop.self.dropInstanceID) {
+        logger.debug('drop instance id is null!');
         return false;
     }
     return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
@@ -60,20 +60,6 @@ export class Database {
 
     readonly #dropCampaigns: Map<string, DropCampaign> = new Map<string, DropCampaign>();
     readonly #drops: Map<string, TimeBasedDrop> = new Map<string, TimeBasedDrop>();
-
-    #getDifference<T extends object>(a: T, b: T): object | null {
-        const difference: any = detailedDiff(a, b);
-        const added = difference["added"];
-        const deleted = difference["deleted"];
-        const updated = difference["updated"];
-        if (Object.keys(added).length > 0 /*|| Object.keys(deleted).length > 0*/ || Object.keys(updated).length > 0) {
-            return {
-                "added": added,
-                "updated": updated
-            };
-        }
-        return null;
-    }
 
     addOrUpdateDropCampaign(campaign: DropCampaign) {
         const existingCampaign = this.#dropCampaigns.get(campaign.id);
@@ -991,7 +977,7 @@ export class TwitchDropsBot extends EventEmitter {
             if (inventoryDrop != null) {
                 this.#database.addOrUpdateDrop(inventoryDrop);
                 currentMinutesWatched = inventoryDrop.self.currentMinutesWatched;
-                if (currentMinutesWatched >= inventoryDrop.requiredMinutesWatched) {
+                if (isDropReadyToClaim(inventoryDrop)) {
                     await this.#claimDropReward(inventoryDrop);
                     continue;
                 }

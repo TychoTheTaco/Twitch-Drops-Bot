@@ -19,11 +19,11 @@
     "updateGames": "node dist/update_games.js",
     "u": "npm run updateGames",
     "docker:run": "npm run docker:run-linux",
-    "dr":  "npm run docker:run",
+    "dr": "npm run docker:run",
     "docker:run-linux": "docker run --rm -i -t -v ${PWD}:/app/data --sig-proxy=false",
-    "drl":  "npm run docker:run-linux",
+    "drl": "npm run docker:run-linux",
     "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false",
-    "drw":  "npm run docker:run-windows"
+    "drw": "npm run docker:run-windows"
   },
   "keywords": [],
   "author": "",
@@ -34,7 +34,6 @@
     "cli-progress": "^3.10.0",
     "csv-parse": "^5.0.4",
     "csv-stringify": "^6.0.5",
-    "deep-object-diff": "^1.1.7",
     "dnscache": "^1.0.2",
     "ink": "^3.2.0",
     "lodash": "^4.17.21",
