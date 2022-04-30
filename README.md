@@ -82,6 +82,10 @@ A sample config file looks like this:
     "updates": {
         "type": "release",
         "enabled": true
+    },
+    "logging": {
+        "enabled": true,
+        "level": "debug"
     }
 }
 ```
@@ -176,12 +180,12 @@ Below is a list of all available options.
 - `enabled`: boolean - When `true` (default), the bot will check for updates once per day.
 - `type`: string - Determines which type of update to be notified of.
   - `"dev"` - Notify about updates for new development versions and release versions of the bot.
-  - `"release""` - (default) Only notify for new release versions of the bot.
+  - `"release"` - (default) Only notify for new release versions of the bot.
 
-`logging`
-- `enabled`:
-- `file`:
-- `level`: The level of logging to write to the log file.
+`logging` - Change options related to logging. This should be in JSON format.
+- `enabled`: When `true` (default), the app will log data to a file. Note that if you disable logging, it will be very difficult for me to diagnose any issues that you might run into.
+- `file`: Path of the log file (default: `log-XXXXXXXXXX.txt`). If you use this option, the file will be overwritten whenever you restart the app!
+- `level`: The level of logging to write to the log file. One of: `debug` (default), `info`, `warn`, `error`.
 
 ### Update Games List
 
