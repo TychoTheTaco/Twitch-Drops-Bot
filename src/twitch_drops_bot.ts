@@ -33,7 +33,6 @@ function isDropReadyToClaim(drop: TimeBasedDrop): boolean {
         return false;
     }
     if (!drop.self.dropInstanceID) {
-        logger.debug('drop instance id is null!');
         return false;
     }
     return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
