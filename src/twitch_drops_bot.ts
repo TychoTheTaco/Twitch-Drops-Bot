@@ -563,7 +563,7 @@ export class TwitchDropsBot extends EventEmitter {
                         return false;
                     }
                 } else {
-                    logger.warn("unknown precondition drop: " + d.id);
+                    // If we couldn't find the precondition drop in the inventory, we probably claimed all drops already
                 }
             }
         }
@@ -573,6 +573,7 @@ export class TwitchDropsBot extends EventEmitter {
     /**
      * Get the first unclaimed {@link TimeBasedDrop} from the specified {@link DropCampaign}.
      * @param dropCampaignDetails
+     * @param inventory
      */
     #getFirstUnclaimedDrop(dropCampaignDetails: DropCampaign, inventory: Inventory): TimeBasedDrop | null {
         // TODO: Not all campaigns have time based drops
