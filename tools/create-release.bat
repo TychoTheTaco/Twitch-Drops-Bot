@@ -1,1 +1,1 @@
-"%ProgramFiles%\Git\bin\bash.exe" create-release.sh %*
+"%ProgramFiles%\Git\bin\bash.exe" %0\..\create-release.sh %*

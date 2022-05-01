@@ -356,7 +356,7 @@ export interface Config {
     logging: {
         enabled: boolean,
         file: string,
-        level: string
+        level: "debug" | "info" | "warn" | "error"
     }
 }
 

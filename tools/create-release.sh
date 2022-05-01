@@ -1,6 +1,7 @@
 #
 # Builds and uploads docker images to GitHub container registry for a new release using the latest commit from the master branch.
 #
+currentDirectory=$(dirname "$0")
 
 personalAccessToken=$1
 if [ -z "${personalAccessToken}" ]; then
@@ -9,7 +10,7 @@ if [ -z "${personalAccessToken}" ]; then
 fi
 
 # Read the current version from package.json
-currentVersion=$(cat ../package.json | grep '"version": "' | grep -o '[0-9|\.]\+')
+currentVersion=$(cat "$currentDirectory"/../package.json | grep '"version": "' | grep -o '[0-9|\.]\+')
 if [ -z "${currentVersion}" ]; then
 	echo "Failed to read current version from package.json!"
 	exit 1
