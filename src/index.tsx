@@ -360,6 +360,25 @@ export interface Config {
     }
 }
 
+function findMostRecentlyModifiedCookiesPath() {
+    const cookiesPaths = fs.readdirSync(".").filter((pathName: string) => {
+        return /cookies-.+\.json/.test(pathName);
+    });
+
+    // Find the most recently modified cookies file
+    let mrmPath = null;
+    let mrmTime;
+    for (const path of cookiesPaths) {
+        const stats = fs.statSync(path);
+        if (!mrmTime || stats.mtime > mrmTime) {
+            mrmTime = stats.mtime;
+            mrmPath =  path;
+        }
+    }
+
+    return mrmPath;
+}
+
 async function main() {
     // Parse arguments
     const configurationParser = new ConfigurationParser(options);
@@ -467,7 +486,20 @@ async function main() {
     browser.on('disconnected', onBrowserOrPageClosed);
 
     // Check if we have saved cookies
-    let cookiesPath = config['cookies_path'] || (config['username'] ? `./cookies-${config['username']}.json` : null);
+    let cookiesPath = null;
+    if (config.cookies_path) {
+        cookiesPath = config.cookies_path;
+    } else if (config.username) {
+        cookiesPath = `./cookies-${config['username']}.json`;
+    } else {
+        // The user has not specified a cookies path or a username, lets see if there are any saved cookies in this directory.
+        // If there are, lets use those.
+        const mrmPath = findMostRecentlyModifiedCookiesPath();
+        if (mrmPath) {
+            logger.warn("No username specified! Using existing cookies: " + mrmPath);
+            cookiesPath = mrmPath;
+        }
+    }
     let requireLogin = false;
     let cookies = null;
     if (cookiesPath && fs.existsSync(cookiesPath)) {

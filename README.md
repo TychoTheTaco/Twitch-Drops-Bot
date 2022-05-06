@@ -183,7 +183,7 @@ Below is a list of all available options.
   - `"release"` - (default) Only notify for new release versions of the bot.
 
 `logging` - Change options related to logging. This should be in JSON format.
-- `enabled`: When `true` (default), the app will log data to a file. Note that if you disable logging, it will be very difficult for me to diagnose any issues that you might run into.
+- `enabled`: When `true` (default), the app will log data to a file.
 - `file`: Path of the log file (default: `log-XXXXXXXXXX.txt`). If you use this option, the file will be overwritten whenever you restart the app!
 - `level`: The level of logging to write to the log file. One of: `debug` (default), `info`, `warn`, `error`.
 
