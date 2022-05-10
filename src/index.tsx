@@ -416,7 +416,8 @@ async function main() {
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
-        '--window-size=1920,1080'
+        '--window-size=1920,1080',
+        "--disable-features=HardwareMediaKeyHandling"
     ];
 
     function getArgNames(args: string[]) {
