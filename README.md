@@ -16,20 +16,25 @@ The recommended way of using this bot is to use [Docker](https://www.docker.com/
 
 `vX.X.X` - Specific release versions.
 
-#### Pull the image
+#### 1. Pull the image
 
 Pull the latest release image with `docker pull ghcr.io/tychothetaco/twitch-drops-bot:latest-release`.
 
-#### Starting the container
+#### 2. Starting the container
 
 Use one of the following commands to start the container. Make sure you run this command in the same directory as `config.json`, since it will map the current directory to the `/app/data` directory in the container. If this is the first
-time running the bot, a `config.json` file will be created in the current directory.
+time running the bot, a default `config.json` file will be created in the current directory.
 
 Windows (Command Prompt): `docker run --rm -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
 Linux: `docker run --rm -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
 To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
+
+#### 3. Customize config.json
+
+- By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+- Add your username to the config so that the bot can reuse the correct cookies, so you don't have to log in again everytime the bot is restarted.
 
 ### Non-Docker Setup
 
@@ -38,11 +43,13 @@ To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
 3) Install this package: `npm install .`
 4) Build the app: `npm run build`
 5) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
-6) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+6) Customize your config.json. (Restart the bot for changes to be applied)
+   1) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+   2) Add your username to the config so that the bot can reuse the correct cookies, so you don't have to log in again everytime the bot is restarted.
 
 After updating your install, re-run `npm install .` and `npm run build`.
 
-### Raspberry Pi
+#### Raspberry Pi
 
 Make sure to install the latest version of Node.js, look at [this link](https://github.com/nodesource/distributions/blob/master/README.md).
 
@@ -60,6 +67,8 @@ There are multiple options you can configure. They can be provided as command li
 A sample config file looks like this:
 ```
 {
+    "username": "my_twitch_username",
+    "password": "my_twitch_password",
     "browser": "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
     "games": ["30921", "511224", "488552"],
     "headless": true,
