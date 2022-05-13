@@ -193,6 +193,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                     barsize: 20,
                     clearOnComplete: true,
                     stream: process.stdout,
+                    gracefulExit: false, // fixes too many sigint listeners
                     format: (options: any, params: any, payload: any) => {
                         let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
 
