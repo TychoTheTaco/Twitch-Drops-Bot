@@ -27,9 +27,17 @@ time running the bot, a default `config.json` file will be created in the curren
 
 Windows (Command Prompt): `docker run --rm -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
+Windows (PowerShell): `docker run --rm -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
+
 Linux: `docker run --rm -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot`
 
 To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
+
+##### Troubleshooting
+
+`docker: Error response from daemon: create %cd%: "%cd%" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.`
+
+You are using the `Command Prompt` command above, but are not using Command Prompt as your terminal. Make sure to use the correct command for your OS/terminal.
 
 #### 3. Customize config.json
 
