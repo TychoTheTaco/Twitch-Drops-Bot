@@ -5,23 +5,33 @@ import {getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
 import {Box, Text} from "ink";
 
 interface Props {
-    bot: TwitchDropsBot,
-    dropId?: string
+    bot: TwitchDropsBot
 }
 
 interface State {
-
+    drop?: TimeBasedDrop
 }
 
 export class DropProgressTable extends React.Component<Props, State> {
 
+    constructor(props: Props) {
+        super(props);
+        this.state = {
+            drop: undefined
+        }
+        props.bot.on("drop_progress_updated", (drop: TimeBasedDrop | null) => {
+            this.setState({
+                drop: drop ?? undefined
+            });
+        });
+    }
+
     render() {
 
-        const drop = this.props.dropId ? this.props.bot.getDatabase().getDropById(this.props.dropId) : null;
-        const campaign = this.props.dropId ? this.props.bot.getDatabase().getDropCampaignByDropId(this.props.dropId) : null;
+        const campaign = this.state.drop ? this.props.bot.getDatabase().getDropCampaignByDropId(this.state.drop.id) : null;
 
         let isTwitchAccountLinked = true;
-        if (this.props.dropId) {
+        if (this.state.drop) {
             if (campaign) {
                 isTwitchAccountLinked = campaign?.self.isAccountConnected;
             }
@@ -40,9 +50,9 @@ export class DropProgressTable extends React.Component<Props, State> {
                 {
                     "Game": campaign?.game.displayName ?? "-",
                     "Campaign": campaign?.name ?? "-",
-                    "Drop": drop ? getDropBenefitNames(drop) : "-",
-                    "Progress": drop ? formatProgress(drop) : "-",
-                    "ETA": drop ? getEta(drop) : "-",
+                    "Drop": this.state.drop ? getDropBenefitNames(this.state.drop) : "-",
+                    "Progress": this.state.drop ? formatProgress(this.state.drop) : "-",
+                    "ETA": this.state.drop ? getEta(this.state.drop) : "-",
                 }
             ]}/>
         </Box>

@@ -1255,6 +1255,17 @@ export class TwitchDropsBot extends EventEmitter {
             }
             this.emit("community_points_earned", data);
         });
+        webSocketListener.on("drop-progress", data => {
+            const drop = this.#database.getDropById(data['drop_id']);
+            if (drop) {
+                this.emit("drop_progress_updated", {
+                    ...drop,
+                    self: {
+                        currentMinutesWatched: data["current_progress_min"]
+                    }
+                });
+            }
+        });
 
         // Wrap everything in a try/finally block so that we can detach the web socket listener at the end
         try {

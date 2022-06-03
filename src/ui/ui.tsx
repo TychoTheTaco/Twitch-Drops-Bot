@@ -1,6 +1,6 @@
 import React from "react";
 import {Box} from 'ink';
-import {DropCampaign, TimeBasedDrop} from "../twitch.js";
+import {DropCampaign} from "../twitch.js";
 import {DropCampaignsTable} from "./drop_campaigns_table.js";
 import {StreamStatusBar} from "./stream_status_table.js";
 import {RecentlyClaimedDropsTable} from "./recently_claimed_drops.js";
@@ -18,7 +18,6 @@ interface Props {
 }
 
 interface State {
-    currentDrop?: TimeBasedDrop,
     isUpdatingDropCampaigns: boolean
 }
 
@@ -27,16 +26,8 @@ export class Application extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            currentDrop: undefined,
             isUpdatingDropCampaigns: false
         };
-
-        // Drop Progress Table
-        props.bot.on("drop_progress_updated", (drop: TimeBasedDrop | null) => {
-            this.setState({
-                currentDrop: drop ?? undefined
-            });
-        });
 
         props.bot.on("before_drop_campaigns_updated", () => {
             this.setState({
@@ -57,7 +48,7 @@ export class Application extends React.Component<Props, State> {
                 <Box height={1}/>
                 <StreamStatusBar bot={this.props.bot}/>
                 <Box height={1}/>
-                <DropProgressTable bot={this.props.bot} dropId={this.state.currentDrop?.id}/>
+                <DropProgressTable bot={this.props.bot}/>
                 <Box height={1}/>
                 <DropCampaignsTable bot={this.props.bot} isUpdatingDropCampaigns={this.state.isUpdatingDropCampaigns}/>
                 <Box height={1}/>

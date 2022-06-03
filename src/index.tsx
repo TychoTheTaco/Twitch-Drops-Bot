@@ -400,6 +400,10 @@ async function main() {
         }));
     }
 
+    process.setUncaughtExceptionCaptureCallback(error => {
+        logger.error("Uncaught exception: " + error.stack);
+    });
+
     // Log the current time
     logger.debug("current system time: " + new Date());
 
