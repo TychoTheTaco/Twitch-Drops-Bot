@@ -8,11 +8,6 @@ import axios from "axios";
 
 import logger from "./logger.js";
 
-export interface StreamData {
-    url: string,
-    broadcaster_id: string
-}
-
 export enum StreamTag {
     DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
 }
@@ -96,12 +91,19 @@ export interface Tag {
     tagName: string
 }
 
+export interface Broadcaster {
+    id: string,
+    login: string,
+    displayName: string
+}
+
 export interface Stream {
     createdAt: string,
     game: Game,
     id: string,
     type: string,
-    tags: Tag[]
+    tags: Tag[],
+    broadcaster: Broadcaster
 }
 
 export interface User {
@@ -245,7 +247,7 @@ export class Client {
      * @param gameName
      * @param options
      */
-    async getActiveStreams(gameName: string, options?: { tags?: string[] }): Promise<StreamData[]> {
+    async getActiveStreams(gameName: string, options?: { tags?: string[] }): Promise<Stream[]> {
         const data = await this.#post({
             "operationName": "DirectoryPage_Game",
             "variables": {
@@ -279,10 +281,7 @@ export class Client {
 
         const result = [];
         for (const stream of streams["edges"]) {
-            result.push({
-                "url": "https://www.twitch.tv/" + stream["node"]["broadcaster"]["login"],
-                "broadcaster_id": stream["node"]["broadcaster"]["id"]
-            });
+            result.push(stream["node"]);
         }
         return result;
     }
@@ -323,6 +322,22 @@ export class Client {
         });
         const stream = data["data"]["userOrError"]["stream"];
         return stream !== null && stream !== undefined;
+    }
+
+    async getStream(broadcasterId: string): Promise<Stream | null> {
+        const data = await this.#post({
+            "operationName": "ChannelShell",
+            "variables": {
+                "login": broadcasterId
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "580ab410bcd0c1ad194224957ae2241e5d252b2c5173d8e0cce9d32d5bb14efe"
+                }
+            }
+        });
+        return data["data"]["userOrError"]["stream"];
     }
 
     async getStreamMetadata(channelLogin: string): Promise<User> {
@@ -435,6 +450,10 @@ export function getDropBenefitNames(drop: TimeBasedDrop): string {
         }
     }
     return result;
+}
+
+export function getStreamUrl(stream: Stream) {
+    return "https://www.twitch.tv/" + stream.broadcaster.login;
 }
 
 /**

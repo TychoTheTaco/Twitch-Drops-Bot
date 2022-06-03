@@ -6,6 +6,7 @@ import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
 import puppeteer, {Browser} from "puppeteer";
+
 const {errors} = puppeteer;
 
 const TimeoutError = errors.TimeoutError;
@@ -19,7 +20,7 @@ import {TwitchDropsWatchdog} from "./watchdog.js";
 import {StreamPage} from "./pages/stream.js";
 import utils, {TimedSet} from './utils.js';
 import logger from "./logger.js";
-import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted} from "./twitch.js";
+import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted, getStreamUrl, Stream} from "./twitch.js";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors.js";
 
 type Class<T> = { new(...args: any[]): T };
@@ -684,7 +685,7 @@ export class TwitchDropsBot extends EventEmitter {
 
                 // Check if the first active stream has Drops available. If it doesn't, then we most likely completed
                 // this campaign already, so we shouldn't start watching the stream.
-                if (!(await this.#hasDropsAvailable(streams[0].url, dropCampaignId))) {
+                if (!(await this.#hasDropsAvailable(getStreamUrl(streams[0]), dropCampaignId))) {
                     continue;
                 }
 
@@ -732,23 +733,24 @@ export class TwitchDropsBot extends EventEmitter {
         return null;
     }
 
-    async #getNextPreferredBroadcasterStreamUrl(): Promise<string | null> {
+    async #getNextPreferredBroadcasterStream(): Promise<Stream | null> {
         // Check if any of the preferred broadcasters are online
         for (const broadcasterId of this.#broadcasterIds) {
-            if (await this.#twitchClient.isStreamOnline(broadcasterId)) {
-                const streamUrl = createStreamUrl(broadcasterId);
+            const stream = await this.#twitchClient.getStream(broadcasterId);
+            if (stream) {
+                const streamUrl = getStreamUrl(stream);
                 if (this.#streamUrlTemporaryBlacklist.has(streamUrl)) {
                     continue;
                 }
-                return streamUrl;
+                return stream;
             }
         }
         return null;
     }
 
-    async #getNextIdleStreamUrl(): Promise<string | null> {
+    async #getNextIdleStream(): Promise<Stream | null> {
         // Check if any of the preferred broadcasters are online
-        const streamUrl = await this.#getNextPreferredBroadcasterStreamUrl();
+        const streamUrl = await this.#getNextPreferredBroadcasterStream();
         if (streamUrl !== null) {
             return streamUrl;
         }
@@ -770,11 +772,11 @@ export class TwitchDropsBot extends EventEmitter {
             }
             const streams = await this.#twitchClient.getActiveStreams(campaign.game.displayName);
             if (streams.length > 0) {
-                const streamUrl = streams[0].url;
+                const streamUrl = getStreamUrl(streams[0]);
                 if (this.#streamUrlTemporaryBlacklist.has(streamUrl)) {
                     continue;
                 }
-                return streamUrl;
+                return streams[0];
             }
         }
 
@@ -821,18 +823,19 @@ export class TwitchDropsBot extends EventEmitter {
                     logger.info("No drop campaigns active, watching a stream instead.");
 
                     // Choose a stream to watch
-                    let streamUrl: string | null = null;
+                    let stream: Stream | null = null;
                     try {
-                        streamUrl = await this.#getNextIdleStreamUrl();
+                        stream = await this.#getNextIdleStream();
                     } catch (error) {
                         logger.error("Error getting next idle stream!");
                         logger.debug(error);
                     }
-                    if (streamUrl === null) {
+                    if (stream === null) {
                         logger.info("No idle streams available! sleeping for a bit...");
                         await this.waitForDropCampaignUpdateOrTimeout(this.sleepTimeMilliseconds);
                         continue;
                     }
+                    const streamUrl = getStreamUrl(stream);
                     logger.info("stream: " + streamUrl)
 
                     const dropProgressComponent = new DropProgressComponent({requireProgress: false, exitOnClaim: false});
@@ -849,15 +852,15 @@ export class TwitchDropsBot extends EventEmitter {
                             this.#pendingHighPriority = true;
                         } else {
                             // Check if a more preferred broadcaster is online
-                            let preferredBroadcasterStreamUrl = null;
+                            let preferredBroadcasterStream: Stream | null = null;
                             try {
-                                preferredBroadcasterStreamUrl = await this.#getNextPreferredBroadcasterStreamUrl();
+                                preferredBroadcasterStream = await this.#getNextPreferredBroadcasterStream();
                             } catch (error) {
                                 logger.error("Failed to get next preferred broadcaster stream url");
                                 logger.debug(error);
                             }
-                            if (preferredBroadcasterStreamUrl !== null) {
-                                if (preferredBroadcasterStreamUrl !== streamUrl) {
+                            if (preferredBroadcasterStream !== null) {
+                                if (getStreamUrl(preferredBroadcasterStream) !== streamUrl) {
                                     this.#pendingHighPriority = true;
                                 }
                             }
@@ -869,7 +872,7 @@ export class TwitchDropsBot extends EventEmitter {
 
                     // Watch stream
                     try {
-                        await this.#watchStreamWrapper(streamUrl, components);
+                        await this.#watchStreamWrapper(stream, components);
                     } catch (error) {
                         await this.#page.goto("about:blank");
                     } finally {
@@ -1045,7 +1048,7 @@ export class TwitchDropsBot extends EventEmitter {
                         continue;
                     }
 
-                    return streamUrl;
+                    return stream;
                 }
 
                 // Get a list of active streams that have drops enabled
@@ -1054,7 +1057,7 @@ export class TwitchDropsBot extends EventEmitter {
 
                 // Filter out streams that failed too many times
                 streams = streams.filter(stream => {
-                    return !this.#streamUrlTemporaryBlacklist.has(stream.url);
+                    return !this.#streamUrlTemporaryBlacklist.has(getStreamUrl(stream));
                 });
                 logger.info('Found ' + streams.length + ' good streams');
 
@@ -1062,14 +1065,15 @@ export class TwitchDropsBot extends EventEmitter {
                     return null;
                 }
 
-                return streams[0].url;
+                return streams[0];
             }
 
-            const streamUrl = await getStreamToWatch();
-
-            if (streamUrl === null) {
+            const stream = await getStreamToWatch();
+            if (stream === null) {
                 throw new NoStreamsError();
             }
+
+            const streamUrl = getStreamUrl(stream);
 
             if (!(await this.#hasDropsAvailable(streamUrl, dropCampaignId))) {
                 logger.warn("This stream has no available Drops. This is likely because you already completed this campaign");
@@ -1086,7 +1090,7 @@ export class TwitchDropsBot extends EventEmitter {
             // Watch first stream
             logger.info('Watching stream: ' + streamUrl);
             try {
-                await this.#watchStreamWrapper(streamUrl, components);
+                await this.#watchStreamWrapper(stream, components);
                 //todo: update campaign info when we claim a drop
             } catch (error) {
                 if (error instanceof NoProgressError) {
@@ -1165,7 +1169,7 @@ export class TwitchDropsBot extends EventEmitter {
         }
     }
 
-    async #watchStreamWrapper(streamUrl: string, components: Component[]) {
+    async #watchStreamWrapper(stream: Stream, components: Component[]) {
 
         const getComponent = <T extends Component>(c: Class<T>): T | null => {
             for (const component of components) {
@@ -1187,10 +1191,12 @@ export class TwitchDropsBot extends EventEmitter {
             });
         }
 
+        const streamUrl = getStreamUrl(stream);
+
         const startWatchTime = new Date().getTime();
         try {
             this.emit("start_watching_stream", streamUrl);
-            await this.#watchStream(streamUrl, components);
+            await this.#watchStream(stream, components);
         } catch (error) {
             if (error instanceof HighPriorityError) {
                 // Ignore
@@ -1231,7 +1237,9 @@ export class TwitchDropsBot extends EventEmitter {
         }
     }
 
-    async #watchStream(streamUrl: string, components: Component[]) {
+    async #watchStream(stream: Stream, components: Component[]) {
+
+        const streamUrl = getStreamUrl(stream);
 
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         const webSocketListener = new WebSocketListener();
@@ -1241,6 +1249,10 @@ export class TwitchDropsBot extends EventEmitter {
             this.#isStreamDown = true;
         });
         webSocketListener.on("points-earned", data => {
+            // Ignore these events if they are from a different stream than the one we are currently watching. This can happen if a user is watching multiple streams on one account.
+            if (stream.broadcaster.id !== data["channel_id"]) {
+                return;
+            }
             this.emit("community_points_earned", data);
         });
 
@@ -1395,7 +1407,7 @@ export class TwitchDropsBot extends EventEmitter {
                     channelIds.add(channel.id);
                 }
                 streams = streams.filter(stream => {
-                    return channelIds.has(stream.broadcaster_id);
+                    return channelIds.has(stream.broadcaster.id);
                 });
             }
         }
