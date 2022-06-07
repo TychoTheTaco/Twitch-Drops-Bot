@@ -52,7 +52,8 @@ export interface TimeBasedDrop {
         benefit: {
             id: string,
             name: string,
-            game: Game
+            game: Game,
+            imageAssetURL: string
         }
     }[],
     startAt: string,

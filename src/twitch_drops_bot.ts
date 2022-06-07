@@ -56,7 +56,7 @@ function getBroadcasterIdFromUrl(streamUrl: string): string {
     return streamUrl.split("twitch.tv/")[1];
 }
 
-export class Database {
+export class Database extends EventEmitter {
 
     readonly #dropCampaigns: Map<string, DropCampaign> = new Map<string, DropCampaign>();
     readonly #drops: Map<string, TimeBasedDrop> = new Map<string, TimeBasedDrop>();
@@ -67,6 +67,7 @@ export class Database {
             _.merge(existingCampaign, campaign);
         } else {
             this.#dropCampaigns.set(campaign.id, campaign);
+            this.emit("new_drops_campaign_added", campaign);
         }
         const timeBasedDrops = campaign.timeBasedDrops;
         if (timeBasedDrops) {
@@ -130,6 +131,8 @@ export declare interface TwitchDropsBot {
     on(event: "start_watching_stream", listener: (streamUrl: string) => void): this;
 
     on(event: "stop_watching_stream", listener: (watchTimeMs: number) => void): this;
+
+    on(event: "new_drops_campaign_found", listener: (campaign: DropCampaign) => void): this;
 }
 
 export interface TwitchDropsBotOptions {
@@ -328,6 +331,8 @@ export class TwitchDropsBot extends EventEmitter {
      */
     readonly #completedDropIds: Set<string> = new Set<string>();
 
+    #isFirstWatchdogFinished: boolean = false;
+
     static async create(browser: Browser, cookies: any, options?: TwitchDropsBotOptions): Promise<TwitchDropsBot> {
         // Get some data from the cookies
         let oauthToken: string | undefined = undefined;
@@ -362,6 +367,12 @@ export class TwitchDropsBot extends EventEmitter {
         super();
         this.#page = page;
         this.#twitchClient = client;
+
+        this.#database.on("new_drops_campaign_added", (campaign: DropCampaign) => {
+            if (this.#isFirstWatchdogFinished) {
+                this.emit("new_drops_campaign_found", campaign);
+            }
+        })
 
         const getDropCampaigns = this.#twitchClient.getDropCampaigns.bind(this.#twitchClient);
         this.#twitchClient.getDropCampaigns = async () => {
@@ -466,9 +477,20 @@ export class TwitchDropsBot extends EventEmitter {
             // Add pending Drop campaigns
             for (const campaign of campaigns) {
 
-                // Add Drop campaign to database (updating it if it already existed)
                 const dropCampaignId = campaign.id;
-                this.#database.addOrUpdateDropCampaign(campaign);
+
+                // Get the drop campaign details now, so that new drops campaign notification will have all the details.
+                // TODO: Ideally, we would do this later since we might not need the details yet
+                let dropCampaignDetails = null;
+                try {
+                    dropCampaignDetails = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
+                } catch (error) {
+                    logger.error("Failed to get drop campaign details");
+                    logger.debug(error);
+                }
+
+                // Add Drop campaign to database (updating it if it already existed)
+                this.#database.addOrUpdateDropCampaign(dropCampaignDetails ?? campaign);
 
                 // Add Drops campaigns to the pending campaign queue
                 if (this.#gameIds.length === 0 || this.#gameIds.includes(campaign.game.id) || this.#watchUnlistedGames) {
@@ -491,13 +513,6 @@ export class TwitchDropsBot extends EventEmitter {
                     }
 
                     // Check if we already completed this campaign
-                    let dropCampaignDetails = null;
-                    try {
-                        dropCampaignDetails = await this.#twitchClient.getDropCampaignDetails(dropCampaignId);
-                    } catch (error) {
-                        logger.error("Failed to get drop campaign details");
-                        logger.debug(error);
-                    }
                     if (dropCampaignDetails && inventory) {
                         if (this.#isCampaignCompleted(dropCampaignDetails, inventory)) {
                             logger.info("campaign already completed: " + this.#getDropCampaignFullName(dropCampaignId));
@@ -525,6 +540,7 @@ export class TwitchDropsBot extends EventEmitter {
                 }
             }
 
+            this.#isFirstWatchdogFinished = true;
             this.#pendingDropCampaignIdsNotifier.notifyAll();
         });
     }

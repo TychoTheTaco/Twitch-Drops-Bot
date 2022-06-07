@@ -52,8 +52,8 @@ You are using the `Command Prompt` command above, but are not using Command Prom
 4) Build the app: `npm run build`
 5) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
 6) Customize your config.json. (Restart the bot for changes to be applied)
-   1) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
-   2) Add your username to the config so that the bot can reuse the correct cookies, so you don't have to log in again everytime the bot is restarted.
+    1) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+    2) Add your username to the config so that the bot can reuse the correct cookies, so you don't have to log in again everytime the bot is restarted.
 
 After updating your install, re-run `npm install .` and `npm run build`.
 
@@ -70,39 +70,56 @@ $ sudo sudo apt-get update && apt-get install -y nodejs
 
 ## Options
 
-There are multiple options you can configure. They can be provided as command line arguments or in a config JSON file. Options passed as command line arguments will override items in the config file. If no command line arguments are provided, a default config file will be generated.
+There are multiple options you can configure. They can be provided as command line arguments or in a config JSON file. Options passed as command line arguments will override items in the config file. If no command line arguments are
+provided, a default config file will be generated.
 
 A sample config file looks like this:
+
 ```
 {
     "username": "my_twitch_username",
     "password": "my_twitch_password",
     "browser": "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    "games": ["30921", "511224", "488552"],
+    "games": ["30921", "514152", "138585"],
     "headless": true,
-    "headless_login": false,
+    "headless_login": true,
     "interval": 15,
     "load_timeout_secs": 30,
     "failed_stream_retry": 3,
     "failed_stream_timeout": 30,
     "browser_args": [],
-    "watch_unlisted_games": false,
-    "hide_video": false,
+    "watch_unlisted_games": true,
+    "hide_video": true,
     "show_account_not_linked_warning": true,
-    "ignored_games": [],
+    "ignored_games": ["509511"],
     "attempt_impossible_campaigns": true,
-    "watch_streams_when_no_drop_campaigns_active": false,
-    "broadcasters": [],
+    "watch_streams_when_no_drop_campaigns_active": true,
+    "do_version_check": true,
+    "broadcasters": ["my_favorite_streamer", "my_second_favorite_streamer"],
     "tui": {
-        "enabled": false
+        "enabled": true
     },
     "updates": {
         "type": "release",
         "enabled": true
     },
-    "logging": {
-        "enabled": true,
-        "level": "debug"
+    "notifications": {
+        "discord": [
+            {
+                "webhook_url": "my_webhook_url",
+                "events": [
+                    "new_drops_campaign", "drop_claimed"
+                ],
+                "games": "all"
+            },
+            {
+                "webhook_url": "another_webhook_url",
+                "events": [
+                    "new_drops_campaign"
+                ],
+                "games": "config"
+            }
+        ]
     }
 }
 ```
@@ -111,7 +128,7 @@ Below is a list of all available options.
 
 `--config <path>` The path to your configuration file.
 
-- Alias: `-c` 
+- Alias: `-c`
 - Default: `config.json`
 
 `--browser <path>` | `browser` The path to your browser executable. Only Google Chrome is currently supported. Although Puppeteer includes a version of Chromium, it does not support the video format required to watch Twitch streams, so a separate Google Chrome installation is required.
@@ -196,13 +213,25 @@ Below is a list of all available options.
 
 - `enabled`: boolean - When `true` (default), the bot will check for updates once per day.
 - `type`: string - Determines which type of update to be notified of.
-  - `"dev"` - Notify about updates for new development versions and release versions of the bot.
-  - `"release"` - (default) Only notify for new release versions of the bot.
+    - `"dev"` - Notify about updates for new development versions and release versions of the bot.
+    - `"release"` - (default) Only notify for new release versions of the bot.
 
 `logging` - Change options related to logging. This should be in JSON format.
+
 - `enabled`: When `true` (default), the app will log data to a file.
 - `file`: Path of the log file (default: `log-XXXXXXXXXX.txt`). If you use this option, the file will be overwritten whenever you restart the app!
 - `level`: The level of logging to write to the log file. One of: `debug` (default), `info`, `warn`, `error`.
+
+`notifications` - Change options related to notifications. This should be in JSON format.
+
+- `discord`: An array of discord notification objects. Each notification object has the following properties:
+    - `webhook_url`: The URL of the Discord webhook.
+    - `events`: A list of events to get notifications for. Possible events are:
+        - `drop_claimed`: A drop is claimed.
+        - `new_drops_campaign`: A new Drops campaign was found.
+    - `games`: Which games you want notifications for. Options are:
+        - `config`: Only get notifications related to games that are listed in the config.
+        - `all`: Get notifications related to any game.
 
 ### Update Games List
 

@@ -15,7 +15,7 @@ import cliProgress from "cli-progress";
 const {BarFormat} = cliProgress.Format;
 
 import logger from './logger.js';
-import {getDropBenefitNames, TimeBasedDrop} from './twitch.js';
+import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from './twitch.js';
 import {StringOption, BooleanOption, IntegerOption, StringListOption, JsonOption} from './options.js';
 import {TwitchDropsBot} from './twitch_drops_bot.js';
 import {ConfigurationParser} from './configuration_parser.js';
@@ -23,6 +23,7 @@ import {LoginPage} from "./pages/login.js";
 import {Application} from "./ui/ui.js";
 import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "./utils.js";
 import {transports} from "winston";
+import {DiscordWebhookSender} from "./notifiers/discord.js";
 
 // Load version number from package.json
 let VERSION = "unknown";
@@ -323,8 +324,17 @@ const options = [
             file: undefined,
             level: 'debug'
         }
-    })
+    }),
+    new JsonOption<{
+        discord: DiscordNotifier[]
+    }>("--notifications")
 ];
+
+interface DiscordNotifier {
+    webhook_url: string,
+    events: ("new_drops_campaign" | "drop_claimed")[],
+    games: "all" | "config" // "config" = only notify for games explicitly listed in config. "all" = notify for all games (including watch_unlisted_games)
+}
 
 export interface Config {
     username: string,
@@ -358,6 +368,9 @@ export interface Config {
         enabled: boolean,
         file: string,
         level: "debug" | "info" | "warn" | "error"
+    },
+    notifications: {
+        discord: DiscordNotifier[]
     }
 }
 
@@ -373,11 +386,20 @@ function findMostRecentlyModifiedCookiesPath() {
         const stats = fs.statSync(path);
         if (!mrmTime || stats.mtime > mrmTime) {
             mrmTime = stats.mtime;
-            mrmPath =  path;
+            mrmPath = path;
         }
     }
 
     return mrmPath;
+}
+
+/**
+ * Log some environment information that is useful for debugging.
+ */
+function logEnvironmentInfo() {
+    logger.debug("current system time: " + new Date());
+    logger.debug(`git commit hash: ${process.env.GIT_COMMIT_HASH}`);
+    logger.debug("NodeJS version: " + process.version);
 }
 
 async function main() {
@@ -400,20 +422,17 @@ async function main() {
         }));
     }
 
+    logEnvironmentInfo();
+
     process.setUncaughtExceptionCaptureCallback(error => {
         logger.error("Uncaught exception: " + error.stack);
     });
-
-    // Log the current time
-    logger.debug("current system time: " + new Date());
 
     // todo: move this into a validation step in the config parser
     if (!["release", "dev"].includes(config.updates.type)) {
         logger.error("Invalid update type: " + config.updates.type);
         process.exit(1);
     }
-
-    logger.debug(`git commit hash: ${process.env.GIT_COMMIT_HASH}`);
 
     // Add default browser args
     const defaultBrowserArgs = [
@@ -488,7 +507,7 @@ async function main() {
         args: config['browser_args']
     });
 
-    // Automatically stop this program if the browser or page is closed
+    // Automatically stop this program if the browser is closed
     browser.on('disconnected', onBrowserOrPageClosed);
 
     // Check if we have saved cookies
@@ -600,6 +619,8 @@ async function main() {
         broadcasterIds: config["broadcasters"]
     });
 
+    setUpNotifiers(bot, config);
+
     if (config.tui.enabled) {
         startUiMode(bot, config);
     } else {
@@ -607,6 +628,51 @@ async function main() {
     }
 
     await bot.start();
+}
+
+function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
+
+    bot.on("new_drops_campaign_found", (campaign: DropCampaign) => {
+        for (const notifier of config.notifications.discord) {
+            if (notifier.events.includes("new_drops_campaign")) {
+                if (notifier.games === "config" && !config.games.includes(campaign.game.id)){
+                    continue;
+                }
+                new DiscordWebhookSender(notifier.webhook_url).sendNewDropsCampaignWebhook(campaign).catch(error => {
+                    logger.error("Failed to send Discord webhook!");
+                    logger.debug(error);
+                });
+            }
+        }
+    });
+
+    bot.on("drop_claimed", (dropId => {
+        const drop = bot.getDatabase().getDropById(dropId);
+        if (!drop) {
+            logger.error("Failed to send Discord webhook: drop was null. id: " + dropId);
+            return;
+        }
+
+        const campaign = bot.getDatabase().getDropCampaignByDropId(dropId);
+        if (!campaign) {
+            logger.error("Failed to send Discord webhook: campaign was null");
+            logger.debug("drop: " + JSON.stringify(drop, null, 4));
+            return;
+        }
+
+        for (const notifier of config.notifications.discord) {
+            if (notifier.events.includes("drop_claimed")) {
+                if (notifier.games === "config" && !config.games.includes(campaign.game.id)){
+                    continue;
+                }
+                new DiscordWebhookSender(notifier.webhook_url).sendDropClaimedWebhook(drop, campaign).catch(error => {
+                    logger.error("Failed to send Discord webhook!");
+                    logger.debug(error);
+                });
+            }
+        }
+
+    }));
 }
 
 // Check if this file is being run directly
