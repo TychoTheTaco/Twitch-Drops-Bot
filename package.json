@@ -1,6 +1,6 @@
 {
   "name": "twitch_drops_bot",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A Node.js bot for automatically collecting Twitch drops.",
   "type": "module",
   "repository": {
@@ -30,17 +30,17 @@
   "license": "ISC",
   "dependencies": {
     "argparse": "^2.0.1",
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "cli-progress": "^3.11.0",
     "csv-parse": "^5.0.4",
     "csv-stringify": "^6.0.5",
     "dnscache": "^1.0.2",
     "ink": "^3.2.0",
     "lodash": "^4.17.21",
-    "pidtree": "^0.5.0",
+    "pidtree": "^0.6.0",
     "pidusage": "^3.0.0",
     "prompt": "^1.2.2",
-    "puppeteer": "^13.5.2",
+    "puppeteer": "^14.2.1",
     "puppeteer-extra": "^3.2.3",
     "puppeteer-extra-plugin-stealth": "^2.9.0",
     "react": "^17.0.2",
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@types/argparse": "^2.0.10",
     "@types/cli-progress": "^3.9.2",
-    "@types/jest": "^27.4.1",
+    "@types/jest": "^28.1.1",
     "@types/lodash": "^4.14.181",
     "@types/object-hash": "^2.2.1",
     "@types/pidusage": "^2.0.2",
@@ -67,10 +67,10 @@
     "eslint-plugin-jest": "^26.1.5",
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-unused-imports": "^2.0.0",
-    "husky": "^7.0.0",
-    "jest": "^27.5.1",
+    "husky": "^8.0.1",
+    "jest": "^28.1.0",
     "rimraf": "^3.0.2",
-    "ts-jest": "^27.1.4",
+    "ts-jest": "^28.0.4",
     "typescript": "^4.6.3"
   }
 }
