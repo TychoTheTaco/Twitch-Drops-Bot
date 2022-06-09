@@ -325,7 +325,10 @@ export class Client {
         return stream !== null && stream !== undefined;
     }
 
-    async getStream(broadcasterId: string): Promise<Stream | null> {
+    async getStream(broadcasterId: string): Promise<{
+        id: string,
+        viewersCount: number
+    } | null> {
         const data = await this.#post({
             "operationName": "ChannelShell",
             "variables": {
@@ -453,8 +456,8 @@ export function getDropBenefitNames(drop: TimeBasedDrop): string {
     return result;
 }
 
-export function getStreamUrl(stream: Stream) {
-    return "https://www.twitch.tv/" + stream.broadcaster.login;
+export function getStreamUrl(username: string) {
+    return "https://www.twitch.tv/" + username;
 }
 
 /**

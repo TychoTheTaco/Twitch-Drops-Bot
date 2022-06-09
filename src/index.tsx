@@ -205,11 +205,12 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                             if (campaign) {
                                 result += `${ansiEscape("36m")}${campaign.game.name ?? campaign.game.displayName}${ansiEscape("39m")} | ${ansiEscape("35m")}${campaign.name}${ansiEscape("39m")}\n`;
                             } else {
-                                result += '\n'
+                                result += ansiEscape("2K") + '\n'
                             }
                             result += `${getDropBenefitNames(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
                         } else {
-                            result += `- No Drops Active -\n\n`;
+                            result += ansiEscape("2K") + `- No Drops Active -\n`;
+                            result += ansiEscape("2K") +" \n";
                         }
 
                         if (isFirstOutput) {

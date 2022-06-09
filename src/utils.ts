@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path";
 
-import {Page} from "puppeteer";
+import {HTTPResponse, Page} from "puppeteer";
 import {parse} from "csv-parse/sync";
 import {stringify} from "csv-stringify/sync";
 import axios from "axios";
@@ -154,6 +154,42 @@ export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./g
         destinationPath,
         'Name,ID\n' + toWrite);
     logger.info('Games list updated');
+}
+
+/**
+ * Create a promise to wait for a response with the given operation name. After calling Page.goto(), await the returned data() function to get the result.
+ * @param page
+ * @param operationName
+ */
+export function waitForResponseWithOperationName(page: Page, operationName: string) {
+    const result: {
+        operationIndex: number,
+        promise: Promise<HTTPResponse> | null,
+        data: any
+    } = {
+        operationIndex: -1,
+        promise: null,
+        data: async function () {
+            const response = await this.promise;
+            return (await response?.json())[this.operationIndex]["data"];
+        }
+    }
+    result.promise = page.waitForResponse((response: HTTPResponse) => {
+        if (response.url().startsWith("https://gql.twitch.tv/gql")) {
+            const postData = response.request().postData();
+            if (postData) {
+                const data = JSON.parse(postData);
+                for (let i = 0; i < data.length; ++i) {
+                    if ( data[i]["operationName"] === operationName) {
+                        result.operationIndex = i;
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    });
+    return result;
 }
 
 export default {
