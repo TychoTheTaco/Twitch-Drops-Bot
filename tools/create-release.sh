@@ -5,7 +5,7 @@ currentDirectory=$(dirname "$0")
 
 personalAccessToken=$1
 if [ -z "${personalAccessToken}" ]; then
-	echo "Missing GitHub personal access token! See https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry if you need to create one."
+	echo "Missing GitHub personal access token! Visit https://github.com/settings/tokens/new to create one. Must have \"write:packages\" permission."
 	exit 1
 fi
 
@@ -54,6 +54,10 @@ if ! confirm; then
 	exit 2
 fi
 
+# Get the project directory (https://stackoverflow.com/questions/59895/how-can-i-get-the-source-directory-of-a-bash-script-from-within-the-script-itsel)
+scriptDirectory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" &>/dev/null && pwd 2>/dev/null)"
+projectDirectory="$(cd "$scriptDirectory/../" && pwd)"
+
 # Build and push docker image
 docker buildx build \
 	--platform linux/amd64,linux/arm64/v8,linux/arm/v7 \
@@ -61,4 +65,10 @@ docker buildx build \
 	--tag ghcr.io/tychothetaco/twitch-drops-bot:latest-release \
 	--build-arg GIT_COMMIT_HASH="$hash" \
 	--output type=registry \
-	.
+	"$projectDirectory"
+
+# Tag the commit with the version number
+echo "Tagging commit with version code..."
+git tag v"$currentVersion" "$hash"
+
+echo "Done!"
