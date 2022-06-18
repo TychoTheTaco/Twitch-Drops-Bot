@@ -48,10 +48,10 @@ export class StatusBar extends React.Component<Props, State> {
             <Text> | </Text>
             <Text>MEM: {byteCountToString(this.state.memory)}</Text>
             <Text> | </Text>
-            <Text>Version: {this.#getFullVersionString()}</Text>
+            <Text>Version: {this.#getFullVersionString(this.props.currentReleaseVersion, this.props.currentDevVersion)}</Text>
             {
                 (this.props.currentReleaseVersion !== this.state.latestReleaseVersion || this.props.currentDevVersion !== this.state.latestDevVersion) &&
-                <Text color={"greenBright"}> ▲ {this.#getFullVersionString()}</Text>
+                <Text color={"greenBright"}> ▲ {this.#getFullVersionString(this.state.latestReleaseVersion, this.state.latestDevVersion)}</Text>
             }
         </Box>
     }
@@ -72,10 +72,9 @@ export class StatusBar extends React.Component<Props, State> {
         }
     }
 
-    #getFullVersionString(): string {
-        let result = this.props.currentReleaseVersion;
-        const dev = this.props.currentDevVersion;
-        if (this.props.config.updates.type === "dev" && dev) {
+    #getFullVersionString(release: string, dev?: string): string {
+        let result = release;
+        if (this.props.config.updates.type === "dev" && dev && this.props.currentReleaseVersion === this.state.latestReleaseVersion) {
             result += `.${dev.slice(0, 5)}`;
         }
         return result;
