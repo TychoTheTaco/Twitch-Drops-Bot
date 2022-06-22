@@ -328,7 +328,11 @@ const options = [
     }),
     new JsonOption<{
         discord: DiscordNotifier[]
-    }>("--notifications")
+    }>("--notifications", {
+        defaultValue: {
+            discord: []
+        }
+    })
 ];
 
 interface DiscordNotifier {
