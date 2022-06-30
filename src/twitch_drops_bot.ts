@@ -5,7 +5,7 @@ import _ from "lodash";
 import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
-import puppeteer, {Browser} from "puppeteer";
+import puppeteer, {Browser, Frame, HTTPResponse} from "puppeteer";
 
 const {errors} = puppeteer;
 
@@ -349,13 +349,17 @@ export class TwitchDropsBot extends EventEmitter {
             }
         }
 
-        if (!oauthToken || !channelLogin) {
+        if (!oauthToken) {
             throw new Error("Invalid cookies!");
         }
 
         // Seems to be the default hard-coded client ID
         // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
         const client = new Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
+        if (!channelLogin) {
+            const channelLogin = await client.autoDetectUserId();
+            logger.info("auto detected user id: " + channelLogin);
+        }
 
         const page = await browser.newPage();
         await page.setCookie(...cookies);
@@ -367,6 +371,32 @@ export class TwitchDropsBot extends EventEmitter {
         super();
         this.#page = page;
         this.#twitchClient = client;
+
+        /*this.#page.on("frameattached", (frame: Frame) => {
+            logger.info("frame attach: " + frame.name() + " " + frame.url());
+            logger.info("is main: " + (frame === this.#page.mainFrame()));
+        });
+        this.#page.on("framedetached", (frame: Frame) => {
+            logger.info("frame detach: " + frame.name() + " " + frame.url());
+            logger.info("is main: " + (frame === this.#page.mainFrame()));
+        });
+        this.#page.on("framenavigated", (frame: Frame) => {
+            logger.info("frame navigated: " + frame.name() + " " + frame.url());
+            logger.info("is main: " + (frame === this.#page.mainFrame()));
+        });*/
+
+
+        const callback = (response: HTTPResponse | null) => {
+            logger.info("page navigation complete");
+            if (response === null) {
+                logger.info("null response");
+            } else {
+                logger.info("response: " + response.url() + " status: " + response.status());
+            }
+            this.#page.waitForNavigation().then(callback);
+        };
+
+        this.#page.waitForNavigation().then(callback);
 
         this.#database.on("new_drops_campaign_added", (campaign: DropCampaign) => {
             if (this.#isFirstWatchdogFinished) {
@@ -1348,6 +1378,26 @@ export class TwitchDropsBot extends EventEmitter {
                 return null;
             }
 
+            // Listen for navigation
+            let didFrameNavigationHappen = false;
+            const onFrameNavigated = (frame: Frame) => {
+                logger.info("frame navigated: " + frame.name() + " " + frame.url());
+                logger.info("is main: " + (frame === this.#page.mainFrame()));
+                if (frame === this.#page.mainFrame()) {
+                    logger.debug("stream url: " + streamUrl);
+                    logger.debug("frame url: " + frame.url());
+                    if (frame.url() !== streamUrl) {
+                        didFrameNavigationHappen = true;
+                        this.#page.mainFrame().waitForNavigation().then(() => {
+                            logger.info("frame navigation done!");
+                        });
+                    } else {
+                        logger.error("frame navigation without raid!");
+                    }
+                }
+            }
+            this.#page.on("framenavigated", onFrameNavigated);
+
             // Wrap everything in a try/finally block so that we can stop the progress bar at the end
             try {
 
@@ -1370,11 +1420,15 @@ export class TwitchDropsBot extends EventEmitter {
                         throw new HighPriorityError();
                     }
 
+                    if (didFrameNavigationHappen) {
+                        throw new StreamDownError("navigation occurred");
+                    }
+
                     // Check if the URL changed since we started watching. This can happen when a broadcaster ends their stream via a Raid.
                     const currentUrl = this.#page.url();
                     if (currentUrl !== streamUrl) {
                         logger.debug("url mismatch: " + currentUrl + " vs " + streamUrl);
-                        throw new StreamDownError("url mismatch");
+                        //throw new StreamDownError("url mismatch");
                     }
 
                     for (const component of components) {
@@ -1410,6 +1464,7 @@ export class TwitchDropsBot extends EventEmitter {
             } finally {
                 this.emit("watch_status_updated", null);
                 this.emit("drop_progress_updated", null);
+                this.#page.off("framenavigated", onFrameNavigated);
             }
         } finally {
             await webSocketListener.detach();

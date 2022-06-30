@@ -2,6 +2,7 @@
 
 // @ts-ignore
 import dnscache from "dnscache";
+
 dnscache({enable: true});
 
 import axios from "axios";
@@ -129,12 +130,26 @@ export class Client {
 
     readonly #clientId: string;
     readonly #oauthToken: string;
-    readonly #channelLogin: string;
+    #userId?: string;
 
-    constructor(clientId: string, oauthToken: string, channelLogin: string) {
+    constructor(clientId: string, oauthToken: string, userId?: string) {
         this.#clientId = clientId;
         this.#oauthToken = oauthToken;
-        this.#channelLogin = channelLogin;
+        this.#userId = userId;
+    }
+
+    async autoDetectUserId(): Promise<string | undefined> {
+        const data = await this.#post({
+            "operationName": "CoreActionsCurrentUser",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "6b5b63a013cf66a995d61f71a508ab5c8e4473350c5d4136f846ba65e8101e95"
+                }
+            }
+        });
+        this.#userId = data["data"]["currentUser"]["id"];
+        return this.#userId;
     }
 
     /**
@@ -214,7 +229,7 @@ export class Client {
             },
             "variables": {
                 "dropID": dropId,
-                "channelLogin": this.#channelLogin
+                "channelLogin": this.#userId
             }
         });
         try {
