@@ -17,8 +17,8 @@ export abstract class TwitchPage {
      * @param selector
      */
     protected async click(selector: string) {
-        return this.#page.evaluate((selector) => {
-            document.querySelector(selector).click();
+        return this.#page.evaluate((selector: string) => {
+            document.querySelector<HTMLElement>(selector)?.click();
         }, selector);
     }
 
