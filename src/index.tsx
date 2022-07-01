@@ -252,13 +252,14 @@ function startUiMode(bot: TwitchDropsBot, config: Config) {
     });
     logger.transports[0].silent = true;
 
-    render(<Application bot={bot} username={config.username} version={VERSION} config={config}/>);
+    render(<Application bot={bot} version={VERSION} config={config}/>);
 }
 
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
     new StringOption('--username', {alias: '-u'}),
     new StringOption('--password', {alias: '-p'}),
+    new StringOption("--auth-token"),
     new StringOption('--browser', {
         alias: '-b',
         defaultValue: () => {
@@ -342,8 +343,9 @@ interface DiscordNotifier {
 }
 
 export interface Config {
-    username: string,
+    username?: string,
     password?: string,
+    auth_token?: string,
     browser: string,
     games: string[],
     headless: boolean,
@@ -405,6 +407,18 @@ function logEnvironmentInfo() {
     logger.debug("current system time: " + new Date());
     logger.debug(`git commit hash: ${process.env.GIT_COMMIT_HASH}`);
     logger.debug("NodeJS version: " + process.version);
+}
+
+/**
+ * Mask some fields of the config such as username, password, etc.
+ * @param config The same config with sensitive fields masked.
+ */
+function createMaskedConfig(config: Config): Config {
+    const masked = {...config};
+    masked.username = config.username ? "present" : undefined;
+    masked.password = config.password ? "present" : undefined;
+    masked.auth_token = config.auth_token ? "present" : undefined;
+    return masked;
 }
 
 async function main() {
@@ -500,12 +514,10 @@ async function main() {
         config['username'] = config['username'].toLowerCase();
     }
 
-    // Print config without password
-    const printableConfig = {...config};
-    printableConfig['password'] = config['password'] ? 'present' : undefined;
-    logger.debug('Using config: ' + JSON.stringify(printableConfig, null, 4));
+    // Print masked config
+    logger.debug('Using config: ' + JSON.stringify(createMaskedConfig(config), null, 4));
 
-    // Start browser and open a new tab.
+    // Start browser
     const browser = await puppeteer.launch({
         headless: config['headless'],
         executablePath: config['browser'],
@@ -530,7 +542,7 @@ async function main() {
             cookiesPath = mrmPath;
         }
     }
-    let requireLogin = false;
+    let areSavedCookiesValid = false;
     let cookies = null;
     if (cookiesPath && fs.existsSync(cookiesPath)) {
 
@@ -544,10 +556,12 @@ async function main() {
             const username = config['username'];
             if (username && (username !== getUsernameFromCookies(cookies))) {
                 logger.warn('Provided username does not match the one found in the cookies! Using the cookies to login...');
+                config.username = getUsernameFromCookies(cookies);
             }
 
             // Restore cookies from previous session
             logger.info('Restoring cookies from last session.');
+            areSavedCookiesValid = true;
 
         } else {
 
@@ -555,21 +569,46 @@ async function main() {
             logger.info('Saved cookies are invalid.')
             fs.unlinkSync(cookiesPath);
 
-            // We need to login again
-            requireLogin = true;
+        }
+
+    }
+
+    // If the saved cookies were not valid, let's create some with the provided auth token (if any)
+    if (!areSavedCookiesValid){
+
+        if (config.auth_token) {
+
+            logger.info("Using auth_token to log in");
+            cookies = [
+                {
+                    "name": "auth-token",
+                    "value": config.auth_token,
+                    "domain": ".twitch.tv",
+                    "path": "/",
+                    "expires": new Date().getTime() + (1000 * 60 * 60 * 24 * 365), // Set expire date to + 1 year
+                    "size": 40, // TODO: Not sure what this is for, seems to be same for all cookies
+                    "httpOnly": false,
+                    "secure": true,
+                    "session": false,
+                    "sameSite": "None",
+                    "sameParty": false,
+                    "sourceScheme": "Secure",
+                    "sourcePort": 443
+                }
+            ];
+            areSavedCookiesValid = true;
 
         }
 
-    } else {
-        requireLogin = true;
     }
 
-    if (requireLogin) {
+    // If the saved cookies are not valid, and we don't have an auth token, then we have to log in with username and password
+    if (!areSavedCookiesValid) {
         logger.info('Logging in...');
 
         // Validate options
-        if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined)) {
-            logger.error("You must provide a username and password to use headless login!");
+        if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined) && config.auth_token === undefined) {
+            logger.error("You must provide a username and password or an auth token to use headless login!");
             process.exit(1);
         }
 
@@ -590,21 +629,11 @@ async function main() {
         if (needNewBrowser) {
             await loginBrowser.close();
         }
-    }
 
-    // Get some data from the cookies
-    for (const cookie of cookies) {
-        switch (cookie['name']) {
-            case 'login':
-                config['username'] = cookie['value'];
-                logger.info('Logged in as ' + cookie['value']);
-                break;
-        }
-    }
+        config.username = getUsernameFromCookies(cookies);
 
-    // Save cookies
-    if (requireLogin) {
-        cookiesPath = `./cookies-${config['username']}.json`;
+        // Save cookies
+        cookiesPath = `./cookies-${config.username}.json`;
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies, null, 4));
         logger.info('Saved cookies to ' + cookiesPath);
     }

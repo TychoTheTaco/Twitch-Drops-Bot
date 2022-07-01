@@ -5,7 +5,7 @@ import _ from "lodash";
 import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
-import puppeteer, {Browser} from "puppeteer";
+import puppeteer, {Browser, Frame, HTTPResponse} from "puppeteer";
 
 const {errors} = puppeteer;
 
@@ -349,13 +349,17 @@ export class TwitchDropsBot extends EventEmitter {
             }
         }
 
-        if (!oauthToken || !channelLogin) {
+        if (!oauthToken) {
             throw new Error("Invalid cookies!");
         }
 
         // Seems to be the default hard-coded client ID
         // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
         const client = new Client('kimne78kx3ncx6brgo4mv6wki5h1ko', oauthToken, channelLogin);
+        if (!channelLogin) {
+            await client.autoDetectUserId();
+            logger.info("auto detected user id");
+        }
 
         const page = await browser.newPage();
         await page.setCookie(...cookies);
