@@ -151,7 +151,7 @@ export class LoginPage extends TwitchPage {
 
                     // Enter code
                     const first_input = await this.page.waitForXPath('(//input[@type="text"])');
-                    if (first_input == null) {
+                    if (first_input === null) {
                         logger.error("first_input was null!");
                         break
                     }
