@@ -36,7 +36,8 @@ interface Props {
 interface State {
     campaigns: DropCampaign[],
     progress: { [key: string]: number },
-    lastUpdateTime: Date
+    lastUpdateTime: Date,
+    uiUpdateTimeoutId?: NodeJS.Timeout
 }
 
 export class DropCampaignsTable extends React.Component<Props, State> {
@@ -136,6 +137,20 @@ export class DropCampaignsTable extends React.Component<Props, State> {
             </Box>
             <Table header={["Priority", "Game", "Campaign", "Status"]} data={data.slice(0, 5)} divider={' '}/>
         </Box>;
+    }
+
+    componentDidMount() {
+        const update = () => {
+            this.setState({
+                ...this.state
+            });
+            setTimeout(update, 1000);
+        }
+        update();
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.state.uiUpdateTimeoutId);
     }
 
     #getProgressString(id: string) {
