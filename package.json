@@ -42,7 +42,7 @@
     "prompt": "^1.2.2",
     "puppeteer": "^15.3.0",
     "puppeteer-extra": "^3.3.4",
-    "puppeteer-extra-plugin-stealth": "^2.10.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.0",
     "react": "^17.0.2",
     "sorted-array-type": "^1.2.1",
     "string-width": "^5.1.2",
