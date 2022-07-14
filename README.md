@@ -243,4 +243,17 @@ If you want to update the list of games found in `games.csv`, just run `npm run 
 
 When this happens, its usually because the stream page did not load fast enough. It's normal for this to happen occasionally, but if it happens often, it might be due to a slow or unstable network connection. This can also happen if you're using a low-power system such as a Raspberry Pi.
 
-Try increasing `load_timeout_secs` to `60` or `90`.  
+Try increasing `load_timeout_secs` to `60` or `90`.
+
+## FAQ
+
+#### The game I want to watch is not in `games.csv`. Can I still use this bot for that game?
+
+Yes, you can use this bot for any game! The `games.csv` file is provided for convenience and might be missing some games, but you can find a game's ID yourself by following these steps.
+Open the game's main page on Twitch, for example, Rocket League: https://www.twitch.tv/directory/game/Rocket%20League. Right-click the game's image. Click `Inspect Element`. You should see something like this:
+
+```
+<img alt="Rocket League" class="tw-image" src="https://static-cdn.jtvnw.net/ttv-boxart/30921-144x192.jpg">
+```
+
+The number in between `ttv-boxart/` and `-144x192.jpg` is the game ID. In this example it is `30921`.
