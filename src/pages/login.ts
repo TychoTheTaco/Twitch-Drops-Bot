@@ -116,7 +116,15 @@ export class LoginPage extends TwitchPage {
                                 continue;
                             }
                             logger.info("Resent verification email");
-                            await resendCodeButton.click();
+                            // await resendCodeButton.click();
+
+                            // ! FIXME - TS2684
+                            // The code above gives the following error:
+                            //
+                            // src/pages/login.ts:119:35 - error TS2684: The 'this' context of type 'ElementHandle<Node>' is not assignable to method's 'this' of type 'ElementHandle<Element>'.
+                            // 119                             await resendCodeButton.click();
+
+                            await ((resendCodeButton) as puppeteer.ElementHandle<Element>).click();
                         } else {
                             break;
                         }
@@ -128,7 +136,8 @@ export class LoginPage extends TwitchPage {
                         logger.error("first_input was null!");
                         break
                     }
-                    await first_input.click();
+                    //await first_input.click(); // same as above (search for TS2684)
+                    await ((first_input) as puppeteer.ElementHandle<Element>).click();
                     await this.page.keyboard.type(code);
                     break;
                 } catch (error) {
@@ -155,7 +164,8 @@ export class LoginPage extends TwitchPage {
                         logger.error("first_input was null!");
                         break
                     }
-                    await first_input.click();
+                    //await first_input.click(); // same as above (search for TS2684)
+                    await ((first_input) as puppeteer.ElementHandle<Element>).click();
                     await this.page.keyboard.type(code);
 
                     // Click submit
@@ -164,7 +174,8 @@ export class LoginPage extends TwitchPage {
                         logger.error("button was null!");
                         break
                     }
-                    await button.click();
+                    //await button.click(); // same as above (search for TS2684)
+                    await ((button) as puppeteer.ElementHandle<Element>).click();
 
                     break;
                 } catch (error) {
