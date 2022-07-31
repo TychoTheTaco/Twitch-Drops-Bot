@@ -1301,7 +1301,8 @@ export class TwitchDropsBot extends EventEmitter {
 
             // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
             logger.info('Waiting for page to load...');
-            const element = (await this.#page.$x('//div[@data-a-player-state]'))[0];
+            //const element = (await this.#page.$x('//div[@data-a-player-state]'))[0]; // search for TS2345
+            const element = (await this.#page.waitForXPath('//div[@data-a-player-state]')) as puppeteer.ElementHandle<Element>;
             await this.#waitUntilElementRendered(this.#page, element);
 
             const streamPage = new StreamPage(this.#page);
