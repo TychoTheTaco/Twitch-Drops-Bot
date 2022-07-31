@@ -48,8 +48,8 @@ export class DropCampaignsTable extends React.Component<Props, State> {
     };
 
     readonly #priorityComparator: (a: DropCampaign, b: DropCampaign) => number;
-    readonly #startTimeComparator: (a: DropCampaign, b: DropCampaign) => number;
-    readonly #endTimeComparator: (a: DropCampaign, b: DropCampaign) => number;
+    //readonly #startTimeComparator: (a: DropCampaign, b: DropCampaign) => number;
+    //readonly #endTimeComparator: (a: DropCampaign, b: DropCampaign) => number;
 
     constructor(props: any) {
         super(props);
@@ -69,7 +69,7 @@ export class DropCampaignsTable extends React.Component<Props, State> {
             const indexB = this.state.campaigns.indexOf(b);
             return indexA - indexB;
         }
-        this.#startTimeComparator = (a: DropCampaign, b: DropCampaign) => {
+        /*this.#startTimeComparator = (a: DropCampaign, b: DropCampaign) => {
             const statusA = a.status;
             const statusB = b.status;
             if (statusA === "UPCOMING" && statusB !== "UPCOMING") {
@@ -92,7 +92,7 @@ export class DropCampaignsTable extends React.Component<Props, State> {
             const startTimeA = Date.parse(a.endAt);
             const startTimeB = Date.parse(b.endAt);
             return startTimeA - startTimeB;
-        }
+        }*/
     }
 
     render() {
@@ -152,7 +152,7 @@ export class DropCampaignsTable extends React.Component<Props, State> {
         clearTimeout(this.state.uiUpdateTimeoutId);
     }
 
-    #getProgressString(id: string) {
+    /*#getProgressString(id: string) {
         if (this.state.progress.hasOwnProperty(id)) {
             for (const campaign of this.state.campaigns) {
                 for (const drop of campaign.timeBasedDrops) {
@@ -164,6 +164,6 @@ export class DropCampaignsTable extends React.Component<Props, State> {
             }
         }
         return "-";
-    }
+    }*/
 
 }

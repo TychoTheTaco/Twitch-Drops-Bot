@@ -5,7 +5,7 @@ import _ from "lodash";
 import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
-import puppeteer, {Browser, Frame, HTTPResponse} from "puppeteer";
+import puppeteer, {Browser} from "puppeteer";
 
 const {errors} = puppeteer;
 
@@ -776,12 +776,12 @@ export class TwitchDropsBot extends EventEmitter {
         }
 
         // Check provided game ID list
-        for (const gameId of this.#gameIds) {
-            /*const streams = await this.#twitchClient.getActiveStreams(gameId);
+        /*for (const gameId of this.#gameIds) {
+            const streams = await this.#twitchClient.getActiveStreams(gameId);
             if (streams.length > 0) {
                 return streams[0];
-            }*/
-        }
+            }
+        }*/
 
         // Check pending Drop Campaigns' games
         for (const dropCampaignId of this.#pendingDropCampaignIds) {

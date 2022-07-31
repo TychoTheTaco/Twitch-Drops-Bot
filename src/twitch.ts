@@ -303,7 +303,7 @@ export class Client {
     }
 
     async claimDropReward(dropId: string) {
-        const data = await this.#post({
+        return await this.#post({
             "operationName": "DropsPage_ClaimDropRewards",
             "variables": {
                 "input": {
