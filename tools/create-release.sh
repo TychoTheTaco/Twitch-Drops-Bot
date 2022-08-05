@@ -1,7 +1,24 @@
 #
 # Builds and uploads docker images to GitHub container registry for a new release using the latest commit from the master branch.
 #
+
 currentDirectory=$(dirname "$0")
+
+isWindows() {
+	if [[ "$(uname)" == MINGW32_NT* ]]; then
+		return 0
+	elif [[ "$(uname)" == MINGW64_NT* ]]; then
+		return 0
+	fi
+	return 1
+}
+
+isDockerRunning() {
+	if docker version >/dev/null 2>&1; then
+		return 0
+	fi
+	return 1
+}
 
 personalAccessToken=$1
 if [ -z "${personalAccessToken}" ]; then
@@ -58,6 +75,19 @@ fi
 scriptDirectory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" &>/dev/null && pwd 2>/dev/null)"
 projectDirectory="$(cd "$scriptDirectory/../" && pwd)"
 
+# Make sure docker is running
+if isWindows; then
+	if ! isDockerRunning; then
+		echo "Docker not running! Starting it now..."
+		"/c/Program Files/Docker/Docker/Docker Desktop.exe" &
+		while ! isDockerRunning; do
+			echo "Waiting for Docker..."
+			sleep 5
+		done
+		echo "Done."
+	fi
+fi
+
 # Build and push docker image
 docker buildx build \
 	--platform linux/amd64,linux/arm64/v8,linux/arm/v7 \
@@ -69,6 +99,8 @@ docker buildx build \
 
 # Tag the commit with the version number
 echo "Tagging commit with version code..."
-git tag v"$currentVersion" "$hash"
+tagName=v"$currentVersion"
+git tag "$tagName" "$hash"
+git push origin "$tagName"
 
 echo "Done!"
