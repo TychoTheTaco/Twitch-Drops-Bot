@@ -6,7 +6,7 @@ test("StringListOption", () => {
 
     const test = (input: string, expected: string[]) => {
         expect(option.parse(input)).toStrictEqual(expected);
-    }
+    };
 
     test("", []);
     test("a", ["a"]);

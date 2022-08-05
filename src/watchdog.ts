@@ -22,11 +22,11 @@ export class TwitchDropsWatchdog extends EventEmitter {
         if (!this.#isRunning) {
             this.#isRunning = true;
             const run = () => {
-                this.emit('before_update');
+                this.emit("before_update");
                 this.#client.getDropCampaigns().then((campaigns: DropCampaign[]) => {
-                    this.emit('update', campaigns);
+                    this.emit("update", campaigns);
                 }).catch((error) => {
-                    this.emit('error', error);
+                    this.emit("error", error);
                 }).finally(() => {
                     this.#timeoutId = setTimeout(run, 1000 * 60 * this.#pollingIntervalMinutes);
                 });

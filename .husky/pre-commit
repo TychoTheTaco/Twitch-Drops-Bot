@@ -7,8 +7,8 @@ PATH=$PATH:node_modules/.bin
 # Check for unused dependencies
 node tools/check-unused-dependencies.js
 
-# Check of linter errors
-if ! eslint . --ext js,ts,jsx,tsx; then
+# Check for linter errors
+if ! eslint "src/*" "test/" --ext js,ts,jsx,tsx; then
   exit 1
 fi
 

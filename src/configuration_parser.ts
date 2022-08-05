@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
-import fs from 'fs';
+import fs from "fs";
 
-import {ArgumentParser} from 'argparse';
+import {ArgumentParser} from "argparse";
 
-import logger from './logger.js';
+import logger from "./logger.js";
 import {Option, StringListOption} from "./options.js";
 
 export class ConfigurationParser {
@@ -24,7 +24,7 @@ export class ConfigurationParser {
 
         // Parse arguments
         const parser = new ArgumentParser();
-        parser.add_argument('--config', '-c', {default: 'config.json'});
+        parser.add_argument("--config", "-c", {default: "config.json"});
         for (const option of this.#options) {
             if (option.alias) {
                 parser.add_argument(option.name, option.alias, option.argparseOptions);
@@ -35,8 +35,8 @@ export class ConfigurationParser {
         const args = parser.parse_args();
 
         const getJsonKey = (option: Option<any>): string => {
-            return option.name.replace(/^-+/g, '').replace(/-/g, '_');
-        }
+            return option.name.replace(/^-+/g, "").replace(/-/g, "_");
+        };
 
         const getOptionByName = (name: string): Option<any> | null => {
             for (const option of this.#options) {
@@ -45,15 +45,15 @@ export class ConfigurationParser {
                 }
             }
             return null;
-        }
+        };
 
         // Load config from file if it exists
         let config: any = {};
-        logger.info('Loading config file: ' + args['config']);
-        const configFileExists = fs.existsSync(args['config']);
+        logger.info("Loading config file: " + args["config"]);
+        const configFileExists = fs.existsSync(args["config"]);
         if (configFileExists) {
             try {
-                config = JSON.parse(fs.readFileSync(args['config'], {encoding: 'utf-8'}));
+                config = JSON.parse(fs.readFileSync(args["config"], {encoding: "utf-8"}));
 
                 // Check for unknown options
                 for (const key of Object.keys(config)) {
@@ -71,19 +71,19 @@ export class ConfigurationParser {
                             continue;
                         }
                         for (const item of value) {
-                            if (typeof item !== 'string') {
+                            if (typeof item !== "string") {
                                 throw new Error(`Error parsing option "${key}": Item is not a string: ${item}`);
                             }
                         }
                     }
                 }
             } catch (error) {
-                logger.error('Failed to read config file!');
+                logger.error("Failed to read config file!");
                 logger.error(error);
                 process.exit(1);
             }
         } else {
-            logger.warn('Config file not found! Creating a default one...');
+            logger.warn("Config file not found! Creating a default one...");
         }
 
         // Override options from config with options from arguments and set defaults
@@ -92,14 +92,14 @@ export class ConfigurationParser {
             if (args[key] === undefined) {
                 if (config[key] === undefined) {
                     const defaultValue = option.defaultValue;
-                    if (typeof defaultValue === 'function') {
+                    if (typeof defaultValue === "function") {
                         config[key] = defaultValue();
                     } else {
                         config[key] = defaultValue;
                     }
                 }
             } else {
-                if (typeof args[key] === 'string') {
+                if (typeof args[key] === "string") {
                     config[key] = option.parse(args[key]);
                 } else {
                     config[key] = args[key];
@@ -110,8 +110,8 @@ export class ConfigurationParser {
         // Save config file if it didn't exist
         if (this.#saveIfNotExist) {
             if (!configFileExists) {
-                fs.writeFileSync(args['config'], JSON.stringify(config, null, 4));
-                logger.info('Config saved to ' + args['config']);
+                fs.writeFileSync(args["config"], JSON.stringify(config, null, 4));
+                logger.info("Config saved to " + args["config"]);
             }
         }
 

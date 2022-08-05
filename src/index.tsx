@@ -3,8 +3,8 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import url from "node:url";
 
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
 puppeteer.use(StealthPlugin());
 
@@ -14,11 +14,11 @@ import cliProgress from "cli-progress";
 
 const {BarFormat} = cliProgress.Format;
 
-import logger from './logger.js';
-import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from './twitch.js';
-import {StringOption, BooleanOption, IntegerOption, StringListOption, JsonOption} from './options.js';
-import {TwitchDropsBot} from './twitch_drops_bot.js';
-import {ConfigurationParser} from './configuration_parser.js';
+import logger from "./logger.js";
+import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "./twitch.js";
+import {StringOption, BooleanOption, IntegerOption, StringListOption, JsonOption} from "./options.js";
+import {TwitchDropsBot} from "./twitch_drops_bot.js";
+import {ConfigurationParser} from "./configuration_parser.js";
 import {LoginPage} from "./pages/login.js";
 import {Application} from "./ui/ui.js";
 import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "./utils.js";
@@ -35,14 +35,14 @@ try {
 }
 
 function onBrowserOrPageClosed() {
-    logger.info('Browser was disconnected or tab was closed! Exiting...');
+    logger.info("Browser was disconnected or tab was closed! Exiting...");
     process.exit(1);
 }
 
 function getUsernameFromCookies(cookies: any) {
     for (const cookie of cookies) {
-        if (cookie['name'] === 'name' || cookie['name'] === 'login') {
-            return cookie['value'];
+        if (cookie["name"] === "name" || cookie["name"] === "login") {
+            return cookie["value"];
         }
     }
 }
@@ -51,7 +51,7 @@ function areCookiesValid(cookies: any) {
     let isOauthTokenFound = false;
     for (const cookie of cookies) {
         // Check if we have an OAuth token
-        if (cookie['name'] === 'auth-token') {
+        if (cookie["name"] === "auth-token") {
             isOauthTokenFound = true;
         }
     }
@@ -105,7 +105,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                 logger.debug("Done checking for updates");
             });
             setTimeout(checkForUpdates, 1000 * 60 * 60 * 24);
-        }
+        };
         checkForUpdates();
     }
 
@@ -118,7 +118,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
     const progressBarHeight: number = 3;
 
     function ansiEscape(code: string): string {
-        return '\x1B[' + code;
+        return "\x1B[" + code;
     }
 
     const startProgressBar = (p = payload) => {
@@ -127,26 +127,26 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
             isProgressBarStarted = true;
             isFirstOutput = true;
             for (let i = 0; i < progressBarHeight; ++i) {
-                process.stdout.write('\n');
+                process.stdout.write("\n");
             }
             process.stdout.write(ansiEscape(`${progressBarHeight}A`));
             progressBar.start(1, 0, p);
         }
-    }
+    };
 
     const updateProgressBar = (p = payload) => {
         payload = p;
         if (progressBar !== null) {
             progressBar.update(0, p);
         }
-    }
+    };
 
     const stopProgressBar = (clear: boolean = false) => {
         if (isProgressBarStarted) {
             isProgressBarStarted = false;
             progressBar.stop();
             for (let i = 0; i < progressBarHeight - 1; ++i) {
-                process.stdout.write(ansiEscape(`1B`) + ansiEscape("2K"));
+                process.stdout.write(ansiEscape("1B") + ansiEscape("2K"));
             }
             process.stdout.write(ansiEscape(`${progressBarHeight - 1}A`));
         }
@@ -154,15 +154,15 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
             progressBar = null;
             payload = null;
         }
-    }
+    };
 
     // Intercept logging messages to stop/start the progress bar
     const onBeforeLogMessage = () => {
         stopProgressBar();
-    }
+    };
     const onAfterLogMessage = () => {
         startProgressBar();
-    }
+    };
     for (const level of Object.keys(logger.levels)) {
         // @ts-ignore
         const og = logger[level];
@@ -173,7 +173,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
             const result = og(args);
             onAfterLogMessage();
             return result;
-        }
+        };
     }
 
     let currentDrop: TimeBasedDrop | null = null;
@@ -196,7 +196,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                     stream: process.stdout,
                     gracefulExit: false, // fixes too many sigint listeners
                     format: (options: any, params: any, payload: any) => {
-                        let result = 'Watching ' + payload['stream_url'] + ` | Viewers: ${payload['viewers']} | Uptime: ${payload['uptime']}` + ansiEscape('0K') + '\n';
+                        let result = "Watching " + payload["stream_url"] + ` | Viewers: ${payload["viewers"]} | Uptime: ${payload["uptime"]}` + ansiEscape("0K") + "\n";
 
                         const drop = currentDrop;
                         if (drop) {
@@ -205,11 +205,11 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                             if (campaign) {
                                 result += `${ansiEscape("36m")}${campaign.game.name ?? campaign.game.displayName}${ansiEscape("39m")} | ${ansiEscape("35m")}${campaign.name}${ansiEscape("39m")}\n`;
                             } else {
-                                result += ansiEscape("2K") + '\n'
+                                result += ansiEscape("2K") + "\n";
                             }
-                            result += `${getDropBenefitNames(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape('0K') + '\n';
+                            result += `${getDropBenefitNames(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape("0K") + "\n";
                         } else {
-                            result += ansiEscape("2K") + `- No Drops Active -\n`;
+                            result += ansiEscape("2K") + "- No Drops Active -\n";
                             result += ansiEscape("2K") +" \n";
                         }
 
@@ -222,7 +222,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                 },
                 cliProgress.Presets.shades_classic
             );
-            progressBar.on('redraw-post', () => {
+            progressBar.on("redraw-post", () => {
                 isFirstOutput = false;
             });
             startProgressBar(data);
@@ -257,11 +257,11 @@ function startUiMode(bot: TwitchDropsBot, config: Config) {
 
 // Options defined here can be configured in either the config file or as command-line arguments
 const options = [
-    new StringOption('--username', {alias: '-u'}),
-    new StringOption('--password', {alias: '-p'}),
+    new StringOption("--username", {alias: "-u"}),
+    new StringOption("--password", {alias: "-p"}),
     new StringOption("--auth-token"),
-    new StringOption('--browser', {
-        alias: '-b',
+    new StringOption("--browser", {
+        alias: "-b",
         defaultValue: () => {
             switch (process.platform) {
                 case "win32":
@@ -285,20 +285,20 @@ const options = [
             }
         }
     }),
-    new StringListOption('--games', {alias: '-g'}),
-    new BooleanOption('--headless', false, {defaultValue: true}),
-    new BooleanOption('--headless-login'),
-    new IntegerOption('--interval', {alias: '-i', defaultValue: 15}),
-    new IntegerOption('--load-timeout-secs', {alias: '-t', defaultValue: 30}),
-    new IntegerOption('--failed-stream-retry', {defaultValue: 3}),
-    new IntegerOption('--failed-stream-timeout', {defaultValue: 30}),
-    new StringListOption('--browser-args'),
+    new StringListOption("--games", {alias: "-g"}),
+    new BooleanOption("--headless", false, {defaultValue: true}),
+    new BooleanOption("--headless-login"),
+    new IntegerOption("--interval", {alias: "-i", defaultValue: 15}),
+    new IntegerOption("--load-timeout-secs", {alias: "-t", defaultValue: 30}),
+    new IntegerOption("--failed-stream-retry", {defaultValue: 3}),
+    new IntegerOption("--failed-stream-timeout", {defaultValue: 30}),
+    new StringListOption("--browser-args"),
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
-    new BooleanOption('--watch-unlisted-games'),
-    new BooleanOption('--hide-video'),
-    new StringOption('--cookies-path'),
-    new StringOption('--log-level'),
-    new BooleanOption('--show-account-not-linked-warning', false, {defaultValue: true, alias: '-sanlw'}),
+    new BooleanOption("--watch-unlisted-games"),
+    new BooleanOption("--hide-video"),
+    new StringOption("--cookies-path"),
+    new StringOption("--log-level"),
+    new BooleanOption("--show-account-not-linked-warning", false, {defaultValue: true, alias: "-sanlw"}),
     new StringListOption("--ignored-games"),
     new BooleanOption("--attempt-impossible-campaigns", false, {defaultValue: true}),
     new BooleanOption("--watch-streams-when-no-drop-campaigns-active", true, {alias: "-wswndca"}),
@@ -324,7 +324,7 @@ const options = [
         defaultValue: {
             enabled: true,
             file: undefined,
-            level: 'debug'
+            level: "debug"
         }
     }),
     new JsonOption<{
@@ -436,7 +436,7 @@ async function main() {
             filename: fileName,
             level: level,
             options: {
-                flags: 'w' // Overwrite file
+                flags: "w" // Overwrite file
             }
         }));
     }
@@ -455,11 +455,11 @@ async function main() {
 
     // Add default browser args
     const defaultBrowserArgs = [
-        '--mute-audio',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--window-size=1920,1080',
+        "--mute-audio",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--window-size=1920,1080",
         "--disable-features=HardwareMediaKeyHandling"
     ];
 
@@ -475,7 +475,7 @@ async function main() {
     for (const arg of defaultBrowserArgs) {
         const argName = arg.split("=")[0];
         if (!argNames.includes(argName)) {
-            config['browser_args'].push(arg);
+            config["browser_args"].push(arg);
         }
     }
 
@@ -496,7 +496,7 @@ async function main() {
             config["headless_login"] = requiredHeadlessLogin;
         }
 
-        const requiredBrowserArgs = ["--no-sandbox"]
+        const requiredBrowserArgs = ["--no-sandbox"];
         const actualBrowserArgs = config["browser_args"];
         const actualBrowserArgsNames = getArgNames(actualBrowserArgs);
         for (const arg of requiredBrowserArgs) {
@@ -510,29 +510,29 @@ async function main() {
     }
 
     // Make username lowercase
-    if (config['username']) {
-        config['username'] = config['username'].toLowerCase();
+    if (config["username"]) {
+        config["username"] = config["username"].toLowerCase();
     }
 
     // Print masked config
-    logger.debug('Using config: ' + JSON.stringify(createMaskedConfig(config), null, 4));
+    logger.debug("Using config: " + JSON.stringify(createMaskedConfig(config), null, 4));
 
     // Start browser
     const browser = await puppeteer.launch({
-        headless: config['headless'],
-        executablePath: config['browser'],
-        args: config['browser_args']
+        headless: config["headless"],
+        executablePath: config["browser"],
+        args: config["browser_args"]
     });
 
     // Automatically stop this program if the browser is closed
-    browser.on('disconnected', onBrowserOrPageClosed);
+    browser.on("disconnected", onBrowserOrPageClosed);
 
     // Check if we have saved cookies
     let cookiesPath = null;
     if (config.cookies_path) {
         cookiesPath = config.cookies_path;
     } else if (config.username) {
-        cookiesPath = `./cookies-${config['username']}.json`;
+        cookiesPath = `./cookies-${config["username"]}.json`;
     } else {
         // The user has not specified a cookies path or a username, lets see if there are any saved cookies in this directory.
         // If there are, lets use those.
@@ -547,26 +547,26 @@ async function main() {
     if (cookiesPath && fs.existsSync(cookiesPath)) {
 
         // Load cookies
-        cookies = JSON.parse(fs.readFileSync(cookiesPath, 'utf-8'));
+        cookies = JSON.parse(fs.readFileSync(cookiesPath, "utf-8"));
 
         // Make sure these cookies are valid
         if (areCookiesValid(cookies)) {
 
             // If both cookies and a username are provided and the provided username does not match the username stored in the cookies, warn the user and prefer to use the one from the cookies.
-            const username = config['username'];
+            const username = config["username"];
             if (username && (username !== getUsernameFromCookies(cookies))) {
-                logger.warn('Provided username does not match the one found in the cookies! Using the cookies to login...');
+                logger.warn("Provided username does not match the one found in the cookies! Using the cookies to login...");
                 config.username = getUsernameFromCookies(cookies);
             }
 
             // Restore cookies from previous session
-            logger.info('Restoring cookies from last session.');
+            logger.info("Restoring cookies from last session.");
             areSavedCookiesValid = true;
 
         } else {
 
             // Saved cookies are invalid, let's delete them
-            logger.info('Saved cookies are invalid.')
+            logger.info("Saved cookies are invalid.");
             fs.unlinkSync(cookiesPath);
 
         }
@@ -604,27 +604,27 @@ async function main() {
 
     // If the saved cookies are not valid, and we don't have an auth token, then we have to log in with username and password
     if (!areSavedCookiesValid) {
-        logger.info('Logging in...');
+        logger.info("Logging in...");
 
         // Validate options
-        if (config['headless_login'] && (config['username'] === undefined || config['password'] === undefined) && config.auth_token === undefined) {
+        if (config["headless_login"] && (config["username"] === undefined || config["password"] === undefined) && config.auth_token === undefined) {
             logger.error("You must provide a username and password or an auth token to use headless login!");
             process.exit(1);
         }
 
         // Check if we need to create a new headful browser for the login
-        const needNewBrowser = config['headless'] && !config['headless_login'];
+        const needNewBrowser = config["headless"] && !config["headless_login"];
         let loginBrowser = browser;
         if (needNewBrowser) {
             loginBrowser = await puppeteer.launch({
                 headless: false,
-                executablePath: config['browser'],
-                args: config['browser_args']
+                executablePath: config["browser"],
+                args: config["browser_args"]
             });
         }
 
         const loginPage = new LoginPage(await loginBrowser.newPage());
-        cookies = await loginPage.login(config['username'], config['password'], config['headless_login'], config['load_timeout_secs']);
+        cookies = await loginPage.login(config["username"], config["password"], config["headless_login"], config["load_timeout_secs"]);
 
         if (needNewBrowser) {
             await loginBrowser.close();
@@ -635,20 +635,20 @@ async function main() {
         // Save cookies
         cookiesPath = `./cookies-${config.username}.json`;
         fs.writeFileSync(cookiesPath, JSON.stringify(cookies, null, 4));
-        logger.info('Saved cookies to ' + cookiesPath);
+        logger.info("Saved cookies to " + cookiesPath);
     }
 
     const bot = await TwitchDropsBot.create(browser, cookies, {
-        gameIds: config['games'],
-        failedStreamBlacklistTimeout: config['failed_stream_timeout'],
-        failedStreamRetryCount: config['failed_stream_retry'],
-        dropCampaignPollingInterval: config['interval'],
-        loadTimeoutSeconds: config['load_timeout_secs'],
-        hideVideo: config['hide_video'],
-        watchUnlistedGames: config['watch_unlisted_games'],
-        showAccountNotLinkedWarning: config['show_account_not_linked_warning'],
-        ignoredGameIds: config['ignored_games'],
-        attemptImpossibleDropCampaigns: config['attempt_impossible_campaigns'],
+        gameIds: config["games"],
+        failedStreamBlacklistTimeout: config["failed_stream_timeout"],
+        failedStreamRetryCount: config["failed_stream_retry"],
+        dropCampaignPollingInterval: config["interval"],
+        loadTimeoutSeconds: config["load_timeout_secs"],
+        hideVideo: config["hide_video"],
+        watchUnlistedGames: config["watch_unlisted_games"],
+        showAccountNotLinkedWarning: config["show_account_not_linked_warning"],
+        ignoredGameIds: config["ignored_games"],
+        attemptImpossibleDropCampaigns: config["attempt_impossible_campaigns"],
         watchStreamsWhenNoDropCampaignsActive: config["watch_streams_when_no_drop_campaigns_active"],
         broadcasterIds: config["broadcasters"]
     });

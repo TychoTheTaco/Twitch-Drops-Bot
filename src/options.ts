@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 export abstract class Option<T> {
 
@@ -77,7 +77,7 @@ export class BooleanOption extends Option<boolean> {
         // Both 'store_true' and 'store_false' actions automatically create a default of false/true when no argument is
         // passed. This interferes with our custom default argument handling because we expect to get 'undefined' when no
         // argument is passed. Changing the actions to 'store_const' avoids this problem.
-        const argparseOptions = {action: 'store_const', const: true};
+        const argparseOptions = {action: "store_const", const: true};
 
         optional ??= {};
 
@@ -89,12 +89,12 @@ export class BooleanOption extends Option<boolean> {
 
     parse(string: string): boolean {
         switch (string) {
-            case 'true':
+            case "true":
                 return true;
-            case 'false':
+            case "false":
                 return false;
         }
-        throw new Error('Invalid boolean string: ' + string);
+        throw new Error("Invalid boolean string: " + string);
     }
 
 }
@@ -105,7 +105,7 @@ export class IntegerOption extends Option<number> {
         optional ??= {};
         optional.defaultValue ??= 0;
         if (optional.argparseOptions) {
-            optional.argparseOptions['type'] = 'int';
+            optional.argparseOptions["type"] = "int";
         }
         super(name, optional);
     }
@@ -130,11 +130,11 @@ export class StringListOption extends Option<string[]> {
         let isEscaped = false;
         for (const c of string) {
             if (!isEscaped) {
-                if (c === '\\') {
+                if (c === "\\") {
                     isEscaped = true;
                     continue;
                 }
-                if (c === ',') {
+                if (c === ",") {
                     items.push(item);
                     item = "";
                     continue;
@@ -146,7 +146,7 @@ export class StringListOption extends Option<string[]> {
         if (item.length > 0) {
             items.push(item);
         }
-        return items.filter((item) => {return item.length > 0});
+        return items.filter((item) => {return item.length > 0;});
     }
 
 }

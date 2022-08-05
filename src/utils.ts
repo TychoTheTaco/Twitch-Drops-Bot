@@ -1,4 +1,4 @@
-import fs from "node:fs"
+import fs from "node:fs";
 import path from "node:path";
 
 import {HTTPResponse, Page} from "puppeteer";
@@ -11,8 +11,8 @@ import logger from "./logger.js";
 
 export async function saveScreenshotAndHtml(page: Page, pathPrefix: string) {
     const time = new Date().getTime();
-    const screenshotPath = pathPrefix + '-screenshot-' + time + '.png';
-    const htmlPath = pathPrefix + '-page-' + time + '.html';
+    const screenshotPath = pathPrefix + "-screenshot-" + time + ".png";
+    const htmlPath = pathPrefix + "-page-" + time + ".html";
     await page.screenshot({
         fullPage: true,
         path: screenshotPath
@@ -75,7 +75,7 @@ export class TimedSet<T> extends Set<T> {
 }
 
 export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./games.csv", destinationPath: string = sourcePath) {
-    logger.info('Parsing games...');
+    logger.info("Parsing games...");
 
     // Read games from source file
     let oldGames = [];
@@ -84,9 +84,9 @@ export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./g
         let oldGamesRaw = fs.readFileSync(sourcePath, {encoding: "utf-8"});
 
         // Detect and replace line endings
-        if (oldGamesRaw.includes('\r\n')) {
-            logger.info('File games.csv contains CRLF line endings. Will replace with LF.');
-            oldGamesRaw = oldGamesRaw.replace(/\r\n/g, '\n');
+        if (oldGamesRaw.includes("\r\n")) {
+            logger.info("File games.csv contains CRLF line endings. Will replace with LF.");
+            oldGamesRaw = oldGamesRaw.replace(/\r\n/g, "\n");
         }
 
         // Parse string into list of columns
@@ -102,7 +102,7 @@ export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./g
     const oldIdToNameMap = new Map<string, string>(oldGames.map(game => game.reverse()));
 
     // Create list of [name, id] for new games
-    const newGames = campaigns.map(campaign => [campaign['game']['displayName'], campaign['game']['id']]);
+    const newGames = campaigns.map(campaign => [campaign["game"]["displayName"], campaign["game"]["id"]]);
 
     const newIdToNameMap = new Map<string, string>();
 
@@ -132,7 +132,7 @@ export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./g
         } else if (oldName === newName && oldId == newId) {
             // same data
         } else {
-            logger.info("interesting: " + oldName + " vs " + newName + "   " + oldId + " vs " + newId)
+            logger.info("interesting: " + oldName + " vs " + newName + "   " + oldId + " vs " + newId);
         }
 
         newIdToNameMap.set(newId, newName);
@@ -152,8 +152,8 @@ export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./g
 
     fs.writeFileSync(
         destinationPath,
-        'Name,ID\n' + toWrite);
-    logger.info('Games list updated');
+        "Name,ID\n" + toWrite);
+    logger.info("Games list updated");
 }
 
 /**
@@ -173,7 +173,7 @@ export function waitForResponseWithOperationName(page: Page, operationName: stri
             const response = await this.promise;
             return (await response?.json())[this.operationIndex]["data"];
         }
-    }
+    };
     result.promise = page.waitForResponse((response: HTTPResponse) => {
         if (response.url().startsWith("https://gql.twitch.tv/gql")) {
             const postData = response.request().postData();

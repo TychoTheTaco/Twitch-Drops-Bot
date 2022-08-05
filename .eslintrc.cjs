@@ -18,6 +18,8 @@ module.exports = {
         "eslint-plugin-jest"
     ],
     "rules": {
-        "unused-imports/no-unused-imports": "error"
+        "unused-imports/no-unused-imports": "error",
+        "semi": ["error", "always"],
+        "quotes": ["error", "double"]
     }
 }
