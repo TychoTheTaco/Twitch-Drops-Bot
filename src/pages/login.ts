@@ -116,7 +116,7 @@ export class LoginPage extends TwitchPage {
                                 continue;
                             }
                             logger.info("Resent verification email");
-                            await resendCodeButton.click();
+                            await ((resendCodeButton) as puppeteer.ElementHandle<Element>).click();
                         } else {
                             break;
                         }
@@ -128,7 +128,7 @@ export class LoginPage extends TwitchPage {
                         logger.error("first_input was null!");
                         break
                     }
-                    await first_input.click();
+                    await ((first_input) as puppeteer.ElementHandle<Element>).click();
                     await this.page.keyboard.type(code);
                     break;
                 } catch (error) {
@@ -155,7 +155,7 @@ export class LoginPage extends TwitchPage {
                         logger.error("first_input was null!");
                         break
                     }
-                    await first_input.click();
+                    await ((first_input) as puppeteer.ElementHandle<Element>).click();
                     await this.page.keyboard.type(code);
 
                     // Click submit
@@ -164,7 +164,7 @@ export class LoginPage extends TwitchPage {
                         logger.error("button was null!");
                         break
                     }
-                    await button.click();
+                    await ((button) as puppeteer.ElementHandle<Element>).click();
 
                     break;
                 } catch (error) {
