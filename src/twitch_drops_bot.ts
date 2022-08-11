@@ -560,7 +560,7 @@ export class TwitchDropsBot extends EventEmitter {
 
     #getFirstBroadcasterIndex(campaign: DropCampaign) {
         for (let i = 0; i < this.#broadcasterIds.length; ++i) {
-            if (campaign.allow && campaign.allow.isEnabled) {
+            if (campaign.allow && campaign.allow.isEnabled && campaign.allow.channels) {
                 for (const channel of campaign.allow.channels) {
                     if (channel.displayName.toLowerCase() === this.#broadcasterIds[i].toLowerCase()) {
                         return i;
