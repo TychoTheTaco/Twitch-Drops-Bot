@@ -271,8 +271,17 @@ export class TwitchDropsBot extends EventEmitter {
         } else if (indexA === indexB) {  // Both games have the same priority. Give priority to the one that ends first.
             const endTimeA = Date.parse(campaignA.endAt);
             const endTimeB = Date.parse(campaignB.endAt);
-            if (endTimeA === endTimeB) {
-                return a < b ? -1 : 1;
+            if (endTimeA === endTimeB) {  // Both campaigns end at the same time. Give priority to the one that is in the broadcasters list
+                const broadcasterIndexA = this.#getFirstBroadcasterIndex(campaignA);
+                const broadcasterIndexB = this.#getFirstBroadcasterIndex(campaignB);
+                if (broadcasterIndexA === -1 && broadcasterIndexB !== -1) {
+                    return 1;
+                } else if (broadcasterIndexA !== -1 && broadcasterIndexB === -1) {
+                    return -1;
+                } else if (broadcasterIndexA === broadcasterIndexB) {
+                    return a < b ? -1 : 1;
+                }
+                return Math.sign(broadcasterIndexA - broadcasterIndexB);
             }
             return endTimeA < endTimeB ? -1 : 1;
         }
@@ -547,6 +556,19 @@ export class TwitchDropsBot extends EventEmitter {
             this.#isFirstWatchdogFinished = true;
             this.#pendingDropCampaignIdsNotifier.notifyAll();
         });
+    }
+
+    #getFirstBroadcasterIndex(campaign: DropCampaign) {
+        for (let i = 0; i < this.#broadcasterIds.length; ++i) {
+            if (campaign.allow && campaign.allow.isEnabled) {
+                for (const channel of campaign.allow.channels) {
+                    if (channel.displayName.toLowerCase() === this.#broadcasterIds[i].toLowerCase()) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     #isCampaignCompleted(dropCampaignDetails: DropCampaign, inventory: Inventory): boolean {
