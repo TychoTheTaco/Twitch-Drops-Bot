@@ -45,6 +45,19 @@ if [ "$latestVersion" = "$currentVersion" ]; then
 	exit 1
 fi
 
+# Make sure docker is running
+if isWindows; then
+	if ! isDockerRunning; then
+		echo "Docker not running! Starting it now..."
+		"/c/Program Files/Docker/Docker/Docker Desktop.exe" &
+		while ! isDockerRunning; do
+			echo "Waiting for Docker..."
+			sleep 5
+		done
+		echo "Done."
+	fi
+fi
+
 # Login to GitHub container registry
 echo "Logging in to GitHub container registry..."
 echo "$personalAccessToken" | docker login ghcr.io -u tychothetaco --password-stdin
@@ -74,19 +87,6 @@ fi
 # Get the project directory (https://stackoverflow.com/questions/59895/how-can-i-get-the-source-directory-of-a-bash-script-from-within-the-script-itsel)
 scriptDirectory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" &>/dev/null && pwd 2>/dev/null)"
 projectDirectory="$(cd "$scriptDirectory/../" && pwd)"
-
-# Make sure docker is running
-if isWindows; then
-	if ! isDockerRunning; then
-		echo "Docker not running! Starting it now..."
-		"/c/Program Files/Docker/Docker/Docker Desktop.exe" &
-		while ! isDockerRunning; do
-			echo "Waiting for Docker..."
-			sleep 5
-		done
-		echo "Done."
-	fi
-fi
 
 # Build and push docker image
 docker buildx build \
