@@ -4,12 +4,12 @@ test("getGameIdFromName", async () => {
     const client = new Client();
     expect(await client.getGameIdFromName("rocket league")).toStrictEqual("30921");
     expect(await client.getGameIdFromName("Rocket LeAgUe")).toStrictEqual("30921");
-    expect(await client.getGameIdFromName("rocket")).toStrictEqual(undefined);
+    expect(await client.getGameIdFromName("rocket")).toBeNull();
     expect(await client.getGameIdFromName("league")).toStrictEqual("21779");
     expect(await client.getGameIdFromName("PUBG: BATTLEGROUNDS")).toStrictEqual("493057");
     expect(await client.getGameIdFromName("pubg")).toStrictEqual("493057");
     expect(await client.getGameIdFromName("battlegrounds")).toStrictEqual("493057");
-    expect(await client.getGameIdFromName("this cannot be a real game")).toStrictEqual(undefined);
+    expect(await client.getGameIdFromName("this cannot be a real game")).toBeNull();
 });
 
 test("getActiveStreams", async () => {

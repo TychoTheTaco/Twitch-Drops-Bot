@@ -110,6 +110,10 @@ export class Database extends EventEmitter {
 
 }
 
+function isInteger(string: string): boolean {
+    return string.match(/^\d+$/) !== null;
+}
+
 export declare interface TwitchDropsBot {
     on(event: "before_drop_campaigns_updated", listener: () => void): this;
 
@@ -372,6 +376,27 @@ export class TwitchDropsBot extends EventEmitter {
 
         const page = await browser.newPage();
         await page.setCookie(...cookies);
+
+        // Convert all game IDs/names to IDs
+        const games = options?.gameIds ?? [];
+        const gameIds: string[] = [];
+        for (const game of games) {
+            if (isInteger(game)) {
+                gameIds.push(game);
+            } else {
+                const id = await client.getGameIdFromName(game);
+                if (id) {
+                    logger.debug(`Matched game name "${game}" to ID "${id}"`);
+                    gameIds.push(id);
+                } else {
+                    logger.error("Failed to find game ID from name: " + game);
+                }
+            }
+        }
+        options = {
+            gameIds: gameIds,
+            ...options
+        };
 
         return new TwitchDropsBot(page, client, options);
     }

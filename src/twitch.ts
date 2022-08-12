@@ -223,7 +223,7 @@ export class Client {
         );
     }
 
-    async getGameIdFromName(name: string): Promise<string | undefined> {
+    async getGameIdFromName(name: string): Promise<string | null> {
         const data = await this.#post({
             "operationName": "DirectoryRoot_Directory",
             "variables": {
@@ -240,6 +240,7 @@ export class Client {
         if (game) {
             return game.id;
         }
+        return null;
     }
 
     /**
