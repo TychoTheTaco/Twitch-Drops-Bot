@@ -8,6 +8,7 @@ dnscache({enable: true});
 import axios from "axios";
 
 import logger from "./logger.js";
+import assert from "assert";
 
 export enum StreamTag {
     DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
@@ -123,23 +124,29 @@ export interface Channel {
     id: string
 }
 
+export interface Options {
+    clientId?: string,
+    oauthToken?: string,
+    userId?: string
+}
+
 /**
  * A client for interacting with the Twitch GQL endpoint.
  */
 export class Client {
 
     readonly #clientId: string;
-    readonly #oauthToken: string;
+    readonly #oauthToken?: string;
     #userId?: string;
 
-    constructor(clientId: string, oauthToken: string, userId?: string) {
-        this.#clientId = clientId;
-        this.#oauthToken = oauthToken;
-        this.#userId = userId;
+    constructor(options?: Options) {
+        this.#clientId = options?.clientId ?? "kimne78kx3ncx6brgo4mv6wki5h1ko";
+        this.#oauthToken = options?.oauthToken;
+        this.#userId = options?.userId;
     }
 
     async autoDetectUserId(): Promise<string | undefined> {
-        const data = await this.#post({
+        const data = await this.#postAuthorized({
             "operationName": "CoreActionsCurrentUser",
             "extensions": {
                 "persistedQuery": {
@@ -152,19 +159,10 @@ export class Client {
         return this.#userId;
     }
 
-    /**
-     * Send a POST request to the Twitch GQL endpoint. The request will include authentication headers.
-     * @param data The data to send to the API.
-     * @private
-     */
-    async #post(data: any): Promise<any> {
+    async postWrapper(data: any, headers: { [key: string]: string }) {
         const response = await axios.post("https://gql.twitch.tv/gql", data,
             {
-                headers: {
-                    "Content-Type": "text/plain;charset=UTF-8",
-                    "Client-Id": this.#clientId,
-                    "Authorization": `OAuth ${this.#oauthToken}`
-                }
+                headers: headers
             }
         );
 
@@ -198,10 +196,57 @@ export class Client {
     }
 
     /**
+     * Send a POST request to the Twitch GQL endpoint.
+     * @param data The data to send to the API.
+     * @private
+     */
+    async #post(data: any): Promise<any> {
+        return this.postWrapper(data, {
+            "Content-Type": "text/plain;charset=UTF-8",
+            "Client-Id": this.#clientId,
+        });
+    }
+
+    /**
+     * Send a POST request to the Twitch GQL endpoint. The request will include authentication headers.
+     * @param data The data to send to the API.
+     * @private
+     */
+    async #postAuthorized(data: any): Promise<any> {
+        assert(this.#oauthToken !== undefined, "Missing OAuth token!");
+        return this.postWrapper(data,
+            {
+                "Content-Type": "text/plain;charset=UTF-8",
+                "Client-Id": this.#clientId,
+                "Authorization": `OAuth ${this.#oauthToken}`
+            }
+        );
+    }
+
+    async getGameIdFromName(name: string): Promise<string | undefined> {
+        const data = await this.#post({
+            "operationName": "DirectoryRoot_Directory",
+            "variables": {
+                "name": name
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "9f4f6ae67f21ee50b454fcf048691107a52bfe7907ead73b9427398e343ca319"
+                }
+            }
+        });
+        const game = data.data.game;
+        if (game) {
+            return game.id;
+        }
+    }
+
+    /**
      * Get a list of drop campaigns. This can include expired, active, and future campaigns.
      */
     async getDropCampaigns(): Promise<DropCampaign[]> {
-        const data = await this.#post({
+        const data = await this.#postAuthorized({
             "operationName": "ViewerDropsDashboard",
             "extensions": {
                 "persistedQuery": {
@@ -219,7 +264,7 @@ export class Client {
     }
 
     async getDropCampaignDetails(dropId: string): Promise<DropCampaign> {
-        const data = await this.#post({
+        const data = await this.#postAuthorized({
             "operationName": "DropCampaignDetails",
             "extensions": {
                 "persistedQuery": {
@@ -241,7 +286,7 @@ export class Client {
     }
 
     async getInventory(): Promise<Inventory> {
-        const data = await this.#post({
+        const data = await this.#postAuthorized({
             "operationName": "Inventory",
             "extensions": {
                 "persistedQuery": {
@@ -303,7 +348,7 @@ export class Client {
     }
 
     async claimDropReward(dropId: string) {
-        return await this.#post({
+        return await this.#postAuthorized({
             "operationName": "DropsPage_ClaimDropRewards",
             "variables": {
                 "input": {
@@ -319,35 +364,14 @@ export class Client {
         });
     }
 
-    /**
-     * Check if a stream is online.
-     * @param broadcasterId
-     */
-    async isStreamOnline(broadcasterId: string): Promise<boolean> {
-        const data = await this.#post({
-            "operationName": "ChannelShell",
-            "variables": {
-                "login": broadcasterId
-            },
-            "extensions": {
-                "persistedQuery": {
-                    "version": 1,
-                    "sha256Hash": "580ab410bcd0c1ad194224957ae2241e5d252b2c5173d8e0cce9d32d5bb14efe"
-                }
-            }
-        });
-        const stream = data["data"]["userOrError"]["stream"];
-        return stream !== null && stream !== undefined;
-    }
-
-    async getStream(broadcasterId: string): Promise<{
+    async getStream(username: string): Promise<{
         id: string,
         viewersCount: number
     } | null> {
         const data = await this.#post({
             "operationName": "ChannelShell",
             "variables": {
-                "login": broadcasterId
+                "login": username
             },
             "extensions": {
                 "persistedQuery": {
@@ -392,7 +416,7 @@ export class Client {
     }
 
     async getAvailableCampaigns(channelId: string): Promise<TimeBasedDrop[]> {
-        const data = await this.#post({
+        const data = await this.#postAuthorized({
             "operationName": "DropsHighlightService_AvailableDrops",
             "variables": {
                 "channelID": channelId

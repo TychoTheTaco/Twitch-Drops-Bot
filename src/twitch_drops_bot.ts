@@ -364,7 +364,7 @@ export class TwitchDropsBot extends EventEmitter {
 
         // Seems to be the default hard-coded client ID
         // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-        const client = new Client("kimne78kx3ncx6brgo4mv6wki5h1ko", oauthToken, channelLogin);
+        const client = new Client({oauthToken: oauthToken, userId: channelLogin});
         if (!channelLogin) {
             await client.autoDetectUserId();
             logger.info("auto detected user id");
