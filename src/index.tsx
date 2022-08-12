@@ -324,7 +324,7 @@ const options = [
         defaultValue: {
             enabled: true,
             file: undefined,
-            level: "debug"
+            level: "info"
         }
     }),
     new JsonOption<{
@@ -666,14 +666,14 @@ async function main() {
 
 function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
 
-    bot.on("new_drops_campaign_found", (campaign: DropCampaign) => {
+    bot.on("new_drop_campaign_found", (campaign: DropCampaign) => {
         for (const notifier of config.notifications.discord) {
             if (notifier.events.includes("new_drops_campaign")) {
                 if (notifier.games === "config" && !config.games.includes(campaign.game.id)){
                     continue;
                 }
                 new DiscordWebhookSender(notifier.webhook_url).sendNewDropsCampaignWebhook(campaign).catch(error => {
-                    logger.error("Failed to send Discord webhook!");
+                    logger.error("Failed to send Discord webhook for campaign: " + JSON.stringify(campaign, null, 4));
                     logger.debug(error);
                 });
             }

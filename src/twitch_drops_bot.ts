@@ -67,7 +67,7 @@ export class Database extends EventEmitter {
             _.merge(existingCampaign, campaign);
         } else {
             this.#dropCampaigns.set(campaign.id, campaign);
-            this.emit("new_drops_campaign_added", campaign);
+            this.emit("new_drop_campaign_added", campaign);
         }
         const timeBasedDrops = campaign.timeBasedDrops;
         if (timeBasedDrops) {
@@ -136,7 +136,7 @@ export declare interface TwitchDropsBot {
 
     on(event: "stop_watching_stream", listener: (watchTimeMs: number) => void): this;
 
-    on(event: "new_drops_campaign_found", listener: (campaign: DropCampaign) => void): this;
+    on(event: "new_drop_campaign_found", listener: (campaign: DropCampaign) => void): this;
 }
 
 export interface TwitchDropsBotOptions {
@@ -393,10 +393,9 @@ export class TwitchDropsBot extends EventEmitter {
                 }
             }
         }
-        options = {
-            gameIds: gameIds,
-            ...options
-        };
+        if (options?.gameIds) {
+            options.gameIds = gameIds;
+        }
 
         return new TwitchDropsBot(page, client, options);
     }
@@ -406,9 +405,9 @@ export class TwitchDropsBot extends EventEmitter {
         this.#page = page;
         this.#twitchClient = client;
 
-        this.#database.on("new_drops_campaign_added", (campaign: DropCampaign) => {
+        this.#database.on("new_drop_campaign_added", (campaign: DropCampaign) => {
             if (this.#isFirstWatchdogFinished) {
-                this.emit("new_drops_campaign_found", campaign);
+                this.emit("new_drop_campaign_found", campaign);
             }
         });
 

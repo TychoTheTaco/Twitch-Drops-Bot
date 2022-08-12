@@ -12,9 +12,9 @@ function formatTimestamp(timestamp: string) {
 function formatTime(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     if (hours > 0) {
-        return `${hours} hr` + (hours === 1 ? '' : 's');
+        return `${hours} hr` + (hours === 1 ? "" : "s");
     }
-    return `${minutes} min` + (minutes === 1 ? '' : 's');
+    return `${minutes} min` + (minutes === 1 ? "" : "s");
 }
 
 export class DiscordWebhookSender {
@@ -26,7 +26,7 @@ export class DiscordWebhookSender {
     }
 
     async sendNewDropsCampaignWebhook(campaign: DropCampaign) {
-        let dropsString = ""
+        let dropsString = "";
         const timeBasedDrops = campaign.timeBasedDrops;
         if (timeBasedDrops) {
             dropsString = timeBasedDrops.map(drop => {
