@@ -483,27 +483,34 @@ async function main() {
     if (isInsideDocker()) {
 
         const requiredBrowser = "chromium";
-        const actualBrowser = config["browser"];
+        const actualBrowser = config.browser;
         if (actualBrowser !== requiredBrowser) {
             logger.warn("Overriding browser option because we are inside a docker container!");
-            config["browser"] = requiredBrowser;
+            config.browser = requiredBrowser;
+        }
+
+        const requiredHeadless = true;
+        const actualHeadless = config.headless;
+        if (actualHeadless !== requiredHeadless) {
+            logger.warn("Overriding headless option because we are inside a docker container!");
+            config.headless = requiredHeadless;
         }
 
         const requiredHeadlessLogin = true;
-        const actualHeadlessLogin = config["headless_login"];
+        const actualHeadlessLogin = config.headless_login;
         if (actualHeadlessLogin !== requiredHeadlessLogin) {
             logger.warn("Overriding headless_login option because we are inside a docker container!");
-            config["headless_login"] = requiredHeadlessLogin;
+            config.headless_login = requiredHeadlessLogin;
         }
 
         const requiredBrowserArgs = ["--no-sandbox"];
-        const actualBrowserArgs = config["browser_args"];
+        const actualBrowserArgs = config.browser_args;
         const actualBrowserArgsNames = getArgNames(actualBrowserArgs);
         for (const arg of requiredBrowserArgs) {
             const argName = arg.split("=")[0];
             if (!actualBrowserArgsNames.includes(argName)) {
                 logger.warn("Adding browser option: " + arg + " because we are inside a docker container!");
-                config["browser_args"].push(arg);
+                config.browser_args.push(arg);
             }
         }
 
