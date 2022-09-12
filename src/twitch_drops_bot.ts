@@ -378,23 +378,38 @@ export class TwitchDropsBot extends EventEmitter {
         await page.setCookie(...cookies);
 
         // Convert all game IDs/names to IDs
-        const games = options?.gameIds ?? [];
-        const gameIds: string[] = [];
-        for (const game of games) {
-            if (isInteger(game)) {
-                gameIds.push(game);
-            } else {
-                const id = await client.getGameIdFromName(game);
-                if (id) {
-                    logger.debug(`Matched game name "${game}" to ID "${id}"`);
-                    gameIds.push(id);
+        if (options?.gameIds) {
+            const games = options?.gameIds ?? [];
+            const gameIds: string[] = [];
+            for (const game of games) {
+                if (isInteger(game)) {
+                    gameIds.push(game);
                 } else {
-                    logger.error("Failed to find game ID from name: " + game);
+                    const id = await client.getGameIdFromName(game);
+                    if (id) {
+                        logger.debug(`Matched game name "${game}" to ID "${id}"`);
+                        gameIds.push(id);
+                    } else {
+                        logger.error("Failed to find game ID from name: " + game);
+                    }
                 }
             }
-        }
-        if (options?.gameIds) {
             options.gameIds = gameIds;
+        }
+
+        // Convert Twitch URLs to broadcaster usernames
+        if (options?.broadcasterIds) {
+            const broadcasters = options?.broadcasterIds ?? [];
+            const broadcasterUsernames = [];
+            for (const broadcaster of broadcasters) {
+                const match = broadcaster.match(/^https?:\/\/www\.twitch\.tv\/(.+)$/);
+                if (match) {
+                    broadcasterUsernames.push(match[1]);
+                } else {
+                    broadcasterUsernames.push(broadcaster);
+                }
+            }
+            options.broadcasterIds = broadcasterUsernames;
         }
 
         return new TwitchDropsBot(page, client, options);
@@ -586,7 +601,7 @@ export class TwitchDropsBot extends EventEmitter {
         for (let i = 0; i < this.#broadcasterIds.length; ++i) {
             if (campaign.allow && campaign.allow.isEnabled && campaign.allow.channels) {
                 for (const channel of campaign.allow.channels) {
-                    if (channel.displayName.toLowerCase() === this.#broadcasterIds[i].toLowerCase()) {
+                    if (channel.displayName && channel.displayName.toLowerCase() === this.#broadcasterIds[i].toLowerCase()) {
                         return i;
                     }
                 }
@@ -903,7 +918,10 @@ export class TwitchDropsBot extends EventEmitter {
                     }
                     logger.info("stream: " + streamUrl);
 
-                    const dropProgressComponent = new DropProgressComponent({requireProgress: false, exitOnClaim: false});
+                    const dropProgressComponent = new DropProgressComponent({
+                        requireProgress: false,
+                        exitOnClaim: false
+                    });
 
                     const components: Component[] = [
                         dropProgressComponent,

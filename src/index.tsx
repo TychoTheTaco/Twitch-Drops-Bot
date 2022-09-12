@@ -657,7 +657,7 @@ async function main() {
         ignoredGameIds: config["ignored_games"],
         attemptImpossibleDropCampaigns: config["attempt_impossible_campaigns"],
         watchStreamsWhenNoDropCampaignsActive: config["watch_streams_when_no_drop_campaigns_active"],
-        broadcasterIds: config["broadcasters"]
+        broadcasterIds: config.broadcasters
     });
 
     setUpNotifiers(bot, config);
