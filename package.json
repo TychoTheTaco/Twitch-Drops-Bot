@@ -53,7 +53,7 @@
   "devDependencies": {
     "@types/argparse": "^2.0.10",
     "@types/cli-progress": "^3.9.2",
-    "@types/jest": "^29.0.0",
+    "@types/jest": "^29.0.1",
     "@types/lodash": "^4.14.184",
     "@types/object-hash": "^2.2.1",
     "@types/pidusage": "^2.0.2",
