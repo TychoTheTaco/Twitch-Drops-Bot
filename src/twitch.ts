@@ -127,7 +127,18 @@ export interface Channel {
 export interface Options {
     clientId?: string,
     oauthToken?: string,
-    userId?: string
+    userId?: string,
+    deviceId?: string
+}
+
+interface Integrity {
+    token: string,
+    expiration: number,
+    request_id: string
+}
+
+function parseJwt(token: string): string {
+    return Buffer.from(token.split(".")[1], "base64").toString();
 }
 
 /**
@@ -138,11 +149,19 @@ export class Client {
     readonly #clientId: string;
     readonly #oauthToken?: string;
     #userId?: string;
+    readonly #deviceId?: string;
+
+    /**
+     * https://github.com/mauricew/twitch-graphql-api#integrity
+     * @private
+     */
+    #integrity?: Integrity;
 
     constructor(options?: Options) {
         this.#clientId = options?.clientId ?? "kimne78kx3ncx6brgo4mv6wki5h1ko";
         this.#oauthToken = options?.oauthToken;
         this.#userId = options?.userId;
+        this.#deviceId = options?.deviceId;
     }
 
     async autoDetectUserId(): Promise<string | undefined> {
@@ -195,6 +214,34 @@ export class Client {
         return response.data;
     }
 
+    async #postIntegrity(): Promise<Integrity> {
+        logger.debug("post integrity");
+        assert(this.#deviceId, "Missing device ID");
+        const response = await axios.post("https://gql.twitch.tv/integrity", null, {
+            headers: {
+                "Client-Id": this.#clientId,
+                "Authorization": `OAuth ${this.#oauthToken}`,
+                "X-Device-Id": this.#deviceId
+            }
+        });
+        logger.debug("integrity response: " + JSON.stringify(response.data, null, 4));
+        const decoded = parseJwt((response.data.token as string).slice(3));
+        logger.debug("decoded: " + decoded);
+        if (decoded.includes('"is_bad_bot":"true"')) {
+            logger.debug("BAD BOT!");
+        }
+        return response.data;
+    }
+
+    async #ensureIntegrity() {
+        logger.debug("EXP: " + this.#integrity?.expiration + " NOW: " + new Date().getTime());
+        if (this.#integrity && this.#integrity.expiration > new Date().getTime()) {
+            logger.debug("integ still valid");
+            return;
+        }
+        this.#integrity = await this.#postIntegrity();
+    }
+
     /**
      * Send a POST request to the Twitch GQL endpoint.
      * @param data The data to send to the API.
@@ -203,24 +250,22 @@ export class Client {
     async #post(data: any): Promise<any> {
         return this.postWrapper(data, {
             "Content-Type": "text/plain;charset=UTF-8",
-            "Client-Id": this.#clientId,
+            "Client-Id": this.#clientId
         });
     }
 
     /**
      * Send a POST request to the Twitch GQL endpoint. The request will include authentication headers.
      * @param data The data to send to the API.
+     * @param headers
      * @private
      */
-    async #postAuthorized(data: any): Promise<any> {
+    async #postAuthorized(data: any, headers: any = {}): Promise<any> {
         assert(this.#oauthToken !== undefined, "Missing OAuth token!");
-        return this.postWrapper(data,
-            {
-                "Content-Type": "text/plain;charset=UTF-8",
-                "Client-Id": this.#clientId,
-                "Authorization": `OAuth ${this.#oauthToken}`
-            }
-        );
+        headers["Content-Type"] = "text/plain;charset=UTF-8";
+        headers["Client-Id"] = this.#clientId;
+        headers["Authorization"] = `OAuth ${this.#oauthToken}`;
+        return this.postWrapper(data, headers);
     }
 
     async getGameIdFromName(name: string): Promise<string | null> {
@@ -349,6 +394,9 @@ export class Client {
     }
 
     async claimDropReward(dropId: string) {
+        await this.#ensureIntegrity();
+        assert(this.#integrity, "Missing integrity");
+        assert(this.#deviceId, "Missing device ID");
         return await this.#postAuthorized({
             "operationName": "DropsPage_ClaimDropRewards",
             "variables": {
@@ -362,6 +410,9 @@ export class Client {
                     "sha256Hash": "2f884fa187b8fadb2a49db0adc033e636f7b6aaee6e76de1e2bba9a7baf0daf6"
                 }
             }
+        }, {
+            "Client-Integrity": this.#integrity.token,
+            "X-Device-Id": this.#deviceId
         });
     }
 

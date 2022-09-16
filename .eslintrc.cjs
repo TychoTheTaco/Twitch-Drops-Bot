@@ -20,6 +20,6 @@ module.exports = {
     "rules": {
         "unused-imports/no-unused-imports": "error",
         "semi": ["error", "always"],
-        "quotes": ["error", "double"]
+        "quotes": ["error", "double", {"avoidEscape": true}]
     }
 }

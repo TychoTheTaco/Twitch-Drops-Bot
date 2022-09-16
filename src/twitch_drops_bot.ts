@@ -350,6 +350,7 @@ export class TwitchDropsBot extends EventEmitter {
         // Get some data from the cookies
         let oauthToken: string | undefined = undefined;
         let channelLogin: string | undefined = undefined;
+        let deviceId: string | undefined = undefined;
         for (const cookie of cookies) {
             switch (cookie["name"]) {
                 case "auth-token":  // OAuth token
@@ -359,6 +360,10 @@ export class TwitchDropsBot extends EventEmitter {
                 case "persistent":  // "channelLogin" Used for "DropCampaignDetails" operation
                     channelLogin = cookie["value"].split("%3A")[0];
                     break;
+
+                case "unique_id":
+                    deviceId = cookie["value"];
+                    break;
             }
         }
 
@@ -366,9 +371,13 @@ export class TwitchDropsBot extends EventEmitter {
             throw new Error("Invalid cookies!");
         }
 
+        if (!deviceId) {
+            throw new Error("Missing device ID!");
+        }
+
         // Seems to be the default hard-coded client ID
         // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-        const client = new Client({oauthToken: oauthToken, userId: channelLogin});
+        const client = new Client({oauthToken: oauthToken, userId: channelLogin, deviceId: deviceId});
         if (!channelLogin) {
             await client.autoDetectUserId();
             logger.info("auto detected user id");
@@ -488,7 +497,8 @@ export class TwitchDropsBot extends EventEmitter {
             this.emit("before_drop_campaigns_updated");
         });
         this.#twitchDropsWatchdog.on("error", (error) => {
-            logger.debug("Error checking twitch drops: " + error);
+            logger.error("Error checking twitch drops!");
+            logger.debug(error);
         });
         this.#twitchDropsWatchdog.on("update", async (campaigns: DropCampaign[]) => {
 
