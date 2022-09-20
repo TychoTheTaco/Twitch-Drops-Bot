@@ -25,11 +25,11 @@ Pull the latest release image with `docker pull ghcr.io/tychothetaco/twitch-drop
 Use one of the following commands to start the container. Make sure you run this command in the same directory as `config.json`, since it will map the current directory to the `/app/data` directory in the container. If this is the first
 time running the bot, a default `config.json` file will be created in the current directory.
 
-Windows (Command Prompt): `docker run --rm -v %cd%:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot:latest-release`
+Windows (Command Prompt): `docker run --rm -v "%cd%":/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot:latest-release`
 
-Windows (PowerShell): `docker run --rm -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot:latest-release`
+Windows (PowerShell): `docker run --rm -v "${PWD}":/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot:latest-release`
 
-Linux: `docker run --rm -v ${PWD}:/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot:latest-release`
+Linux: `docker run --rm -v "${PWD}":/app/data -i -t --sig-proxy=false ghcr.io/tychothetaco/twitch-drops-bot:latest-release`
 
 To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
 
