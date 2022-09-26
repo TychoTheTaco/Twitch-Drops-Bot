@@ -1,31 +1,18 @@
 import axios from "axios";
 
 import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
+import {formatTime, formatTimestamp, Notifier} from "./notifier.js";
 
-function formatTimestamp(timestamp: string) {
-    return new Date(timestamp).toLocaleString(undefined, {
-        timeStyle: "short",
-        dateStyle: "short"
-    });
-}
-
-function formatTime(minutes: number): string {
-    const hours = Math.floor(minutes / 60);
-    if (hours > 0) {
-        return `${hours} hr` + (hours === 1 ? "" : "s");
-    }
-    return `${minutes} min` + (minutes === 1 ? "" : "s");
-}
-
-export class DiscordWebhookSender {
+export class DiscordWebhookSender extends Notifier {
 
     readonly #webhookUrl: string;
 
     constructor(webhookUrl: string) {
+        super();
         this.#webhookUrl = webhookUrl;
     }
 
-    async sendNewDropsCampaignWebhook(campaign: DropCampaign) {
+    async onNewDropCampaign(campaign: DropCampaign): Promise<void> {
         let dropsString = "";
         const timeBasedDrops = campaign.timeBasedDrops;
         if (timeBasedDrops) {
@@ -72,7 +59,7 @@ export class DiscordWebhookSender {
         });
     }
 
-    async sendDropClaimedWebhook(drop: TimeBasedDrop, campaign: DropCampaign) {
+    async onDropClaimed(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
         await axios.post(this.#webhookUrl, {
             embeds: [
                 {

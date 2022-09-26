@@ -498,7 +498,7 @@ export class TwitchDropsBot extends EventEmitter {
         });
         this.#twitchDropsWatchdog.on("error", (error) => {
             logger.error("Error checking twitch drops!");
-            logger.debug(error);
+            logger.debug(JSON.stringify(error, null, 4));
         });
         this.#twitchDropsWatchdog.on("update", async (campaigns: DropCampaign[]) => {
 

@@ -24,9 +24,9 @@ import {Application} from "./ui/ui.js";
 import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "./utils.js";
 import {format, transports} from "winston";
 import {DiscordWebhookSender} from "./notifiers/discord.js";
-import {HTTPRequest} from "puppeteer";
 import {TransformableInfo} from "logform";
 import stripAnsi from "strip-ansi";
+import {TelegramNotifier} from "./notifiers/telegram.js";
 
 // Load version number from package.json
 let VERSION = "unknown";
@@ -331,18 +331,29 @@ const options = [
         }
     }),
     new JsonOption<{
-        discord: DiscordNotifier[]
+        discord: DiscordNotifier[],
+        telegram: TelegramNotifier[]
     }>("--notifications", {
         defaultValue: {
-            discord: []
+            discord: [],
+            telegram: []
         }
     })
 ];
 
+type Event = "new_drops_campaign" | "drop_claimed";
+
 interface DiscordNotifier {
     webhook_url: string,
-    events: ("new_drops_campaign" | "drop_claimed")[],
+    events: Event[],
     games: "all" | "config" // "config" = only notify for games explicitly listed in config. "all" = notify for all games (including watch_unlisted_games)
+}
+
+interface TelegramNotifierOptions {
+    token: string,
+    chat_id: string,
+    events: Event[],
+    games: "all" | "config"
 }
 
 export interface Config {
@@ -380,7 +391,8 @@ export interface Config {
         level: "debug" | "info" | "warn" | "error"
     },
     notifications: {
-        discord: DiscordNotifier[]
+        discord: DiscordNotifier[],
+        telegram: TelegramNotifierOptions[]
     }
 }
 
@@ -686,8 +698,19 @@ function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
                 if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
                     continue;
                 }
-                new DiscordWebhookSender(notifier.webhook_url).sendNewDropsCampaignWebhook(campaign).catch(error => {
+                new DiscordWebhookSender(notifier.webhook_url).onNewDropCampaign(campaign).catch(error => {
                     logger.error("Failed to send Discord webhook for campaign: " + JSON.stringify(campaign, null, 4));
+                    logger.debug(error);
+                });
+            }
+        }
+        for (const notifier of config.notifications.telegram) {
+            if (notifier.events.includes("new_drops_campaign")) {
+                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
+                    continue;
+                }
+                new TelegramNotifier(notifier.token, notifier.chat_id).onNewDropCampaign(campaign).catch(error => {
+                    logger.error("Failed to send Telegram notification for campaign: " + JSON.stringify(campaign, null, 4));
                     logger.debug(error);
                 });
             }
@@ -713,8 +736,19 @@ function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
                 if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
                     continue;
                 }
-                new DiscordWebhookSender(notifier.webhook_url).sendDropClaimedWebhook(drop, campaign).catch(error => {
+                new DiscordWebhookSender(notifier.webhook_url).onDropClaimed(drop, campaign).catch(error => {
                     logger.error("Failed to send Discord webhook!");
+                    logger.debug(error);
+                });
+            }
+        }
+        for (const notifier of config.notifications.telegram) {
+            if (notifier.events.includes("drop_claimed")) {
+                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
+                    continue;
+                }
+                new TelegramNotifier(notifier.token, notifier.chat_id).onDropClaimed(drop, campaign).catch(error => {
+                    logger.error("Failed to send Telegram notification!");
                     logger.debug(error);
                 });
             }

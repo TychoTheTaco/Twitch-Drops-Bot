@@ -20,9 +20,9 @@ const logger = createLogger({
     transports: [
         new transports.Console({
             format: format.combine(formatMessage, format.colorize({
-                    colors: {info: "white", warn: "yellow", error: "red"},
-                    all: true
-                }))
+                colors: {info: "white", warn: "yellow", error: "red"},
+                all: true
+            }))
         })
     ]
 });
