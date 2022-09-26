@@ -41,7 +41,7 @@ You are using the `Command Prompt` command above, but are not using Command Prom
 
 #### 3. Customize config.json
 
-- By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+- By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game names or IDs in the config file. See `games.csv` for the game IDs.
 - Add your username to the config so that the bot can reuse the correct cookies, so you don't have to log in again everytime the bot is restarted.
 
 ### Non-Docker Setup
@@ -52,7 +52,7 @@ You are using the `Command Prompt` command above, but are not using Command Prom
 4) Build the app: `npm run build`
 5) Start the bot with `node dist/index.js` or `npm run start`. If there is no configuration file, a default one will be created.
 6) Customize your config.json. (Restart the bot for changes to be applied)
-    1) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game IDs in the config file. See `games.csv` for the game IDs.
+    1) By default, the bot will attempt to watch all games. You can change which games that the bot watches by specifying game names or IDs in the config file. See `games.csv` for the game IDs.
     2) Add your username to the config so that the bot can reuse the correct cookies, so you don't have to log in again everytime the bot is restarted.
 
 After updating your install, re-run `npm install .` and `npm run build`.
@@ -147,6 +147,8 @@ Below is a list of all available options.
 `‑‑password <string>` | `password` Your Twitch password. It is only used to automatically fill out the login page. This is required if `headless-login` is `true`, otherwise it is optional.
 
 - Alias: `-p`
+
+`‑‑auth-token <string>` | `auth_token` An auth token to use for logging in. This can be used instead of a username and password.
 
 `‑‑headless-login` | `headless_login` Login to Twitch in headless mode. If this is enabled, you must also provide a username and password. This is useful for logging in remotely.
 
