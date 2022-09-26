@@ -14,7 +14,7 @@ import cliProgress from "cli-progress";
 
 const {BarFormat} = cliProgress.Format;
 
-import logger from "./logger.js";
+import logger, {formatMessage} from "./logger.js";
 import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "./twitch.js";
 import {StringOption, BooleanOption, IntegerOption, StringListOption, JsonOption} from "./options.js";
 import {TwitchDropsBot} from "./twitch_drops_bot.js";
@@ -22,7 +22,8 @@ import {ConfigurationParser} from "./configuration_parser.js";
 import {LoginPage} from "./pages/login.js";
 import {Application} from "./ui/ui.js";
 import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "./utils.js";
-import {transports} from "winston";
+import {format, transports} from "winston";
+import stripAnsi from "strip-ansi";
 import {DiscordWebhookSender} from "./notifiers/discord.js";
 
 // Load version number from package.json
@@ -421,7 +422,7 @@ function createMaskedConfig(config: Config): Config {
     return masked;
 }
 
-async function main() {
+async function main(): Promise<void> {
     // Parse arguments
     const configurationParser = new ConfigurationParser(options);
     let config: Config = configurationParser.parse() as Config;
@@ -435,6 +436,9 @@ async function main() {
         logger.add(new transports.File({
             filename: fileName,
             level: level,
+            format: format.printf(info => {
+                return stripAnsi(formatMessage(info));
+            }),
             options: {
                 flags: "w" // Overwrite file
             }
