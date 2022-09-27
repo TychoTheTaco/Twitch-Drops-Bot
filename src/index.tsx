@@ -23,8 +23,10 @@ import {LoginPage} from "./pages/login.js";
 import {Application} from "./ui/ui.js";
 import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "./utils.js";
 import {format, transports} from "winston";
-import stripAnsi from "strip-ansi";
 import {DiscordWebhookSender} from "./notifiers/discord.js";
+import {HTTPRequest} from "puppeteer";
+import {TransformableInfo} from "logform";
+import stripAnsi from "strip-ansi";
 
 // Load version number from package.json
 let VERSION = "unknown";
@@ -211,7 +213,7 @@ function startProgressBarMode(bot: TwitchDropsBot, config: Config) {
                             result += `${getDropBenefitNames(drop)} ${BarFormat((drop.self.currentMinutesWatched ?? 0) / drop.requiredMinutesWatched, options)} ${drop.self.currentMinutesWatched ?? 0} / ${drop.requiredMinutesWatched} minutes` + ansiEscape("0K") + "\n";
                         } else {
                             result += ansiEscape("2K") + "- No Drops Active -\n";
-                            result += ansiEscape("2K") +" \n";
+                            result += ansiEscape("2K") + " \n";
                         }
 
                         if (isFirstOutput) {
@@ -436,9 +438,10 @@ async function main(): Promise<void> {
         logger.add(new transports.File({
             filename: fileName,
             level: level,
-            format: format.printf(info => {
-                return stripAnsi(formatMessage(info));
-            }),
+            format: format.combine(format((info: TransformableInfo) => {
+                info.message = stripAnsi(info.message);
+                return info;
+            })(), formatMessage),
             options: {
                 flags: "w" // Overwrite file
             }
@@ -680,7 +683,7 @@ function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
     bot.on("new_drop_campaign_found", (campaign: DropCampaign) => {
         for (const notifier of config.notifications.discord) {
             if (notifier.events.includes("new_drops_campaign")) {
-                if (notifier.games === "config" && !config.games.includes(campaign.game.id)){
+                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
                     continue;
                 }
                 new DiscordWebhookSender(notifier.webhook_url).sendNewDropsCampaignWebhook(campaign).catch(error => {
@@ -707,7 +710,7 @@ function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
 
         for (const notifier of config.notifications.discord) {
             if (notifier.events.includes("drop_claimed")) {
-                if (notifier.games === "config" && !config.games.includes(campaign.game.id)){
+                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
                     continue;
                 }
                 new DiscordWebhookSender(notifier.webhook_url).sendDropClaimedWebhook(drop, campaign).catch(error => {
