@@ -294,6 +294,7 @@ const options = [
     new IntegerOption("--failed-stream-retry", {defaultValue: 3}),
     new IntegerOption("--failed-stream-timeout", {defaultValue: 30}),
     new StringListOption("--browser-args"),
+    new StringOption("--browser-userdata"),
     /*    new BooleanOption('--update-games', null, false), TODO: auto update games.csv ? */
     new BooleanOption("--watch-unlisted-games"),
     new BooleanOption("--hide-video"),
@@ -356,6 +357,7 @@ export interface Config {
     failed_stream_retry: number,
     failed_stream_timeout: number,
     browser_args: string[],
+    browser_userdata: string,
     watch_unlisted_games: boolean,
     hide_video: boolean,
     cookies_path: string,
@@ -532,7 +534,8 @@ async function main(): Promise<void> {
     const browser = await puppeteer.launch({
         headless: config["headless"],
         executablePath: config["browser"],
-        args: config["browser_args"]
+        args: config["browser_args"],
+        ...(config["browser_userdata"] && { userDataDir: config["browser_userdata"]})
     });
 
     // Automatically stop this program if the browser is closed
@@ -630,7 +633,8 @@ async function main(): Promise<void> {
             loginBrowser = await puppeteer.launch({
                 headless: false,
                 executablePath: config["browser"],
-                args: config["browser_args"]
+                args: config["browser_args"],
+                ...(config["browser_userdata"] && { userDataDir: config["browser_userdata"]})
             });
         }
 
