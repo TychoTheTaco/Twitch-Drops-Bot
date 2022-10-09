@@ -119,6 +119,16 @@ A sample config file looks like this:
                 ],
                 "games": "config"
             }
+        ],
+        "telegram": [
+            {
+                "token": "abcde",
+                "chat_id": "12345",
+                "events": [
+                    "new_drops_campaign", "drop_claimed"
+                ],
+                "games": "all"
+            }
         ]
     }
 }
@@ -131,12 +141,17 @@ Below is a list of all available options.
 - Alias: `-c`
 - Default: `config.json`
 
-`--browser <path>` | `browser` The path to your browser executable. Only Google Chrome is currently supported. Although Puppeteer includes a version of Chromium, it does not support the video format required to watch Twitch streams, so a separate Google Chrome installation is required.
+`--browser <path>` | `browser` The path to your browser executable. Only Google Chrome is currently supported. Although Puppeteer includes a version of Chromium, it does not support the video format required to watch Twitch streams, so a
+separate Google Chrome installation is required.
 
 - Alias: `-b`
 - Default: Operating system dependent
 
-`‑‑games <ids|names>` | `games` A list of IDs and/or names of the games that the bot should automatically watch. See `games.csv` for a list of game IDs (Note that this is not a complete list - this bot supports any games with time based Drops). If empty or omitted, the bot will try to watch all games. If provided as a command line argument, this should be a comma-separated list of IDs. If provided in the JSON config, this should be an array of strings. This list is in order of priority! The bot will give priority to games that are at the beginning of the list. For example: Your config file has `"games": ["1", "2", "3"]`. The bot is currently watching a stream for game `2`. The bot periodically checks if there are active campaigns/streams for the other games listed, and finds one for game `1`. Game `1` is listed first in the config, so it has a higher priority and the bot will switch to it. If there are multiple active campaigns for a game, then it will give priority to the one that ends first.
+`‑‑games <ids|names>` | `games` A list of IDs and/or names of the games that the bot should automatically watch. See `games.csv` for a list of game IDs (Note that this is not a complete list - this bot supports any games with time based
+Drops). If empty or omitted, the bot will try to watch all games. If provided as a command line argument, this should be a comma-separated list of IDs. If provided in the JSON config, this should be an array of strings. This list is in
+order of priority! The bot will give priority to games that are at the beginning of the list. For example: Your config file has `"games": ["1", "2", "3"]`. The bot is currently watching a stream for game `2`. The bot periodically checks if
+there are active campaigns/streams for the other games listed, and finds one for game `1`. Game `1` is listed first in the config, so it has a higher priority and the bot will switch to it. If there are multiple active campaigns for a game,
+then it will give priority to the one that ends first.
 
 - Alias: `-g`
 
@@ -163,7 +178,8 @@ Below is a list of all available options.
 - Alias: `-i`
 - Default: `15`
 
-`‑‑browser‑args <args>` | `browser_args` Extra arguments to pass to the browser instance. If provided as a command line argument, this should be a comma-separated list of args. Note that `\ ` is used as an escape character so if you want to use a comma in one of the args, it needs to be escaped so this `--some-arg=a,b,c` would be `--some-arg=a\,b\,c` If provided in the JSON config, this should be an array of strings.
+`‑‑browser‑args <args>` | `browser_args` Extra arguments to pass to the browser instance. If provided as a command line argument, this should be a comma-separated list of args. Note that `\ ` is used as an escape character so if you want to
+use a comma in one of the args, it needs to be escaped so this `--some-arg=a,b,c` would be `--some-arg=a\,b\,c` If provided in the JSON config, this should be an array of strings.
 
 `‑‑watch‑unlisted‑games` | `watch_unlisted_games` When `true`, the app will watch streams of games that are not listed in the config if the listed games' campaigns are completed or no streams are active.
 
@@ -197,11 +213,14 @@ Below is a list of all available options.
 
 `‑‑ignored-games` | `ignored_games` A list of IDs of games that the bot should ignore. This is useful when `watch_unlisted_games` is `true`, but you want to ignore some games.
 
-`‑‑attempt-impossible-campaigns` | `attempt_impossible_campaigns` When true, the bot will make progress towards Drop Campaigns even if the campaign is expected to end before we can finish watching to claim the Drop. For example: A Drop Campaign will end in 30 minutes. We have watched 15 / 60 minutes for one of the Drops. Normally, we will not be able to finish and claim the Drop so there is no point in trying. However, sometimes Drop Campaigns get extended which means we would have had enough time.
+`‑‑attempt-impossible-campaigns` | `attempt_impossible_campaigns` When true, the bot will make progress towards Drop Campaigns even if the campaign is expected to end before we can finish watching to claim the Drop. For example: A Drop
+Campaign will end in 30 minutes. We have watched 15 / 60 minutes for one of the Drops. Normally, we will not be able to finish and claim the Drop so there is no point in trying. However, sometimes Drop Campaigns get extended which means we
+would have had enough time.
 
 - Default: `true`
 
-`‑‑watch-streams-when-no-drop-campaigns-active` | `watch_streams_when_no_drop_campaigns_active` When true, the bot will watch streams when there are no Drop Campaigns active, or if there are no streams online for any pending Drop Campaigns. This is useful if you still want to claim community points.
+`‑‑watch-streams-when-no-drop-campaigns-active` | `watch_streams_when_no_drop_campaigns_active` When true, the bot will watch streams when there are no Drop Campaigns active, or if there are no streams online for any pending Drop Campaigns.
+This is useful if you still want to claim community points.
 
 - Default: `false`
 
@@ -226,14 +245,23 @@ Below is a list of all available options.
 
 `notifications` - Change options related to notifications. This should be in JSON format.
 
-- `discord`: An array of discord notification objects. Each notification object has the following properties:
+Each notification object should have these properties:
+
+- `events`: A list of events to get notifications for. Possible events are:
+    - `drop_claimed`: A drop is claimed.
+    - `new_drops_campaign`: A new Drops campaign was found.
+- `games`: Which games you want notifications for. Options are:
+    - `config`: Only get notifications related to games that are listed in the config.
+    - `all`: Get notifications related to any game.
+
+Specific notification properties:
+
+- `discord`: An array of discord notification objects. Each notification object has the following properties + the above ones:
     - `webhook_url`: The URL of the Discord webhook.
-    - `events`: A list of events to get notifications for. Possible events are:
-        - `drop_claimed`: A drop is claimed.
-        - `new_drops_campaign`: A new Drops campaign was found.
-    - `games`: Which games you want notifications for. Options are:
-        - `config`: Only get notifications related to games that are listed in the config.
-        - `all`: Get notifications related to any game.
+
+- `telegram`: An array of telegram notification objects. Each notification object has the following properties + the above ones:
+    - `token`: The API token of your bot.
+    - `chat_id`: The chat ID where to post the message.
 
 ### Update Games List
 
@@ -243,7 +271,8 @@ If you want to update the list of games found in `games.csv`, just run `npm run 
 
 `Error watching stream`
 
-When this happens, its usually because the stream page did not load fast enough. It's normal for this to happen occasionally, but if it happens often, it might be due to a slow or unstable network connection. This can also happen if you're using a low-power system such as a Raspberry Pi.
+When this happens, its usually because the stream page did not load fast enough. It's normal for this to happen occasionally, but if it happens often, it might be due to a slow or unstable network connection. This can also happen if you're
+using a low-power system such as a Raspberry Pi.
 
 Try increasing `load_timeout_secs` to `60` or `90`.
 
