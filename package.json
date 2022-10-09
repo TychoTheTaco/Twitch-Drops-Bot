@@ -37,6 +37,7 @@
     "dnscache": "^1.0.2",
     "ink": "^3.2.0",
     "lodash": "^4.17.21",
+    "logform": "^2.4.2",
     "pidtree": "^0.6.0",
     "pidusage": "^3.0.0",
     "prompt": "^1.2.2",
