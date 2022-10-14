@@ -15,7 +15,7 @@ import cliProgress from "cli-progress";
 const {BarFormat} = cliProgress.Format;
 
 import logger, {formatMessage} from "./logger.js";
-import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "./twitch.js";
+import {Client, DropCampaign, getDropBenefitNames, TimeBasedDrop} from "./twitch.js";
 import {StringOption, BooleanOption, IntegerOption, StringListOption, JsonOption} from "./options.js";
 import {TwitchDropsBot} from "./twitch_drops_bot.js";
 import {ConfigurationParser} from "./configuration_parser.js";
@@ -27,6 +27,9 @@ import {DiscordWebhookSender} from "./notifiers/discord.js";
 import {TransformableInfo} from "logform";
 import stripAnsi from "strip-ansi";
 import {TelegramNotifier} from "./notifiers/telegram.js";
+import {CommunityPointsUserV1_PointsEarned} from "./web_socket_listener.js";
+import {Event_CommunityPointsEarned_ClaimReason, EventMapType, EventName, Notifier} from "./notifiers/notifier.js";
+import axios from "axios";
 
 // Load version number from package.json
 let VERSION = "unknown";
@@ -341,19 +344,21 @@ const options = [
     })
 ];
 
-type Event = "new_drops_campaign" | "drop_claimed";
+type ConfigEventMapType = {
+    "new_drops_campaign"?: { games: "all" | "config" },
+    "drop_claimed"?: { games: "all" | "config" },
+    "community_points_earned"?: { reasons: Event_CommunityPointsEarned_ClaimReason[] },
+}
 
 interface DiscordNotifier {
     webhook_url: string,
-    events: Event[],
-    games: "all" | "config" // "config" = only notify for games explicitly listed in config. "all" = notify for all games (including watch_unlisted_games)
+    events: ConfigEventMapType
 }
 
 interface TelegramNotifierOptions {
     token: string,
     chat_id: string,
-    events: Event[],
-    games: "all" | "config"
+    events: ConfigEventMapType,
 }
 
 export interface Config {
@@ -600,7 +605,7 @@ async function main(): Promise<void> {
     }
 
     // If the saved cookies were not valid, let's create some with the provided auth token (if any)
-    if (!areSavedCookiesValid){
+    if (!areSavedCookiesValid) {
 
         if (config.auth_token) {
 
@@ -664,8 +669,12 @@ async function main(): Promise<void> {
         logger.info("Saved cookies to " + cookiesPath);
     }
 
-    const bot = await TwitchDropsBot.create(browser, cookies, {
-        gameIds: config["games"],
+    const client = await Client.fromCookies(cookies);
+
+    const gameIds = await convertGameNamesToIds(client, config.games);
+
+    const bot = await TwitchDropsBot.create(browser, cookies, client, {
+        gameIds: gameIds,
         failedStreamBlacklistTimeout: config["failed_stream_timeout"],
         failedStreamRetryCount: config["failed_stream_retry"],
         dropCampaignPollingInterval: config["interval"],
@@ -679,7 +688,7 @@ async function main(): Promise<void> {
         broadcasterIds: config.broadcasters
     });
 
-    setUpNotifiers(bot, config);
+    await setUpNotifiers(bot, config, client, gameIds);
 
     if (config.tui.enabled) {
         startUiMode(bot, config);
@@ -690,30 +699,70 @@ async function main(): Promise<void> {
     await bot.start();
 }
 
-function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
+function isInteger(string: string): boolean {
+    return string.match(/^\d+$/) !== null;
+}
 
-    bot.on("new_drop_campaign_found", (campaign: DropCampaign) => {
-        for (const notifier of config.notifications.discord) {
-            if (notifier.events.includes("new_drops_campaign")) {
-                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
-                    continue;
-                }
-                new DiscordWebhookSender(notifier.webhook_url).onNewDropCampaign(campaign).catch(error => {
-                    logger.error("Failed to send Discord webhook for campaign: " + JSON.stringify(campaign, null, 4));
-                    logger.debug(error);
-                });
+async function convertGameNamesToIds(client: Client, games: string[]) {
+    // Convert all game IDs/names to IDs
+    const ids: string[] = [];
+    for (const game of games) {
+        if (isInteger(game)) {
+            ids.push(game);
+        } else {
+            const id = await client.getGameIdFromName(game);
+            if (id) {
+                logger.debug(`Matched game name "${game}" to ID "${id}"`);
+                ids.push(id);
+            } else {
+                logger.error("Failed to find game ID from name: " + game);
             }
         }
-        for (const notifier of config.notifications.telegram) {
-            if (notifier.events.includes("new_drops_campaign")) {
-                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
-                    continue;
-                }
-                new TelegramNotifier(notifier.token, notifier.chat_id).onNewDropCampaign(campaign).catch(error => {
-                    logger.error("Failed to send Telegram notification for campaign: " + JSON.stringify(campaign, null, 4));
-                    logger.debug(error);
-                });
-            }
+    }
+    return ids;
+}
+
+async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Client, gameIds: string[]) {
+
+    const getGames = (games: "all" | "config") => {
+        return games == "all" ? [] : gameIds;
+    };
+
+    const convertEventMap = (events: ConfigEventMapType): EventMapType => {
+        const eventMap: EventMapType = {};
+        if (events.new_drops_campaign) {
+            eventMap.new_drops_campaign = {gameIds: getGames(events.new_drops_campaign.games)};
+        }
+        if (events.drop_claimed) {
+            eventMap.drop_claimed = {gameIds: getGames(events.drop_claimed.games)};
+        }
+        if (events.community_points_earned) {
+            eventMap.community_points_earned = events.community_points_earned;
+        }
+        return eventMap;
+    };
+
+    const notifiers: Notifier[] = [];
+    for (const notifier of config.notifications.discord) {
+        notifiers.push(new DiscordWebhookSender(convertEventMap(notifier.events), notifier.webhook_url));
+    }
+    for (const notifier of config.notifications.telegram) {
+        notifiers.push(new TelegramNotifier(convertEventMap(notifier.events), notifier.token, notifier.chat_id));
+    }
+
+    const onError = (event: EventName, notifier: Notifier, error: any) => {
+        logger.error(`Failed to send notification for event: new_drop_campaign_found notifier: ${notifier.constructor.name}`);
+        logger.debug(error);
+        if (axios.isAxiosError(error)) {
+            logger.debug("RESPONSE: " + JSON.stringify(error.response?.data, null, 4));
+        }
+    };
+
+    bot.on("new_drop_campaign_found", (campaign: DropCampaign) => {
+        for (const notifier of notifiers) {
+            notifier.onNewDropCampaign(campaign).catch(error => {
+                onError("new_drops_campaign", notifier, error);
+            });
         }
     });
 
@@ -731,30 +780,22 @@ function setUpNotifiers(bot: TwitchDropsBot, config: Config) {
             return;
         }
 
-        for (const notifier of config.notifications.discord) {
-            if (notifier.events.includes("drop_claimed")) {
-                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
-                    continue;
-                }
-                new DiscordWebhookSender(notifier.webhook_url).onDropClaimed(drop, campaign).catch(error => {
-                    logger.error("Failed to send Discord webhook!");
-                    logger.debug(error);
-                });
-            }
-        }
-        for (const notifier of config.notifications.telegram) {
-            if (notifier.events.includes("drop_claimed")) {
-                if (notifier.games === "config" && !config.games.includes(campaign.game.id)) {
-                    continue;
-                }
-                new TelegramNotifier(notifier.token, notifier.chat_id).onDropClaimed(drop, campaign).catch(error => {
-                    logger.error("Failed to send Telegram notification!");
-                    logger.debug(error);
-                });
-            }
+        for (const notifier of notifiers) {
+            notifier.onDropClaimed(drop, campaign).catch(error => {
+                onError("drop_claimed", notifier, error);
+            });
         }
 
     }));
+
+    bot.on("community_points_earned", async (data: CommunityPointsUserV1_PointsEarned) => {
+        const userLogin = await client.getUserLoginFromId(data.channel_id);
+        for (const notifier of notifiers) {
+            notifier.onCommunityPointsEarned(data, userLogin).catch(error => {
+                onError("community_points_earned", notifier, error);
+            });
+        }
+    });
 }
 
 // Check if this file is being run directly

@@ -161,6 +161,15 @@ export function updateGames(campaigns: DropCampaign[], sourcePath: string = "./g
  * @param page
  * @param operationName
  */
+export function waitForResponseDataWithOperationName(page: Page, operationName: string) {
+    const result = waitForResponseWithOperationName(page, operationName);
+    const og = result.data;
+    result.data = async () => {
+        return (await og.bind(result)())["data"];
+    };
+    return result;
+}
+
 export function waitForResponseWithOperationName(page: Page, operationName: string) {
     const result: {
         operationIndex: number,
@@ -171,10 +180,10 @@ export function waitForResponseWithOperationName(page: Page, operationName: stri
         promise: null,
         data: async function () {
             const response = await this.promise;
-            return (await response?.json())[this.operationIndex]["data"];
+            return (await response?.json())[this.operationIndex];
         }
     };
-    result.promise = page.waitForResponse((response: HTTPResponse) => {
+    result.promise = page.waitForResponse(async (response: HTTPResponse) => {
         if (response.url().startsWith("https://gql.twitch.tv/gql")) {
             const postData = response.request().postData();
             if (postData) {

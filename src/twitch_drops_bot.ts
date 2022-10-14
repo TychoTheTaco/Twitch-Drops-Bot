@@ -15,10 +15,10 @@ import {ElementHandle, Page} from "puppeteer";
 import Component from "./components/component.js";
 import DropProgressComponent from "./components/drop_progress.js";
 import CommunityPointsComponent from "./components/community_points.js";
-import WebSocketListener from "./web_socket_listener.js";
+import WebSocketListener, {CommunityPointsUserV1_PointsEarned} from "./web_socket_listener.js";
 import {TwitchDropsWatchdog} from "./watchdog.js";
 import {StreamPage} from "./pages/stream.js";
-import utils, {TimedSet, waitForResponseWithOperationName} from "./utils.js";
+import utils, {TimedSet, waitForResponseDataWithOperationName} from "./utils.js";
 import logger from "./logger.js";
 import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted, getStreamUrl} from "./twitch.js";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors.js";
@@ -110,10 +110,6 @@ export class Database extends EventEmitter {
 
 }
 
-function isInteger(string: string): boolean {
-    return string.match(/^\d+$/) !== null;
-}
-
 export declare interface TwitchDropsBot {
     on(event: "before_drop_campaigns_updated", listener: () => void): this;
 
@@ -123,7 +119,7 @@ export declare interface TwitchDropsBot {
 
     on(event: "drop_progress_updated", listener: (drop: TimeBasedDrop | null) => void): this;
 
-    on(event: "community_points_earned", listener: (data: any) => void): this;
+    on(event: "community_points_earned", listener: (data: CommunityPointsUserV1_PointsEarned) => void): this;
 
     on(event: "watch_status_updated", listener: (data: {
         viewers?: number,
@@ -346,65 +342,9 @@ export class TwitchDropsBot extends EventEmitter {
 
     #isFirstWatchdogFinished: boolean = false;
 
-    static async create(browser: Browser, cookies: any, options?: TwitchDropsBotOptions): Promise<TwitchDropsBot> {
-        // Get some data from the cookies
-        let oauthToken: string | undefined = undefined;
-        let channelLogin: string | undefined = undefined;
-        let deviceId: string | undefined = undefined;
-        for (const cookie of cookies) {
-            switch (cookie["name"]) {
-                case "auth-token":  // OAuth token
-                    oauthToken = cookie["value"];
-                    break;
-
-                case "persistent":  // "channelLogin" Used for "DropCampaignDetails" operation
-                    channelLogin = cookie["value"].split("%3A")[0];
-                    break;
-
-                case "unique_id":
-                    deviceId = cookie["value"];
-                    break;
-            }
-        }
-
-        if (!oauthToken) {
-            throw new Error("Invalid cookies!");
-        }
-
-        if (!deviceId) {
-            throw new Error("Missing device ID!");
-        }
-
-        // Seems to be the default hard-coded client ID
-        // Found in sources / static.twitchcdn.net / assets / minimal-cc607a041bc4ae8d6723.js
-        const client = new Client({oauthToken: oauthToken, userId: channelLogin, deviceId: deviceId});
-        if (!channelLogin) {
-            await client.autoDetectUserId();
-            logger.info("auto detected user id");
-        }
-
+    static async create(browser: Browser, cookies: any, client: Client, options?: TwitchDropsBotOptions): Promise<TwitchDropsBot> {
         const page = await browser.newPage();
         await page.setCookie(...cookies);
-
-        // Convert all game IDs/names to IDs
-        if (options?.gameIds) {
-            const games = options?.gameIds ?? [];
-            const gameIds: string[] = [];
-            for (const game of games) {
-                if (isInteger(game)) {
-                    gameIds.push(game);
-                } else {
-                    const id = await client.getGameIdFromName(game);
-                    if (id) {
-                        logger.debug(`Matched game name "${game}" to ID "${id}"`);
-                        gameIds.push(id);
-                    } else {
-                        logger.error("Failed to find game ID from name: " + game);
-                    }
-                }
-            }
-            options.gameIds = gameIds;
-        }
 
         // Convert Twitch URLs to broadcaster usernames
         if (options?.broadcasterIds) {
@@ -1332,7 +1272,7 @@ export class TwitchDropsBot extends EventEmitter {
         // Create a "Chrome Devtools Protocol" session to listen to websocket events
         const webSocketListener = new WebSocketListener();
 
-        const channelShellOperationResult = waitForResponseWithOperationName(this.#page, "ChannelShell");
+        const channelShellOperationResult = waitForResponseDataWithOperationName(this.#page, "ChannelShell");
 
         let channelId: string | null = null;
 
@@ -1342,7 +1282,7 @@ export class TwitchDropsBot extends EventEmitter {
         });
         webSocketListener.on("points-earned", data => {
             // Ignore these events if they are from a different stream than the one we are currently watching. This can happen if a user is watching multiple streams on one account.
-            if (channelId === null || channelId !== data["channel_id"]) {
+            if (channelId === null || channelId !== data.channel_id) {
                 return;
             }
             this.emit("community_points_earned", data);

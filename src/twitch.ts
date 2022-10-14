@@ -164,7 +164,47 @@ export class Client {
         this.#deviceId = options?.deviceId;
     }
 
-    async autoDetectUserId(): Promise<string | undefined> {
+    static async fromCookies(cookies: any): Promise<Client> {
+        // Get some data from the cookies
+        let oauthToken: string | undefined = undefined;
+        let channelLogin: string | undefined = undefined;
+        let deviceId: string | undefined = undefined;
+        for (const cookie of cookies) {
+            switch (cookie["name"]) {
+                case "auth-token":  // OAuth token
+                    oauthToken = cookie["value"];
+                    break;
+
+                case "persistent":  // "channelLogin" Used for "DropCampaignDetails" operation
+                    channelLogin = cookie["value"].split("%3A")[0];
+                    break;
+
+                case "unique_id":
+                    deviceId = cookie["value"];
+                    break;
+            }
+        }
+
+        if (!oauthToken) {
+            throw new Error("Invalid cookies!");
+        }
+
+        if (!deviceId) {
+            throw new Error("Missing device ID!");
+        }
+
+        const options: Options = {oauthToken: oauthToken, userId: channelLogin, deviceId: deviceId};
+
+        const client = new Client(options);
+        if (!channelLogin) {
+            await client.#autoDetectUserId();
+            logger.info("auto detected user id");
+        }
+
+        return client;
+    }
+
+    async #autoDetectUserId(): Promise<string | undefined> {
         const data = await this.#postAuthorized({
             "operationName": "CoreActionsCurrentUser",
             "extensions": {
@@ -481,6 +521,23 @@ export class Client {
             }
         });
         return data["data"]["channel"]["viewerDropCampaigns"];
+    }
+
+    async getUserLoginFromId(id: string) {
+        const data = await this.#post({
+            "operationName": "ChannelLeaderboards",
+            "variables": {
+                "first": 1,
+                "channelID": id
+            },
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "96867a58f1483929abd907a66a053ca526125dd30b2f9a8fcf3eea566915147f"
+                }
+            }
+        });
+        return data["data"]["user"]["login"];
     }
 
 }

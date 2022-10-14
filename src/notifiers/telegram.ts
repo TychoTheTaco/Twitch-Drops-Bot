@@ -1,12 +1,13 @@
 import axios from "axios";
 
 import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
-import {formatTime, formatTimestamp, Notifier} from "./notifier.js";
+import {EventMapType, formatTime, formatTimestamp, Notifier} from "./notifier.js";
+import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 
 function escapeFormatting(text: string) {
     let safe = "";
     for (const c of text) {
-        if (["*", "_", "~", "."].includes(c)) {
+        if (["*", "_", "~", ".", "-"].includes(c)) {
             safe += "\\";
         }
         safe += c;
@@ -19,17 +20,25 @@ export class TelegramNotifier extends Notifier {
     readonly #token: string;
     readonly #chatId: string;
 
-    constructor(token: string, chatId: string) {
-        super();
+    constructor(events: EventMapType, token: string, chatId: string) {
+        super(events);
         this.#token = token;
         this.#chatId = chatId;
+    }
+
+    #createMessage(title: string, fields: { name: string, value: any }[]): string {
+        let message = `__*${title}*__\n\n`;
+        for (const field of fields) {
+            message += `*${field.name}*\n${field.value}\n\n`;
+        }
+        return message;
     }
 
     async #sendMessage(text: string) {
         await axios.post(`https://api.telegram.org/bot${this.#token}/sendMessage`, {chat_id: this.#chatId, parse_mode: "MarkdownV2", text: text});
     }
 
-    async onNewDropCampaign(campaign: DropCampaign): Promise<void> {
+    async notifyOnNewDropCampaign(campaign: DropCampaign): Promise<void> {
         let dropsString = "";
         const timeBasedDrops = campaign.timeBasedDrops;
         if (timeBasedDrops) {
@@ -41,11 +50,11 @@ export class TelegramNotifier extends Notifier {
         const fields = [
             {
                 name: "Game",
-                value: campaign.game.displayName
+                value: escapeFormatting(campaign.game.displayName)
             },
             {
                 name: "Campaign",
-                value: campaign.name
+                value: escapeFormatting(campaign.name)
             },
             {
                 name: "Starts",
@@ -63,33 +72,48 @@ export class TelegramNotifier extends Notifier {
             });
         }
 
-        let text = "__*New Drop Campaign*__\n\n";
-        for (const field of fields) {
-            text += `*${field.name}*\n${field.value}\n\n`;
-        }
-
-        await this.#sendMessage(text);
+        const message = this.#createMessage("New Drop Campaign", fields);
+        await this.#sendMessage(message);
     }
 
-    async onDropClaimed(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
-        let message = "__*Drop Claimed*__\n\n";
+    async notifyOnDropClaimed(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
         const fields = [
             {
                 name: "Game",
-                value: campaign.game.displayName
+                value: escapeFormatting(campaign.game.displayName)
             },
             {
                 name: "Campaign",
-                value: campaign.name
+                value: escapeFormatting(campaign.name)
             },
             {
                 name: "Drop",
                 value: escapeFormatting(getDropBenefitNames(drop))
             }
         ];
-        for (const field of fields) {
-            message += `*${field.name}*\n${field.value}\n\n`;
-        }
+        const message = this.#createMessage("Drop Claimed", fields);
+        await this.#sendMessage(message);
+    }
+
+    async notifyOnCommunityPointsEarned(data: CommunityPointsUserV1_PointsEarned, channelLogin: string): Promise<void> {
+        const message = this.#createMessage("Community Points Claimed", [
+            {
+                name: "Channel",
+                value: channelLogin
+            },
+            {
+                name: "Points",
+                value: data.point_gain.total_points.toLocaleString()
+            },
+            {
+                name: "Reason",
+                value: data.point_gain.reason_code
+            },
+            {
+                name: "Balance",
+                value: data.balance.balance.toLocaleString()
+            }
+        ]);
         await this.#sendMessage(message);
     }
 

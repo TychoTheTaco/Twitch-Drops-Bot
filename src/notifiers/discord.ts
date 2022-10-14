@@ -1,18 +1,19 @@
 import axios from "axios";
 
 import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
-import {formatTime, formatTimestamp, Notifier} from "./notifier.js";
+import {EventMapType, formatTime, formatTimestamp, Notifier} from "./notifier.js";
+import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 
 export class DiscordWebhookSender extends Notifier {
 
     readonly #webhookUrl: string;
 
-    constructor(webhookUrl: string) {
-        super();
+    constructor(events: EventMapType, webhookUrl: string) {
+        super(events);
         this.#webhookUrl = webhookUrl;
     }
 
-    async onNewDropCampaign(campaign: DropCampaign): Promise<void> {
+    async notifyOnNewDropCampaign(campaign: DropCampaign): Promise<void> {
         let dropsString = "";
         const timeBasedDrops = campaign.timeBasedDrops;
         if (timeBasedDrops) {
@@ -59,7 +60,7 @@ export class DiscordWebhookSender extends Notifier {
         });
     }
 
-    async onDropClaimed(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+    async notifyOnDropClaimed(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
         await axios.post(this.#webhookUrl, {
             embeds: [
                 {
@@ -81,6 +82,34 @@ export class DiscordWebhookSender extends Notifier {
                     thumbnail: {
                         url: drop.benefitEdges[0].benefit.imageAssetURL
                     }
+                }
+            ]
+        });
+    }
+
+    async notifyOnCommunityPointsEarned(data: CommunityPointsUserV1_PointsEarned, channelLogin: string): Promise<void> {
+        await axios.post(this.#webhookUrl, {
+            embeds: [
+                {
+                    title: "Community Points Earned",
+                    fields: [
+                        {
+                            name: "Channel",
+                            value: channelLogin
+                        },
+                        {
+                            name: "Points",
+                            value: data.point_gain.total_points.toLocaleString()
+                        },
+                        {
+                            name: "Reason",
+                            value: data.point_gain.reason_code
+                        },
+                        {
+                            name: "Balance",
+                            value: data.balance.balance.toLocaleString()
+                        }
+                    ]
                 }
             ]
         });

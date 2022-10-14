@@ -5,6 +5,7 @@ import {Client} from "../twitch.js";
 import WebSocketListener from "../web_socket_listener.js";
 import logger from "../logger.js";
 import {StreamPage} from "../pages/stream.js";
+import {waitForResponseWithOperationName} from "../utils.js";
 
 export default class CommunityPointsComponent extends Component {
 
@@ -21,12 +22,19 @@ export default class CommunityPointsComponent extends Component {
         const claimCommunityPointsButton = await page.$x("//div[@data-test-selector='community-points-summary']//div[contains(concat(' ', normalize-space(@class), ' '), ' claimable-bonus__icon ')]/ancestor::button");
         if (claimCommunityPointsButton.length === 1) {
             try {
+                const promise = waitForResponseWithOperationName(page, "ClaimCommunityPoints");
                 await claimCommunityPointsButton[0].evaluate((element: any) => {
                     element.click();
                 });
-                logger.info('Claimed community points!');
+                const response = await promise.data();
+                const errors = response["errors"];
+                if (errors && errors.length > 0) {
+                    logger.error("Failed to claim community points: " + JSON.stringify(errors, null, 4));
+                    return false;
+                }
+                logger.info("Claimed community points!");
             } catch (error) {
-                logger.error('Failed to claim community points!');
+                logger.error("Failed to claim community points!");
                 logger.debug(error);
             }
         } else if (claimCommunityPointsButton.length > 1) {

@@ -1,5 +1,3 @@
-"use strict";
-
 import EventEmitter from "events";
 
 import logger from "./logger.js";
@@ -11,7 +9,41 @@ export interface UserDropEvents_DropProgress {
     required_progress_min: number
 }
 
-class WebSocketListener extends EventEmitter {
+export interface CommunityPointsUserV1_PointsEarned {
+    timestamp: string,
+    channel_id: string,
+    point_gain: {
+        user_id: string,
+        channel_id: string,
+        total_points: number,
+        baseline_points: number,
+        reason_code: ("WATCH" | "CLAIM"),
+        multipliers: any[]
+    },
+    balance: {
+        user_id: string,
+        channel_id: string,
+        balance: number
+    }
+}
+
+export declare interface WebSocketListener {
+    on(event: "claim-available", listener: (data: any) => void): this;
+
+    on(event: "points-earned", listener: (data: CommunityPointsUserV1_PointsEarned) => void): this;
+
+    on(event: "drop-progress", listener: (data: any) => void): this;
+
+    on(event: "drop-claim", listener: (data: any) => void): this;
+
+    on(event: "viewcount", listener: (data: any) => void): this;
+
+    on(event: "stream-down", listener: (data: any) => void): this;
+
+    on(event: "stream-up", listener: (data: any) => void): this;
+}
+
+export class WebSocketListener extends EventEmitter {
 
     #cdp?: CDPSession;
 
