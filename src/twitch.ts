@@ -237,12 +237,12 @@ export class Client {
             for (const error of response.data["errors"]) {
                 if ("message" in error) {
 
-                    const messages = ["service timeout", "service error"];
+                    const messages = ["service timeout", "service error", "failed integrity check"];
 
                     // For some errors, we don't need to include the response data since it is not helpful
                     const message = error["message"];
                     if (messages.includes(message)) {
-                        throw new Error("API error: " + message + " " + JSON.stringify(error, null, 4));
+                        throw new Error("API error: " + message);
                     }
                 }
             }

@@ -940,8 +940,7 @@ export class TwitchDropsBot extends EventEmitter {
                     } else if (error instanceof HighPriorityError) {
                         // Ignore
                     } else {
-                        logger.error("Error processing campaign");
-                        logger.debug(error);
+                        logger.error("Error processing campaign! " + error);
                     }
                 } finally {
                     this.#currentDropCampaignId = null;
@@ -1137,8 +1136,16 @@ export class TwitchDropsBot extends EventEmitter {
         this.emit("drop_claimed", drop.id);
     }
 
+    async #tryClaimDropReward(drop: TimeBasedDrop) {
+        try {
+            await this.#claimDropReward(drop);
+        } catch (error) {
+            logger.error("Failed to claim drop reward! " + error);
+        }
+    }
+
     async #claimDropReward(drop: TimeBasedDrop) {
-        logger.debug("claimDropReward: " + JSON.stringify(drop, null, 4));
+        logger.debug("Claiming drop: " + JSON.stringify(drop, null, 4));
         await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
         this.#onDropRewardClaimed(drop);
         //todo: check if campaign is completed
