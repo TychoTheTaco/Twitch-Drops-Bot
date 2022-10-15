@@ -107,7 +107,7 @@ export class TelegramNotifier extends Notifier {
             },
             {
                 name: "Reason",
-                value: data.point_gain.reason_code
+                value: escapeFormatting(data.point_gain.reason_code)
             },
             {
                 name: "Balance",
