@@ -117,4 +117,25 @@ export class TelegramNotifier extends Notifier {
         await this.#sendMessage(message);
     }
 
+    async notifyOnDropReadyToClaim(drop:TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+        await this.#sendMessage(this.#createMessage("Drop Ready To Claim", [
+            {
+                name: "Game",
+                value: campaign.game.displayName
+            },
+            {
+                name: "Campaign",
+                value: campaign.name
+            },
+            {
+                name: "Drop",
+                value: getDropBenefitNames(drop)
+            },
+            {
+                name: "Claim Here",
+                value: "https://www.twitch.tv/drops/inventory"
+            }
+        ]));
+    }
+
 }

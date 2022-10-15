@@ -115,4 +115,29 @@ export class DiscordWebhookSender extends Notifier {
         });
     }
 
+    async notifyOnDropReadyToClaim(drop:TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+        await axios.post(this.#webhookUrl, {
+            embeds: [
+                {
+                    title: "Drop Ready To Claim",
+                    fields: [
+                        {
+                            name: "Game",
+                            value: campaign.game.displayName
+                        },
+                        {
+                            name: "Campaign",
+                            value: campaign.name
+                        },
+                        {
+                            name: "Drop",
+                            value: getDropBenefitNames(drop)
+                        }
+                    ],
+                    url: "https://www.twitch.tv/drops/inventory"
+                }
+            ]
+        });
+    }
+
 }

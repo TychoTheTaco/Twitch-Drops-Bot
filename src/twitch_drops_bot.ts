@@ -115,6 +115,8 @@ export declare interface TwitchDropsBot {
 
     on(event: "pending_drop_campaigns_updated", listener: (campaigns: DropCampaign[]) => void): this;
 
+    on(event: "drop_ready_to_claim", listener: (dropId: string) => void): this;
+
     on(event: "drop_claimed", listener: (dropId: string) => void): this;
 
     on(event: "drop_progress_updated", listener: (drop: TimeBasedDrop | null) => void): this;
@@ -459,13 +461,8 @@ export class TwitchDropsBot extends EventEmitter {
                         //todo: consider event based drops!
                         for (const drop of campaign.timeBasedDrops) {
                             if (isDropReadyToClaim(drop)) {
-                                try {
-                                    await this.#claimDropReward(drop);
-                                } catch (error) {
-                                    logger.error("Failed to claim drop reward");
-                                    logger.debug(error);
-                                    logger.debug(JSON.stringify(drop, null, 4));
-                                }
+                                this.emit("drop_ready_to_claim", drop.id);
+                                await this.#tryClaimDropReward(drop);
                             }
                         }
                     }
@@ -1014,6 +1011,7 @@ export class TwitchDropsBot extends EventEmitter {
                 this.#database.addOrUpdateDrop(inventoryDrop);
                 currentMinutesWatched = inventoryDrop.self.currentMinutesWatched;
                 if (isDropReadyToClaim(inventoryDrop)) {
+                    this.emit("drop_ready_to_claim", inventoryDrop.id);
                     await this.#claimDropReward(inventoryDrop);
                     continue;
                 }

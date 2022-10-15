@@ -1,7 +1,7 @@
 import {DropCampaign, TimeBasedDrop} from "../twitch.js";
 import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 
-export type EventName = "new_drops_campaign" | "drop_claimed" | "community_points_earned";
+export type EventName = "new_drops_campaign" | "drop_claimed" | "community_points_earned" | "drop_ready_to_claim";
 
 interface EventOptions_NewDropsCampaign {
     gameIds: string[]
@@ -21,6 +21,7 @@ export type EventMapType = {
     "new_drops_campaign"?: EventOptions_NewDropsCampaign,
     "drop_claimed"?: EventOptions_DropClaimed,
     "community_points_earned"?: Event_CommunityPointsEarned,
+    "drop_ready_to_claim"?: {},
 };
 
 export abstract class Notifier {
@@ -81,6 +82,16 @@ export abstract class Notifier {
     }
 
     protected abstract notifyOnCommunityPointsEarned(data: CommunityPointsUserV1_PointsEarned, channelLogin: string): Promise<void>;
+
+    async onDropReadyToClaim(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+        const options = this.#events.drop_ready_to_claim;
+        if (!options) {
+            return;
+        }
+        await this.notifyOnDropReadyToClaim(drop, campaign);
+    }
+
+    protected abstract notifyOnDropReadyToClaim(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void>;
 
 }
 

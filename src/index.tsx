@@ -796,6 +796,24 @@ async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Clien
             });
         }
     });
+
+    bot.on("drop_ready_to_claim", async (dropId: string) => {
+        const drop = bot.getDatabase().getDropById(dropId);
+        if (!drop) {
+            logger.error("Drop is null when ready to claim!");
+            return;
+        }
+        const campaign = bot.getDatabase().getDropCampaignByDropId(dropId);
+        if (!campaign) {
+            logger.error("Campaign is null when ready to claim!");
+            return;
+        }
+        for (const notifier of notifiers) {
+            notifier.onDropReadyToClaim(drop, campaign).catch(error => {
+                onError("drop_ready_to_claim", notifier, error);
+            });
+        }
+    });
 }
 
 // Check if this file is being run directly
