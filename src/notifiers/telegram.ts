@@ -103,7 +103,7 @@ export class TelegramNotifier extends Notifier {
             },
             {
                 name: "Points",
-                value: data.point_gain.total_points.toLocaleString()
+                value: escapeFormatting(data.point_gain.total_points.toLocaleString())
             },
             {
                 name: "Reason",
@@ -111,7 +111,7 @@ export class TelegramNotifier extends Notifier {
             },
             {
                 name: "Balance",
-                value: data.balance.balance.toLocaleString()
+                value: escapeFormatting(data.balance.balance.toLocaleString())
             }
         ]);
         await this.#sendMessage(message);
