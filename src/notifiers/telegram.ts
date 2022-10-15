@@ -121,19 +121,19 @@ export class TelegramNotifier extends Notifier {
         await this.#sendMessage(this.#createMessage("Drop Ready To Claim", [
             {
                 name: "Game",
-                value: campaign.game.displayName
+                value: escapeFormatting(campaign.game.displayName)
             },
             {
                 name: "Campaign",
-                value: campaign.name
+                value: escapeFormatting(campaign.name)
             },
             {
                 name: "Drop",
-                value: getDropBenefitNames(drop)
+                value: escapeFormatting(getDropBenefitNames(drop))
             },
             {
                 name: "Claim Here",
-                value: "https://www.twitch.tv/drops/inventory"
+                value: escapeFormatting("https://www.twitch.tv/drops/inventory")
             }
         ]));
     }

@@ -348,6 +348,7 @@ type ConfigEventMapType = {
     "new_drops_campaign"?: { games: "all" | "config" },
     "drop_claimed"?: { games: "all" | "config" },
     "community_points_earned"?: { reasons: Event_CommunityPointsEarned_ClaimReason[] },
+    "drop_ready_to_claim"?: { },
 }
 
 interface DiscordNotifier {
@@ -738,6 +739,9 @@ async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Clien
         }
         if (events.community_points_earned) {
             eventMap.community_points_earned = events.community_points_earned;
+        }
+        if (events.drop_ready_to_claim) {
+            eventMap.drop_ready_to_claim = events.drop_ready_to_claim;
         }
         return eventMap;
     };
