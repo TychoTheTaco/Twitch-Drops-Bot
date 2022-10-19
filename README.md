@@ -243,25 +243,7 @@ This is useful if you still want to claim community points.
 - `file`: Path of the log file (default: `log-XXXXXXXXXX.txt`). If you use this option, the file will be overwritten whenever you restart the app!
 - `level`: The level of logging to write to the log file. One of: `debug` (default), `info`, `warn`, `error`.
 
-`notifications` - Change options related to notifications. This should be in JSON format.
-
-Each notification object should have these properties:
-
-- `events`: A list of events to get notifications for. Possible events are:
-    - `drop_claimed`: A drop is claimed.
-    - `new_drops_campaign`: A new Drops campaign was found.
-- `games`: Which games you want notifications for. Options are:
-    - `config`: Only get notifications related to games that are listed in the config.
-    - `all`: Get notifications related to any game.
-
-Specific notification properties:
-
-- `discord`: An array of discord notification objects. Each notification object has the following properties + the above ones:
-    - `webhook_url`: The URL of the Discord webhook.
-
-- `telegram`: An array of telegram notification objects. Each notification object has the following properties + the above ones:
-    - `token`: The API token of your bot.
-    - `chat_id`: The chat ID where to post the message.
+`notifications` - See [Notifications](docs/notifications.md) for more details.
 
 ### Update Games List
 
