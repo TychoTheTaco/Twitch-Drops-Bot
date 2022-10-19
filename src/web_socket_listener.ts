@@ -17,7 +17,7 @@ export interface CommunityPointsUserV1_PointsEarned {
         channel_id: string,
         total_points: number,
         baseline_points: number,
-        reason_code: "WATCH" | "CLAIM" | "WATCH_STREAK",
+        reason_code: "WATCH" | "CLAIM" | "WATCH_STREAK" | "RAID",
         multipliers: any[]
     },
     balance: {

@@ -11,7 +11,7 @@ interface EventOptions_DropClaimed {
     gameIds: string[]
 }
 
-export type Event_CommunityPointsEarned_ClaimReason = "watch" | "claim" | "watch_streak";
+export type Event_CommunityPointsEarned_ClaimReason = "watch" | "claim" | "watch_streak" | "raid";
 
 interface Event_CommunityPointsEarned {
     reasons: Event_CommunityPointsEarned_ClaimReason[]
@@ -79,6 +79,12 @@ export abstract class Notifier {
 
                 case "WATCH_STREAK":
                     if (!options.reasons.includes("watch_streak")) {
+                        return;
+                    }
+                    break;
+
+                case "RAID":
+                    if (!options.reasons.includes("raid")) {
                         return;
                     }
                     break;
