@@ -43,9 +43,47 @@ export declare interface WebSocketListener {
     on(event: "stream-up", listener: (data: any) => void): this;
 }
 
+interface Payload {
+    nonce: string
+}
+
+interface PongPayload extends Payload {
+    type: "PONG"
+}
+
+interface MessagePayload extends Payload {
+    type: "MESSAGE"
+    topic: string,
+    data: any
+}
+
+interface ResponsePayload extends Payload {
+    type: "RESPONSE"
+    error?: string
+}
+
+type PayloadType = MessagePayload | ResponsePayload | PongPayload;
+
+interface WebSocketFrame {
+    requestId: string,
+    timestamp: number,
+    response: {
+        opcode: number,
+        mask: boolean,
+        payloadData: string
+    }
+}
+
 export class WebSocketListener extends EventEmitter {
 
     #cdp?: CDPSession;
+
+    /**
+     * A cache of payloads that we have sent, but have not yet received a response for. This is used to log the payload
+     * data when a response returns an error.
+     * @private
+     */
+    #sentPayloads = new Map<string, PayloadType>();
 
     #ignoreTopicHandler = (message: any) => {
         return true;
@@ -138,15 +176,23 @@ export class WebSocketListener extends EventEmitter {
                 pubSubWebSocketRequestId = socket["requestId"];
             }
         });
-        this.#cdp.on("Network.webSocketFrameReceived", frame => {
-            if (frame["requestId"] === pubSubWebSocketRequestId) {
-                const payload = JSON.parse(frame["response"]["payloadData"]);
-                const payloadType = payload["type"];
+        this.#cdp.on("Network.webSocketFrameSent", (frame: WebSocketFrame) => {
+           if (frame.requestId === pubSubWebSocketRequestId) {
+               const payload: PayloadType = JSON.parse(frame.response.payloadData);
+               this.#sentPayloads.set(payload.nonce, payload);
+           }
+        });
+        this.#cdp.on("Network.webSocketFrameReceived", (frame: WebSocketFrame) => {
+            if (frame.requestId === pubSubWebSocketRequestId) {
+                const payload: PayloadType = JSON.parse(frame.response.payloadData);
+                const payloadType = payload.type;
                 if (payloadType === "PONG") {
                     logger.debug("PONG");
                 } else if (payloadType === "RESPONSE") {
-                    if (payload["error"]) {
-                        logger.debug("Error in payload: " + JSON.stringify(payload, null, 4));
+                    const error = payload.error;
+                    if (error) {
+                        const requestPayload = this.#sentPayloads.get(payload.nonce);
+                        logger.error("Websocket response contained an error: '" + error + "' for payload: " + JSON.stringify(requestPayload));
                     }
                 } else if (payloadType === "MESSAGE") {
                     // TODO: Some topics contain more than one period!
@@ -176,6 +222,9 @@ export class WebSocketListener extends EventEmitter {
                 } else {
                     logger.debug("Unknown payload type: " + JSON.stringify(payload, null, 4));
                 }
+
+                // Remove payload from sent payloads cache
+                this.#sentPayloads.delete(payload.nonce);
             }
         });
         this.#cdp.on("Network.webSocketFrameError", data => {
