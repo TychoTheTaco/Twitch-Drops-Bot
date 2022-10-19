@@ -106,28 +106,41 @@ A sample config file looks like this:
     "notifications": {
         "discord": [
             {
-                "webhook_url": "my_webhook_url",
-                "events": [
-                    "new_drops_campaign", "drop_claimed"
-                ],
-                "games": "all"
-            },
-            {
-                "webhook_url": "another_webhook_url",
-                "events": [
-                    "new_drops_campaign"
-                ],
-                "games": "config"
+                "webhook_url": "https://discord.com/api/webhooks/abcde",
+                "events": {
+                    "new_drops_campaign": {
+                        "games": "all"
+                    },
+                    "drop_claimed": {
+                        "games": "config"
+                    },
+                    "community_points_earned": {
+                        "reasons": [
+                            "claim",
+                            "streak",
+                            "raid"
+                        ]
+                    },
+                    "drop_ready_to_claim": {}
+                }
             }
         ],
         "telegram": [
             {
                 "token": "abcde",
                 "chat_id": "12345",
-                "events": [
-                    "new_drops_campaign", "drop_claimed"
-                ],
-                "games": "all"
+                "events": {
+                    "new_drops_campaign": {
+                        "games": "all"
+                    },
+                    "drop_claimed": {
+                        "games": "all"
+                    },
+                    "community_points_earned": {
+                        "reasons": []
+                    },
+                    "drop_ready_to_claim": {}
+                }
             }
         ]
     }
