@@ -1,11 +1,10 @@
-"use strict";
-
-import fs from "fs";
+import fs from "node:fs";
 
 import {ArgumentParser} from "argparse";
+import _ from "lodash";
 
 import logger from "./logger.js";
-import {Option, StringListOption} from "./options.js";
+import {JsonOption, Option, StringListOption} from "./options.js";
 
 export class ConfigurationParser {
 
@@ -90,6 +89,14 @@ export class ConfigurationParser {
         for (const option of this.#options) {
             const key = getJsonKey(option);
             if (args[key] === undefined) {
+                if (option instanceof JsonOption) {
+                    const defaultValue = option.defaultValue;
+                    if (typeof defaultValue === "function") {
+                        _.merge(config[key], defaultValue());
+                    } else {
+                        _.merge(config[key], defaultValue);
+                    }
+                }
                 if (config[key] === undefined) {
                     const defaultValue = option.defaultValue;
                     if (typeof defaultValue === "function") {
