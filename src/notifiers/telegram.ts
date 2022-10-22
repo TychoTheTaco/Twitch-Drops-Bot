@@ -7,7 +7,7 @@ import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 function escapeFormatting(text: string) {
     let safe = "";
     for (const c of text) {
-        if (["*", "_", "~", ".", "-"].includes(c)) {
+        if (["*", "_", "~", ".", "-", "#", "|", "!"].includes(c)) {
             safe += "\\";
         }
         safe += c;
@@ -99,7 +99,7 @@ export class TelegramNotifier extends Notifier {
         const message = this.#createMessage("Community Points Claimed", [
             {
                 name: "Channel",
-                value: channelLogin
+                value: escapeFormatting(channelLogin)
             },
             {
                 name: "Points",
