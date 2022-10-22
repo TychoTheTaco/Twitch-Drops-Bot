@@ -5,12 +5,7 @@ import _ from "lodash";
 import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
-import puppeteer, {Browser} from "puppeteer";
-
-const {errors} = puppeteer;
-
-const TimeoutError = errors.TimeoutError;
-import {ElementHandle, Page} from "puppeteer";
+import puppeteer, {Browser, TimeoutError, ElementHandle, Page} from "puppeteer";
 
 import Component from "./components/component.js";
 import DropProgressComponent from "./components/drop_progress.js";

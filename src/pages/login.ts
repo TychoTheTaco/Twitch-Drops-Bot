@@ -1,12 +1,9 @@
-"use strict";
-
-import fs from "fs";
+import fs from "node:fs";
 
 import prompt from "prompt";
 prompt.start();  // Initialize prompt (this should only be called once!)
 
-import puppeteer from "puppeteer";
-const TimeoutError = puppeteer.errors.TimeoutError;
+import puppeteer, {TimeoutError} from "puppeteer";
 
 import {TwitchPage} from "./page.js";
 import logger from "../logger.js";
