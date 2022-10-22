@@ -1,7 +1,7 @@
-import axios from "axios";
+import axios, {AxiosResponse} from "axios";
 
 import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
-import {EventMapType, formatTime, formatTimestamp, Notifier} from "./notifier.js";
+import {EventMapType, formatTime, formatTimestamp, RateLimitedNotifier} from "./notifier.js";
 import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 
 function escapeFormatting(text: string) {
@@ -15,7 +15,7 @@ function escapeFormatting(text: string) {
     return safe;
 }
 
-export class TelegramNotifier extends Notifier {
+export class TelegramNotifier extends RateLimitedNotifier<string> {
 
     readonly #token: string;
     readonly #chatId: string;
@@ -26,16 +26,20 @@ export class TelegramNotifier extends Notifier {
         this.#chatId = chatId;
     }
 
+    protected sendNotification(data: string): Promise<AxiosResponse> {
+        return axios.post(`https://api.telegram.org/bot${this.#token}/sendMessage`, {chat_id: this.#chatId, parse_mode: "MarkdownV2", text: data});
+    }
+
+    protected getRetryAfterSeconds(response: AxiosResponse): number {
+        return response.data["parameters"]["retry_after"];
+    }
+
     #createMessage(title: string, fields: { name: string, value: any }[]): string {
         let message = `__*${title}*__\n\n`;
         for (const field of fields) {
             message += `*${field.name}*\n${field.value}\n\n`;
         }
         return message;
-    }
-
-    async #sendMessage(text: string) {
-        await axios.post(`https://api.telegram.org/bot${this.#token}/sendMessage`, {chat_id: this.#chatId, parse_mode: "MarkdownV2", text: text});
     }
 
     async notifyOnNewDropCampaign(campaign: DropCampaign): Promise<void> {
@@ -73,7 +77,7 @@ export class TelegramNotifier extends Notifier {
         }
 
         const message = this.#createMessage("New Drop Campaign", fields);
-        await this.#sendMessage(message);
+        await this.post(message);
     }
 
     async notifyOnDropClaimed(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
@@ -92,7 +96,7 @@ export class TelegramNotifier extends Notifier {
             }
         ];
         const message = this.#createMessage("Drop Claimed", fields);
-        await this.#sendMessage(message);
+        await this.post(message);
     }
 
     async notifyOnCommunityPointsEarned(data: CommunityPointsUserV1_PointsEarned, channelLogin: string): Promise<void> {
@@ -114,11 +118,11 @@ export class TelegramNotifier extends Notifier {
                 value: escapeFormatting(data.balance.balance.toLocaleString())
             }
         ]);
-        await this.#sendMessage(message);
+        await this.post(message);
     }
 
     async notifyOnDropReadyToClaim(drop:TimeBasedDrop, campaign: DropCampaign): Promise<void> {
-        await this.#sendMessage(this.#createMessage("Drop Ready To Claim", [
+        await this.post(this.#createMessage("Drop Ready To Claim", [
             {
                 name: "Game",
                 value: escapeFormatting(campaign.game.displayName)

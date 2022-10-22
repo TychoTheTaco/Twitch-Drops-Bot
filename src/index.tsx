@@ -348,7 +348,7 @@ type ConfigEventMapType = {
     "new_drops_campaign"?: { games: "all" | "config" },
     "drop_claimed"?: { games: "all" | "config" },
     "community_points_earned"?: { reasons: Event_CommunityPointsEarned_ClaimReason[] },
-    "drop_ready_to_claim"?: { },
+    "drop_ready_to_claim"?: {},
 }
 
 interface DiscordNotifier {
