@@ -17,6 +17,7 @@ import utils, {TimedSet, waitForResponseDataWithOperationName} from "./utils.js"
 import logger from "./logger.js";
 import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted, getStreamUrl} from "./twitch.js";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors.js";
+import {broadcasterComparator, endTimeComparator, gameIndexComparator} from "./comparators.js";
 
 type Class<T> = { new(...args: any[]): T };
 
@@ -259,30 +260,25 @@ export class TwitchDropsBot extends EventEmitter {
         }
 
         // Sort campaigns based on order of game IDs specified in config
-        const indexA = this.#gameIds.indexOf(campaignA.game.id);
-        const indexB = this.#gameIds.indexOf(campaignB.game.id);
-        if (indexA === -1 && indexB !== -1) {
-            return 1;
-        } else if (indexA !== -1 && indexB === -1) {
-            return -1;
-        } else if (indexA === indexB) {  // Both games have the same priority. Give priority to the one that ends first.
-            const endTimeA = Date.parse(campaignA.endAt);
-            const endTimeB = Date.parse(campaignB.endAt);
-            if (endTimeA === endTimeB) {  // Both campaigns end at the same time. Give priority to the one that is in the broadcasters list
-                const broadcasterIndexA = this.#getFirstBroadcasterIndex(campaignA);
-                const broadcasterIndexB = this.#getFirstBroadcasterIndex(campaignB);
-                if (broadcasterIndexA === -1 && broadcasterIndexB !== -1) {
-                    return 1;
-                } else if (broadcasterIndexA !== -1 && broadcasterIndexB === -1) {
-                    return -1;
-                } else if (broadcasterIndexA === broadcasterIndexB) {
-                    return a < b ? -1 : 1;
-                }
-                return Math.sign(broadcasterIndexA - broadcasterIndexB);
-            }
-            return endTimeA < endTimeB ? -1 : 1;
+        let result = gameIndexComparator(campaignA, campaignB, this.#gameIds);
+        if (result !== 0) {
+            return result;
         }
-        return Math.sign(indexA - indexB);
+
+        // Both games have the same priority. Give priority to the one that ends first.
+        result = endTimeComparator(campaignA, campaignB);
+        if (result !== 0) {
+            return result;
+        }
+
+        // Both campaigns end at the same time. Give priority to the one that is in the broadcasters list
+        result = broadcasterComparator(campaignA, campaignB, this.#broadcasterIds);
+        if (result !== 0) {
+            return result;
+        }
+
+        // All other criteria are the same, sort by ID
+        return campaignA.id < campaignB.id ? -1 : 1;
     });
     #pendingDropCampaignIdsNotifier = new WaitNotify();
 
@@ -537,19 +533,6 @@ export class TwitchDropsBot extends EventEmitter {
             this.#isFirstWatchdogFinished = true;
             this.#pendingDropCampaignIdsNotifier.notifyAll();
         });
-    }
-
-    #getFirstBroadcasterIndex(campaign: DropCampaign) {
-        for (let i = 0; i < this.#broadcasterIds.length; ++i) {
-            if (campaign.allow && campaign.allow.isEnabled && campaign.allow.channels) {
-                for (const channel of campaign.allow.channels) {
-                    if (channel.displayName && channel.displayName.toLowerCase() === this.#broadcasterIds[i].toLowerCase()) {
-                        return i;
-                    }
-                }
-            }
-        }
-        return -1;
     }
 
     #isCampaignCompleted(dropCampaignDetails: DropCampaign, inventory: Inventory): boolean {

@@ -2,6 +2,7 @@ import fs from "fs";
 
 import {updateGames} from "../src/utils";
 import {DropCampaign} from "../src/twitch";
+import {loadJsonData} from "./utils.js";
 
 const DESTINATION_PATH = "test/data/temp/games.csv";
 
@@ -22,7 +23,7 @@ afterAll(() => {
 test("update_games", () => {
 
     // Load "new" campaign data
-    const campaigns: DropCampaign[] = JSON.parse(fs.readFileSync("test/data/campaigns-0.json").toString());
+    const campaigns: DropCampaign[] = loadJsonData("campaigns-0");
 
     // Normal update
     updateGames(campaigns, "test/data/games-0-a.csv", DESTINATION_PATH);
