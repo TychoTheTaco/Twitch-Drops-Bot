@@ -91,11 +91,14 @@ export class ConfigurationParser {
             if (args[key] === undefined) {
                 if (option instanceof JsonOption) {
                     const defaultValue = option.defaultValue;
+                    let value;
                     if (typeof defaultValue === "function") {
-                        _.merge(config[key], defaultValue());
+                        value = defaultValue();
                     } else {
-                        _.merge(config[key], defaultValue);
+                        value = defaultValue;
                     }
+                    _.merge(value, config[key]);
+                    config[key] = value;
                 }
                 if (config[key] === undefined) {
                     const defaultValue = option.defaultValue;
