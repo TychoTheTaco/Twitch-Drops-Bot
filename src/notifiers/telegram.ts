@@ -4,10 +4,14 @@ import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
 import {EventMapType, formatTime, formatTimestamp, RateLimitedNotifier} from "./notifier.js";
 import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 
+/**
+ * Escape special characters. https://core.telegram.org/bots/api#markdownv2-style
+ * @param text
+ */
 function escapeFormatting(text: string) {
     let safe = "";
     for (const c of text) {
-        if (["*", "_", "~", ".", "-", "#", "|", "!"].includes(c)) {
+        if (["_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"].includes(c)) {
             safe += "\\";
         }
         safe += c;
