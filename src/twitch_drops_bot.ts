@@ -145,7 +145,8 @@ export interface TwitchDropsBotOptions {
     showAccountNotLinkedWarning?: boolean,
     attemptImpossibleDropCampaigns?: boolean,
     watchStreamsWhenNoDropCampaignsActive?: boolean,
-    broadcasterIds?: string[]
+    broadcasterIds?: string[],
+    autoClaimCommunityPoints?: boolean
 }
 
 export class TwitchDropsBot extends EventEmitter {
@@ -333,6 +334,8 @@ export class TwitchDropsBot extends EventEmitter {
      */
     readonly #completedDropIds: Set<string> = new Set<string>();
 
+    readonly #autoClaimCommunityPoints: boolean = true;
+
     #isFirstWatchdogFinished: boolean = false;
 
     static async create(browser: Browser, cookies: any, client: Client, options?: TwitchDropsBotOptions): Promise<TwitchDropsBot> {
@@ -422,6 +425,8 @@ export class TwitchDropsBot extends EventEmitter {
         }));
         this.#watchStreamsWhenNoDropCampaignsActive = options?.watchStreamsWhenNoDropCampaignsActive ?? this.#watchStreamsWhenNoDropCampaignsActive;
         this.#streamUrlTemporaryBlacklist = new TimedSet<string>(1000 * 60 * this.#failedStreamBlacklistTimeout);
+
+        this.#autoClaimCommunityPoints = options?.autoClaimCommunityPoints ?? this.#autoClaimCommunityPoints;
 
         // Set up Twitch Drops Watchdog
         this.#twitchDropsWatchdog = new TwitchDropsWatchdog(this.#twitchClient, this.#dropCampaignPollingInterval);
@@ -849,9 +854,12 @@ export class TwitchDropsBot extends EventEmitter {
                     });
 
                     const components: Component[] = [
-                        dropProgressComponent,
-                        new CommunityPointsComponent()
+                        dropProgressComponent
                     ];
+
+                    if (this.#autoClaimCommunityPoints) {
+                        components.push(new CommunityPointsComponent());
+                    }
 
                     let timeout: any = null;
                     const a = async () => {
@@ -1090,9 +1098,12 @@ export class TwitchDropsBot extends EventEmitter {
             const dropProgressComponent = new DropProgressComponent({targetDrop: drop});
 
             const components: Component[] = [
-                dropProgressComponent,
-                new CommunityPointsComponent()
+                dropProgressComponent
             ];
+
+            if (this.#autoClaimCommunityPoints) {
+                components.push(new CommunityPointsComponent());
+            }
 
             // Watch first stream
             logger.info("Watching stream: " + streamUrl);

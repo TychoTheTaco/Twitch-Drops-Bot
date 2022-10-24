@@ -341,7 +341,8 @@ const options = [
             discord: [],
             telegram: []
         }
-    })
+    }),
+    new BooleanOption("--auto-claim-community-points", true, {defaultValue: true})
 ];
 
 type ConfigEventMapType = {
@@ -399,7 +400,8 @@ export interface Config {
     notifications: {
         discord: DiscordNotifier[],
         telegram: TelegramNotifierOptions[]
-    }
+    },
+    auto_claim_community_points: boolean
 }
 
 function findMostRecentlyModifiedCookiesPath() {
@@ -686,7 +688,8 @@ async function main(): Promise<void> {
         ignoredGameIds: config["ignored_games"],
         attemptImpossibleDropCampaigns: config["attempt_impossible_campaigns"],
         watchStreamsWhenNoDropCampaignsActive: config["watch_streams_when_no_drop_campaigns_active"],
-        broadcasterIds: config.broadcasters
+        broadcasterIds: config.broadcasters,
+        autoClaimCommunityPoints: config.auto_claim_community_points
     });
 
     await setUpNotifiers(bot, config, client, gameIds);
