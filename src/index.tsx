@@ -807,7 +807,15 @@ async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Clien
         }
     });
 
+    // Keep track of which drops we already sent notifications for
+    const alreadyNotifiedDropIds = new Set<string>();
     bot.on("drop_ready_to_claim", async (dropId: string) => {
+
+        if (alreadyNotifiedDropIds.has(dropId)) {
+            return;
+        }
+        alreadyNotifiedDropIds.add(dropId);
+
         const drop = bot.getDatabase().getDropById(dropId);
         if (!drop) {
             logger.error("Drop is null when ready to claim!");
