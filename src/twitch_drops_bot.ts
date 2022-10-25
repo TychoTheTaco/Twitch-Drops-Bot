@@ -146,6 +146,7 @@ export interface TwitchDropsBotOptions {
     attemptImpossibleDropCampaigns?: boolean,
     watchStreamsWhenNoDropCampaignsActive?: boolean,
     broadcasterIds?: string[],
+    autoClaimDrops?: boolean,
     autoClaimCommunityPoints?: boolean
 }
 
@@ -334,6 +335,8 @@ export class TwitchDropsBot extends EventEmitter {
      */
     readonly #completedDropIds: Set<string> = new Set<string>();
 
+    readonly #autoClaimDrops: boolean = true;
+
     readonly #autoClaimCommunityPoints: boolean = true;
 
     #isFirstWatchdogFinished: boolean = false;
@@ -426,6 +429,7 @@ export class TwitchDropsBot extends EventEmitter {
         this.#watchStreamsWhenNoDropCampaignsActive = options?.watchStreamsWhenNoDropCampaignsActive ?? this.#watchStreamsWhenNoDropCampaignsActive;
         this.#streamUrlTemporaryBlacklist = new TimedSet<string>(1000 * 60 * this.#failedStreamBlacklistTimeout);
 
+        this.#autoClaimDrops = options?.autoClaimDrops ?? this.#autoClaimDrops;
         this.#autoClaimCommunityPoints = options?.autoClaimCommunityPoints ?? this.#autoClaimCommunityPoints;
 
         // Set up Twitch Drops Watchdog
@@ -458,7 +462,9 @@ export class TwitchDropsBot extends EventEmitter {
                         for (const drop of campaign.timeBasedDrops) {
                             if (isDropReadyToClaim(drop)) {
                                 this.emit("drop_ready_to_claim", drop.id);
-                                await this.#tryClaimDropReward(drop);
+                                if (this.#autoClaimDrops) {
+                                    await this.#tryClaimDropReward(drop);
+                                }
                             }
                         }
                     }
@@ -850,7 +856,8 @@ export class TwitchDropsBot extends EventEmitter {
 
                     const dropProgressComponent = new DropProgressComponent({
                         requireProgress: false,
-                        exitOnClaim: false
+                        exitOnClaim: false,
+                        autoClaimDrops: this.#autoClaimDrops
                     });
 
                     const components: Component[] = [
@@ -997,8 +1004,11 @@ export class TwitchDropsBot extends EventEmitter {
                 currentMinutesWatched = inventoryDrop.self.currentMinutesWatched;
                 if (isDropReadyToClaim(inventoryDrop)) {
                     this.emit("drop_ready_to_claim", inventoryDrop.id);
-                    await this.#claimDropReward(inventoryDrop);
-                    continue;
+                    if (this.#autoClaimDrops) {
+                        await this.#claimDropReward(inventoryDrop);
+                        continue;
+                    }
+                    break;
                 }
             }
 
@@ -1095,7 +1105,7 @@ export class TwitchDropsBot extends EventEmitter {
                 return;
             }
 
-            const dropProgressComponent = new DropProgressComponent({targetDrop: drop});
+            const dropProgressComponent = new DropProgressComponent({targetDrop: drop, autoClaimDrops: this.#autoClaimDrops});
 
             const components: Component[] = [
                 dropProgressComponent

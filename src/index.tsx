@@ -342,6 +342,7 @@ const options = [
             telegram: []
         }
     }),
+    new BooleanOption("--auto-claim-drops", true, {defaultValue: true}),
     new BooleanOption("--auto-claim-community-points", true, {defaultValue: true})
 ];
 
@@ -401,6 +402,7 @@ export interface Config {
         discord: DiscordNotifier[],
         telegram: TelegramNotifierOptions[]
     },
+    auto_claim_drops: boolean,
     auto_claim_community_points: boolean
 }
 
@@ -689,6 +691,7 @@ async function main(): Promise<void> {
         attemptImpossibleDropCampaigns: config["attempt_impossible_campaigns"],
         watchStreamsWhenNoDropCampaignsActive: config["watch_streams_when_no_drop_campaigns_active"],
         broadcasterIds: config.broadcasters,
+        autoClaimDrops: config.auto_claim_drops,
         autoClaimCommunityPoints: config.auto_claim_community_points
     });
 

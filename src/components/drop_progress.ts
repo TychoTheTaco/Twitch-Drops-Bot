@@ -34,6 +34,8 @@ export default class DropProgressComponent extends Component {
      * @private
      */
     readonly #maxNoProgressMinutes: number = 5;
+    
+    readonly #autoClaimDrops: boolean = true;
 
     /**
      * The drop that we are currently making progress towards.
@@ -50,14 +52,15 @@ export default class DropProgressComponent extends Component {
 
     #pendingWebSocketMessages: UserDropEvents_DropProgress[] = [];
 
-    constructor(options?: { targetDrop?: TimeBasedDrop, requireProgress?: boolean, exitOnClaim?: boolean }) {
+    constructor(options?: { targetDrop?: TimeBasedDrop, requireProgress?: boolean, exitOnClaim?: boolean, autoClaimDrops?: boolean }) {
         super();
         this.#targetDrop = options?.targetDrop ?? this.#targetDrop;
         this.#requireProgress = options?.requireProgress ?? this.#requireProgress;
         this.#exitOnClaim = options?.exitOnClaim ?? this.#exitOnClaim;
+        this.#autoClaimDrops = options?.autoClaimDrops ?? this.#autoClaimDrops;
 
         this.#currentDrop = this.#targetDrop ?? this.#currentDrop;
-        logger.debug('target: ' + JSON.stringify(this.#targetDrop, null, 4));
+        logger.debug("target: " + JSON.stringify(this.#targetDrop, null, 4));
 
         if (this.#targetDrop !== null) {
             this.#currentMinutesWatched[this.#targetDrop.id] = 0;
@@ -75,7 +78,7 @@ export default class DropProgressComponent extends Component {
             if (inventoryDrop) {
                 this.#currentMinutesWatched[this.#targetDrop.id] = inventoryDrop.self.currentMinutesWatched;
                 this.#lastMinutesWatched[this.#targetDrop.id] = this.#currentMinutesWatched[this.#targetDrop.id];
-                logger.debug('Initial drop progress: ' + this.#currentMinutesWatched[this.#targetDrop.id] + ' minutes');
+                logger.debug("Initial drop progress: " + this.#currentMinutesWatched[this.#targetDrop.id] + " minutes");
 
                 // Check if this drop is ready to be claimed
                 if (this.#currentMinutesWatched[this.#targetDrop.id] >= this.#targetDrop.requiredMinutesWatched) {
@@ -83,11 +86,11 @@ export default class DropProgressComponent extends Component {
                     logger.debug("ready to claim! ip");
                 }
             } else {
-                logger.debug('Initial drop progress: none');
+                logger.debug("Initial drop progress: none");
             }
         }
 
-        webSocketListener.on('drop-progress', (data: UserDropEvents_DropProgress) => {
+        webSocketListener.on("drop-progress", (data: UserDropEvents_DropProgress) => {
             this.#pendingWebSocketMessages.push(data);
         });
     }
@@ -102,7 +105,9 @@ export default class DropProgressComponent extends Component {
             // since we can make progress towards multiple drops at once.
             if (data.current_progress_min >= data.required_progress_min) {
                 logger.debug("ready to claim! dp"); //todo: make sure drop has not been claimed already, sometimes ws messages are delayed
-                await this.#claimDrop(data.drop_id, twitchClient);
+                if (this.#autoClaimDrops) {
+                    await this.#claimDrop(data.drop_id, twitchClient);
+                }
                 this.#shouldStop = true;
             }
 
@@ -110,7 +115,7 @@ export default class DropProgressComponent extends Component {
             // have multiple drop campaigns, but only one is active at a time. If this happens, then we will just set
             // the current drop to the one we are making progress on.
             if (dropId !== this.#currentDrop?.id) {
-                logger.debug('Drop progress message does not match expected drop: ' + this.#currentDrop?.id + ' vs ' + dropId);
+                logger.debug("Drop progress message does not match expected drop: " + this.#currentDrop?.id + " vs " + dropId);
 
                 if (!(dropId in this.#currentMinutesWatched)) {
                     this.#currentMinutesWatched[dropId] = data.current_progress_min;
@@ -125,14 +130,14 @@ export default class DropProgressComponent extends Component {
                 this.#lastMinutesWatched[dropId] = this.#currentMinutesWatched[dropId];
 
                 if (dropId !== this.#currentDrop?.id) {
-                    logger.debug('made progress towards a different drop! expected: ' + this.#currentDrop?.id + ' vs actual: ' + dropId);
+                    logger.debug("made progress towards a different drop! expected: " + this.#currentDrop?.id + " vs actual: " + dropId);
 
                     // If we made progress for a different drop, switch to it
                     const inventory = await twitchClient.getInventory();
                     const inventoryDrop = getInventoryDrop(dropId, inventory);
 
                     if (inventoryDrop === null) {
-                        throw new Error('Made progress towards a drop but did not find it in inventory!');
+                        throw new Error("Made progress towards a drop but did not find it in inventory!");
                     }
 
                     this.#currentDrop = inventoryDrop; //todo: no game displayname ?
@@ -144,7 +149,7 @@ export default class DropProgressComponent extends Component {
                         this.#lastProgressTime[this.#currentDrop.id] = new Date().getTime();
                     }
 
-                    this.emit('drop-data-changed');
+                    this.emit("drop-data-changed");
 
                 }
             }
@@ -166,7 +171,7 @@ export default class DropProgressComponent extends Component {
                         if (this.#currentMinutesWatched[currentDropId] > this.#lastMinutesWatched[currentDropId]) {
                             this.#lastProgressTime[currentDropId] = new Date().getTime();
                             this.#lastMinutesWatched[currentDropId] = this.#currentMinutesWatched[currentDropId];
-                            logger.debug('No progress from web socket! using inventory progress: ' + this.#currentMinutesWatched[currentDropId] + ' minutes');
+                            logger.debug("No progress from web socket! using inventory progress: " + this.#currentMinutesWatched[currentDropId] + " minutes");
 
                             // Check if this drop is ready to be claimed
                             if (this.#currentMinutesWatched[currentDropId] >= this.#currentDrop.requiredMinutesWatched) {
@@ -185,7 +190,10 @@ export default class DropProgressComponent extends Component {
 
             if (this.#isDropReadyToClaim) {
                 this.#isDropReadyToClaim = false;
-                await this.#claimDrop(this.#currentDrop.id, twitchClient);
+
+                if (this.#autoClaimDrops) {
+                    await this.#claimDrop(this.#currentDrop.id, twitchClient);
+                }
 
                 // TODO: dont return, check for more drops
                 if (this.#exitOnClaim) {
@@ -211,12 +219,12 @@ export default class DropProgressComponent extends Component {
         logger.debug("inventory drop: " + JSON.stringify(inventoryDrop, null, 4));
 
         if (inventoryDrop === null) {
-            throw new Error("inventory drop was null when trying to claim it!")
+            throw new Error("inventory drop was null when trying to claim it!");
         }
 
         // Claim the drop
         await twitchClient.claimDropReward(inventoryDrop.self.dropInstanceID);
-        this.emit('drop-claimed', inventoryDrop);
+        this.emit("drop-claimed", inventoryDrop);
     }
 
     get currentDrop(): TimeBasedDrop | null {
