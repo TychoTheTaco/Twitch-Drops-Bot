@@ -28,7 +28,7 @@ import {TransformableInfo} from "logform";
 import stripAnsi from "strip-ansi";
 import {TelegramNotifier} from "./notifiers/telegram.js";
 import {CommunityPointsUserV1_PointsEarned} from "./web_socket_listener.js";
-import {Event_CommunityPointsEarned_ClaimReason, EventMapType, EventName, Notifier} from "./notifiers/notifier.js";
+import {Event_CommunityPointsEarned_ClaimReason, EventMapType, EventName, EventOptions_DropProgress, Notifier} from "./notifiers/notifier.js";
 import axios from "axios";
 
 // Load version number from package.json
@@ -351,6 +351,7 @@ type ConfigEventMapType = {
     "drop_claimed"?: { games: "all" | "config" },
     "community_points_earned"?: { reasons: Event_CommunityPointsEarned_ClaimReason[] },
     "drop_ready_to_claim"?: {},
+    "drop_progress"?: EventOptions_DropProgress
 }
 
 interface DiscordNotifier {
@@ -749,6 +750,9 @@ async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Clien
         if (events.drop_ready_to_claim) {
             eventMap.drop_ready_to_claim = events.drop_ready_to_claim;
         }
+        if (events.drop_progress) {
+            eventMap.drop_progress = events.drop_progress;
+        }
         return eventMap;
     };
 
@@ -831,6 +835,25 @@ async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Clien
                 onError("drop_ready_to_claim", notifier, error);
             });
         }
+    });
+
+    bot.on("drop_progress_updated", (drop: TimeBasedDrop | null) => {
+        if (!drop) {
+            return;
+        }
+
+        const campaign = bot.getDatabase().getDropCampaignByDropId(drop.id);
+        if (!campaign) {
+            logger.error("Campaign is null when ready to claim!");
+            return;
+        }
+
+        for (const notifier of notifiers) {
+            notifier.onDropProgress(drop, campaign).catch(error => {
+                onError("drop_progress", notifier, error);
+            });
+        }
+
     });
 }
 

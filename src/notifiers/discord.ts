@@ -148,4 +148,37 @@ export class DiscordWebhookSender extends RateLimitedNotifier<object> {
         });
     }
 
+    async notifyOnDropProgress(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+        const progressPercentage = ((drop.self.currentMinutesWatched / drop.requiredMinutesWatched) * 100).toFixed();
+        await this.post({
+            embeds: [
+                {
+                    title: "Drop Progress",
+                    fields: [
+                        {
+                            name: "Game",
+                            value: campaign.game.displayName
+                        },
+                        {
+                            name: "Campaign",
+                            value: campaign.name
+                        },
+                        {
+                            name: "Drop",
+                            value: getDropBenefitNames(drop)
+                        },
+                        {
+                            name: "Progress",
+                            value: `${drop.self.currentMinutesWatched} / ${drop.requiredMinutesWatched} minutes (${progressPercentage}%)`
+                        }
+                    ],
+                    thumbnail: {
+                        url: drop.benefitEdges[0].benefit.imageAssetURL
+                    }
+                }
+            ]
+        });
+    }
+
+
 }

@@ -2,8 +2,9 @@ import {DropCampaign, TimeBasedDrop} from "../twitch.js";
 import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 import axios, {AxiosResponse} from "axios";
 import logger from "../logger.js";
+import {parseIntervalString} from "../utils.js";
 
-export type EventName = "new_drops_campaign" | "drop_claimed" | "community_points_earned" | "drop_ready_to_claim";
+export type EventName = "new_drops_campaign" | "drop_claimed" | "community_points_earned" | "drop_ready_to_claim" | "drop_progress";
 
 interface EventOptions_NewDropsCampaign {
     gameIds: string[]
@@ -19,11 +20,16 @@ interface Event_CommunityPointsEarned {
     reasons: Event_CommunityPointsEarned_ClaimReason[]
 }
 
+export interface EventOptions_DropProgress {
+    interval: string
+}
+
 export type EventMapType = {
     "new_drops_campaign"?: EventOptions_NewDropsCampaign,
     "drop_claimed"?: EventOptions_DropClaimed,
     "community_points_earned"?: Event_CommunityPointsEarned,
     "drop_ready_to_claim"?: {},
+    "drop_progress"?: EventOptions_DropProgress
 };
 
 export abstract class Notifier {
@@ -106,6 +112,38 @@ export abstract class Notifier {
     }
 
     protected abstract notifyOnDropReadyToClaim(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void>;
+
+    readonly #dropProgressIntervals = new Map<string, number[]>();
+
+    async onDropProgress(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+        const options = this.#events.drop_progress;
+        if (!options) {
+            return;
+        }
+
+        if (!this.#dropProgressIntervals.has(drop.id)) {
+            this.#dropProgressIntervals.set(drop.id, parseIntervalString(options.interval, drop.requiredMinutesWatched).filter(item => {
+                return item > drop.self.currentMinutesWatched;
+            }));
+            return;
+        }
+
+        const intervals = this.#dropProgressIntervals.get(drop.id);
+        if (!intervals) {
+            return;
+        }
+
+        for (let i = intervals.length - 1; i >=0; --i) {
+            if (drop.self.currentMinutesWatched >= intervals[i]) {
+                intervals.splice(0, i + 1);
+                this.#dropProgressIntervals.set(drop.id, intervals);
+                await this.notifyOnDropProgress(drop, campaign);
+                break;
+            }
+        }
+    }
+
+    protected abstract notifyOnDropProgress(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void>;
 
 }
 

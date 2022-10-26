@@ -146,4 +146,27 @@ export class TelegramNotifier extends RateLimitedNotifier<string> {
         ]));
     }
 
+    async notifyOnDropProgress(drop: TimeBasedDrop, campaign: DropCampaign): Promise<void> {
+        const progressPercentage = ((drop.self.currentMinutesWatched / drop.requiredMinutesWatched) * 100).toFixed();
+        const fields = [
+            {
+                name: "Game",
+                value: escapeFormatting(campaign.game.displayName)
+            },
+            {
+                name: "Campaign",
+                value: escapeFormatting(campaign.name)
+            },
+            {
+                name: "Drop",
+                value: escapeFormatting(getDropBenefitNames(drop))
+            },
+            {
+                name: "Progress",
+                value: escapeFormatting(`${drop.self.currentMinutesWatched} / ${drop.requiredMinutesWatched} minutes (${progressPercentage}%)`)
+            }
+        ];
+        const message = this.#createMessage("Drop Progress", fields);
+        await this.post(message);
+    }
 }
