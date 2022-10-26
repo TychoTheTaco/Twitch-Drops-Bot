@@ -34,6 +34,68 @@ export async function getLatestDevelopmentVersion(): Promise<string> {
     return data["commit"]["sha"];
 }
 
+export function parseIntervalString(text: string, requiredMinutesWatched: number): number[] {
+    const intervals: number[] = [];
+    const split = text.split("every");
+    if (split.length === 1) {
+
+        const itemStrings = text.split(" ");
+        for (const item of itemStrings) {
+
+            // Minutes
+            let match = item.match(/(\d+)m/);
+            if (match) {
+                const minutes = parseInt(match[1]);
+                intervals.push(minutes);
+                continue;
+            }
+
+            // Percentage
+            match = item.match(/(\d+)%/);
+            if (match) {
+                const percentage = parseInt(match[1]);
+                const minutes = Math.ceil(requiredMinutesWatched * (percentage / 100));
+                intervals.push(minutes);
+                continue;
+            }
+
+            throw new Error(`Invalid interval string: "${text}"`);
+        }
+
+        return intervals.filter(item => {
+            return item <= requiredMinutesWatched;
+        }).sort((a: number, b: number) => {
+            return a - b;
+        });
+
+    } else {
+
+        // Minutes
+        let match = split[1].match(/(\d+)m/);
+        if (match) {
+            const minutes = parseInt(match[1]);
+            for (let i = minutes; i <= requiredMinutesWatched; i += minutes) {
+                intervals.push(i);
+            }
+            return intervals;
+        }
+
+        // Percentage
+        match = split[1].match(/(\d+)%/);
+        if (match) {
+            const percentage = parseInt(match[1]);
+            const minutes = requiredMinutesWatched * (percentage / 100);
+            for (let i = minutes; i <= requiredMinutesWatched; i += minutes) {
+                intervals.push(Math.ceil(i));
+            }
+            return intervals;
+        }
+
+    }
+
+    throw new Error(`Invalid interval string: "${text}"`);
+}
+
 export function compareVersionString(a: string, b: string): -1 | 0 | 1 {
     const numbersA = a.split(/\D+/g).filter(value => value.length > 0).map(value => parseInt(value));
     const numbersB = b.split(/\D+/g).filter(value => value.length > 0).map(value => parseInt(value));
@@ -189,7 +251,7 @@ export function waitForResponseWithOperationName(page: Page, operationName: stri
             if (postData) {
                 const data = JSON.parse(postData);
                 for (let i = 0; i < data.length; ++i) {
-                    if ( data[i]["operationName"] === operationName) {
+                    if (data[i]["operationName"] === operationName) {
                         result.operationIndex = i;
                         return true;
                     }
