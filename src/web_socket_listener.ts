@@ -164,6 +164,8 @@ export class WebSocketListener extends EventEmitter {
         "stream-change-v1": this.#ignoreTopicHandler,
         "user-subscribe-events-v1": this.#ignoreTopicHandler,
         "onsite-notifications-v1": this.#ignoreTopicHandler,
+        "update-summary": this.#ignoreTopicHandler,
+        "create-notification": this.#ignoreTopicHandler  // alternative to detect drop ready to claim
     };
 
     async attach(page: Page) {
