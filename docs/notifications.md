@@ -76,6 +76,6 @@ Sent when community points are earned.
 
 ### drop_ready_to_claim
 
-Sent when the bot detects that a Drop Reward in your inventory is ready to claim. This may be sent multiple times for the same Drop Reward.
+Sent when the bot detects that a Drop Reward is ready to claim.
 
 - `<no options>`
