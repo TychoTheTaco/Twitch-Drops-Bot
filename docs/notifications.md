@@ -21,7 +21,10 @@
                         "raid"
                     ]
                 },
-                "drop_ready_to_claim": {}
+                "drop_ready_to_claim": {},
+                "drop_progress": {
+                    "interval": "5m 30m 45m"
+                }
             }
         }
     ],
@@ -39,7 +42,10 @@
                 "community_points_earned": {
                     "reasons": []
                 },
-                "drop_ready_to_claim": {}
+                "drop_ready_to_claim": {},
+                "drop_progress": {
+                    "interval": "every 10%"
+                }
             }
         }
     ]
@@ -79,3 +85,9 @@ Sent when community points are earned.
 Sent when the bot detects that a Drop Reward is ready to claim.
 
 - `<no options>`
+
+### drop_progress
+
+Sent when progress is made towards a Drop.
+
+- `interval` - The interval to send progress notifications. This can be a single interval like `every 10m` or `every 25%`, or you can specify multiple intervals like `5m 10m 60m`. You can also mix minutes with percentages: `5m 50% 90% 30m`.
