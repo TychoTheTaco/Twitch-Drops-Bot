@@ -169,7 +169,7 @@ export abstract class RateLimitedNotifier<T> extends Notifier {
     protected async post(data: T) {
         const remainingSeconds = (this.#tryAgainTime.getTime() - new Date().getTime()) / 1000;
         if (remainingSeconds > 0) {
-            logger.warn(`Delaying notification due to rate limit! Trying again in ${remainingSeconds} seconds.`);
+            logger.warn(`[${this.constructor.name}] Delaying notification due to rate limit! Trying again in ${remainingSeconds} seconds.`);
             this.#pendingRequests.push(data);
             return;
         }
@@ -184,7 +184,7 @@ export abstract class RateLimitedNotifier<T> extends Notifier {
                         const retryAfterSeconds = this.getRetryAfterSeconds(response);
                         const retryAfterMilliseconds = retryAfterSeconds * 1000;
                         this.#tryAgainTime = new Date(new Date().getTime() + retryAfterMilliseconds);
-                        logger.warn(`Hit notification rate limit! Delaying notification for ${retryAfterSeconds} seconds.`);
+                        logger.warn(`[${this.constructor.name}] Hit notification rate limit! Delaying notification for ${retryAfterSeconds} seconds.`);
                         this.#pendingRequests.push(data);
                         setTimeout(this.#sendPendingRequests.bind(this), retryAfterMilliseconds);
                         return;
@@ -196,14 +196,14 @@ export abstract class RateLimitedNotifier<T> extends Notifier {
     }
 
     async #sendPendingRequests() {
-        logger.info(`Sending ${this.#pendingRequests.length} pending notifications...`);
+        logger.info(`[${this.constructor.name}] Sending ${this.#pendingRequests.length} pending notifications...`);
         while (this.#pendingRequests.length > 0) {
             const data = this.#pendingRequests.shift();
             if (data) {
                 try {
                     await this.post(data);
                 } catch (error) {
-                    logger.error("Error sending notification: " + error);
+                    logger.error(`[${this.constructor.name}] Error sending notification: ` + error);
                 }
             }
         }
