@@ -60,7 +60,7 @@ export default class DropProgressComponent extends Component {
         this.#autoClaimDrops = options?.autoClaimDrops ?? this.#autoClaimDrops;
 
         this.#currentDrop = this.#targetDrop ?? this.#currentDrop;
-        logger.debug("target: " + JSON.stringify(this.#targetDrop, null, 4));
+        logger.debug("target: " + JSON.stringify(this.#targetDrop));
 
         if (this.#targetDrop !== null) {
             this.#currentMinutesWatched[this.#targetDrop.id] = 0;
@@ -108,7 +108,9 @@ export default class DropProgressComponent extends Component {
                 if (this.#autoClaimDrops) {
                     await this.#claimDrop(data.drop_id, twitchClient);
                 }
-                this.#shouldStop = true;
+                if (dropId === this.currentDrop?.id) {
+                    this.#shouldStop = true;
+                }
             }
 
             // Check if we are making progress towards the expected drop. This is not always the case since a game may
@@ -141,7 +143,7 @@ export default class DropProgressComponent extends Component {
                     }
 
                     this.#currentDrop = inventoryDrop; //todo: no game displayname ?
-                    logger.debug("new drop: " + JSON.stringify(inventoryDrop, null, 4));
+                    logger.debug("new drop: " + JSON.stringify(inventoryDrop));
 
                     if (!(this.#currentDrop.id in this.#currentMinutesWatched)) {
                         this.#currentMinutesWatched[this.#currentDrop?.id] = this.#currentDrop?.self.currentMinutesWatched;

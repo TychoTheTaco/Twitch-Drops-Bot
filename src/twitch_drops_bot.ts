@@ -977,7 +977,7 @@ export class TwitchDropsBot extends EventEmitter {
         this.#currentDropCampaignDetails = details;
         this.#database.addOrUpdateDropCampaign(details);
 
-        logger.debug("working on campaign " + JSON.stringify(campaign, null, 4));
+        logger.debug("working on campaign " + JSON.stringify(campaign));
 
         // Reset failed stream counts
         for (const streamUrl of Object.getOwnPropertyNames(this.#failedStreamUrlCounts)) {
@@ -993,7 +993,7 @@ export class TwitchDropsBot extends EventEmitter {
                 logger.info("no active drops");
                 break;
             }
-            logger.debug("working on drop " + JSON.stringify(drop, null, 4));
+            logger.debug("working on drop " + JSON.stringify(drop));
 
             let currentMinutesWatched = 0;
 
@@ -1144,7 +1144,7 @@ export class TwitchDropsBot extends EventEmitter {
     }
 
     async #claimDropReward(drop: TimeBasedDrop) {
-        logger.debug("Claiming drop: " + JSON.stringify(drop, null, 4));
+        logger.debug("Claiming drop: " + JSON.stringify(drop));
         await this.#twitchClient.claimDropReward(drop.self.dropInstanceID);
         this.#onDropRewardClaimed(drop);
         //todo: check if campaign is completed
