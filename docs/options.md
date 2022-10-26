@@ -188,7 +188,7 @@ This is useful if you still want to claim community points.
 - `file`: Path of the log file (default: `log-XXXXXXXXXX.txt`). If you use this option, the file will be overwritten whenever you restart the app!
 - `level`: The level of logging to write to the log file. One of: `debug` (default), `info`, `warn`, `error`.
 
-`notifications` - See [Notifications](docs/notifications.md) for more details.
+`notifications` - See [Notifications](notifications.md) for more details.
 
 `--auto-claim-drops` | `auto_claim_drops` Automatically claim Drop Rewards.
 
