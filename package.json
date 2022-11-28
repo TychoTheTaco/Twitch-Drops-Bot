@@ -63,7 +63,7 @@
     "@types/react": "^17.0.41",
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.41.0",
-    "@typescript-eslint/parser": "^5.41.0",
+    "@typescript-eslint/parser": "^5.44.0",
     "depcheck": "^1.4.3",
     "eslint": "^8.26.0",
     "eslint-plugin-jest": "^27.1.3",
