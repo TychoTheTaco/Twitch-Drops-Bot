@@ -3,7 +3,7 @@ import fs from "node:fs";
 import prompt from "prompt";
 prompt.start();  // Initialize prompt (this should only be called once!)
 
-import puppeteer, {TimeoutError} from "puppeteer";
+import {TimeoutError, ElementHandle} from "puppeteer";
 
 import {TwitchPage} from "./page.js";
 import logger from "../logger.js";
@@ -113,7 +113,7 @@ export class LoginPage extends TwitchPage {
                                 continue;
                             }
                             logger.info("Resent verification email");
-                            await ((resendCodeButton) as puppeteer.ElementHandle<Element>).click();
+                            await ((resendCodeButton) as ElementHandle<Element>).click();
                         } else {
                             break;
                         }
@@ -125,7 +125,7 @@ export class LoginPage extends TwitchPage {
                         logger.error("first_input was null!");
                         break
                     }
-                    await ((first_input) as puppeteer.ElementHandle<Element>).click();
+                    await ((first_input) as ElementHandle<Element>).click();
                     await this.page.keyboard.type(code);
                     break;
                 } catch (error) {
@@ -152,7 +152,7 @@ export class LoginPage extends TwitchPage {
                         logger.error("first_input was null!");
                         break
                     }
-                    await ((first_input) as puppeteer.ElementHandle<Element>).click();
+                    await ((first_input) as ElementHandle<Element>).click();
                     await this.page.keyboard.type(code);
 
                     // Click submit
@@ -161,7 +161,7 @@ export class LoginPage extends TwitchPage {
                         logger.error("button was null!");
                         break
                     }
-                    await ((button) as puppeteer.ElementHandle<Element>).click();
+                    await ((button) as ElementHandle<Element>).click();
 
                     break;
                 } catch (error) {
