@@ -5,7 +5,7 @@ import _ from "lodash";
 import SortedArray from "sorted-array-type";
 // @ts-ignore
 import WaitNotify from "wait-notify";
-import puppeteer, {Browser, TimeoutError, ElementHandle, Page} from "puppeteer";
+import {Browser, TimeoutError, ElementHandle, Page} from "puppeteer";
 
 import Component from "./components/component.js";
 import DropProgressComponent from "./components/drop_progress.js";
@@ -1319,7 +1319,7 @@ export class TwitchDropsBot extends EventEmitter {
 
             // Wait for the page to load completely (hopefully). This checks the video player container for any DOM changes and waits until there haven't been any changes for a few seconds.
             logger.info("Waiting for page to load...");
-            const element = (await this.#page.waitForXPath("//div[@data-a-player-state]")) as puppeteer.ElementHandle<Element>;
+            const element = (await this.#page.waitForXPath("//div[@data-a-player-state]")) as ElementHandle<Element>;
             await this.#waitUntilElementRendered(this.#page, element);
 
             const streamPage = new StreamPage(this.#page);
