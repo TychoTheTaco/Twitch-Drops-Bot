@@ -4,7 +4,7 @@ import {DropCampaign, getDropBenefitNames, TimeBasedDrop} from "../twitch.js";
 import {EventMapType, formatTime, formatTimestamp, RateLimitedNotifier} from "./notifier.js";
 import {CommunityPointsUserV1_PointsEarned} from "../web_socket_listener.js";
 
-export class DiscordWebhookSender extends RateLimitedNotifier<object> {
+export class DiscordNotifier extends RateLimitedNotifier<object> {
 
     readonly #webhookUrl: string;
 

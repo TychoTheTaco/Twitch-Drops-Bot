@@ -23,7 +23,7 @@ import {LoginPage} from "./pages/login.js";
 import {Application} from "./ui/ui.js";
 import {compareVersionString, getLatestDevelopmentVersion, getLatestReleaseVersion} from "./utils.js";
 import {format, transports} from "winston";
-import {DiscordWebhookSender} from "./notifiers/discord.js";
+import {DiscordNotifier} from "./notifiers/discord.js";
 import {TransformableInfo} from "logform";
 import stripAnsi from "strip-ansi";
 import {TelegramNotifier} from "./notifiers/telegram.js";
@@ -354,7 +354,7 @@ type ConfigEventMapType = {
     "drop_progress"?: EventOptions_DropProgress
 }
 
-interface DiscordNotifier {
+interface DiscordNotifierOptions {
     webhook_url: string,
     events: ConfigEventMapType
 }
@@ -400,7 +400,7 @@ export interface Config {
         level: "debug" | "info" | "warn" | "error"
     },
     notifications: {
-        discord: DiscordNotifier[],
+        discord: DiscordNotifierOptions[],
         telegram: TelegramNotifierOptions[]
     },
     auto_claim_drops: boolean,
@@ -758,7 +758,7 @@ async function setUpNotifiers(bot: TwitchDropsBot, config: Config, client: Clien
 
     const notifiers: Notifier[] = [];
     for (const notifier of config.notifications.discord) {
-        notifiers.push(new DiscordWebhookSender(convertEventMap(notifier.events), notifier.webhook_url));
+        notifiers.push(new DiscordNotifier(convertEventMap(notifier.events), notifier.webhook_url));
     }
     for (const notifier of config.notifications.telegram) {
         notifiers.push(new TelegramNotifier(convertEventMap(notifier.events), notifier.token, notifier.chat_id));

@@ -9,6 +9,8 @@ export interface UserDropEvents_DropProgress {
     required_progress_min: number
 }
 
+export type CommunityPointsUserV1_PointsEarned_ReasonCode = "WATCH" | "CLAIM" | "WATCH_STREAK" | "RAID";
+
 export interface CommunityPointsUserV1_PointsEarned {
     timestamp: string,
     channel_id: string,
@@ -17,7 +19,7 @@ export interface CommunityPointsUserV1_PointsEarned {
         channel_id: string,
         total_points: number,
         baseline_points: number,
-        reason_code: "WATCH" | "CLAIM" | "WATCH_STREAK" | "RAID",
+        reason_code: CommunityPointsUserV1_PointsEarned_ReasonCode,
         multipliers: any[]
     },
     balance: {

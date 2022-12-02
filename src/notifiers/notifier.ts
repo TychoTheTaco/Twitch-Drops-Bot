@@ -36,7 +36,7 @@ export abstract class Notifier {
 
     readonly #events: EventMapType;
 
-    protected constructor(events: EventMapType) {
+    constructor(events: EventMapType) {
         this.#events = events;
     }
 
