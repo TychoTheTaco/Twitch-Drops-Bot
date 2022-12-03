@@ -197,8 +197,9 @@ export abstract class RateLimitedNotifier<T> extends Notifier {
 
     async #sendPendingRequests() {
         logger.info(`[${this.constructor.name}] Sending ${this.#pendingRequests.length} pending notifications...`);
-        while (this.#pendingRequests.length > 0) {
-            const data = this.#pendingRequests.shift();
+        const pendingRequests = this.#pendingRequests;
+        this.#pendingRequests = [];
+        for (const data of pendingRequests) {
             if (data) {
                 try {
                     await this.post(data);
