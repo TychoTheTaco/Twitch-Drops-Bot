@@ -57,7 +57,7 @@
     "@types/cli-progress": "^3.9.2",
     "@types/jest": "^29.2.3",
     "@types/lodash": "^4.14.190",
-    "@types/object-hash": "^3.0.0",
+    "@types/object-hash": "^3.0.1",
     "@types/pidusage": "^2.0.2",
     "@types/prompt": "^1.1.4",
     "@types/react": "^17.0.41",
