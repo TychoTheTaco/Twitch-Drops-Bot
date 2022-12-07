@@ -306,7 +306,7 @@ describe("RateLimitedNotifier", () => {
             });
             if (sentRequests.length >= MAX_REQUESTS_PER_INTERVAL) {
                 throw new AxiosError("mocked rate limit error", undefined, undefined, undefined, {
-                    data: (REQUEST_INTERVAL_SECONDS - (new Date().getTime() - sentRequests[0].getTime()) / 1000).toString(),
+                    data: (REQUEST_INTERVAL_SECONDS - (new Date().getTime() - sentRequests[0].getTime()) / 1000 + 1).toString(),
                     status: 429,
                     statusText: "RATE LIMIT",
                     headers: {},
