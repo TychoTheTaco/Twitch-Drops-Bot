@@ -274,12 +274,12 @@ class TestRateLimitedNotifier extends RateLimitedNotifier<string> {
     }
 
     protected async sendNotification(data: string): Promise<AxiosResponse> {
+        // @ts-ignore
         return {
             data: "data",
             status: 200,
             statusText: "OK",
             headers: {},
-            config: {}
         };
     }
 
@@ -310,6 +310,7 @@ describe("RateLimitedNotifier", () => {
                     status: 429,
                     statusText: "RATE LIMIT",
                     headers: {},
+                    // @ts-ignore
                     config: {}
                 });
             }
