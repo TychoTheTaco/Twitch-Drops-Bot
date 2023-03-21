@@ -500,7 +500,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "9d952e4aacd4f8bb9f159bd4d5886d72c398007249a8b09e604a651fc2f8ac17"
+                    "sha256Hash": "a4747cac9d8e8bf6cf80969f6da6363ca1bdbd80fe136797e71504eb404313fd"
                 }
             }
         });
@@ -533,7 +533,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "96867a58f1483929abd907a66a053ca526125dd30b2f9a8fcf3eea566915147f"
+                    "sha256Hash": "226807519d6ef966dc5a74e8d5dbad3d4d1a46b135511f1dd69e4f0b417aaf9c"
                 }
             }
         });
