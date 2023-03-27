@@ -5,7 +5,7 @@ provided, a default config file will be generated.
 
 A sample config file looks like this:
 
-```
+```json
 {
     "username": "my_twitch_username",
     "password": "my_twitch_password",
@@ -194,6 +194,6 @@ This is useful if you still want to claim community points.
 
 - Default: `true`
 
-`--auto-claim-community-points` | `auto_claim_community points` Automatically claim Community Points.
+`--auto-claim-community-points` | `auto_claim_community_points` Automatically claim Community Points.
 
 - Default: `true`
