@@ -115,17 +115,16 @@ export class WebSocketListener extends EventEmitter {
                     return true;
 
                 case "stream-down":
-                    this.emit(messageType, message);
-                    return true;
-
                 case "stream-up":
                     this.emit(messageType, message);
                     return true;
 
                 case "commercial":
                     return true;
+
+                default:
+                    return false;
             }
-            return false;
         },
         "community-points-user-v1": message => {
             const messageType = message["type"];
@@ -142,8 +141,10 @@ export class WebSocketListener extends EventEmitter {
                 case "claim-claimed":
                 case "active-multipliers-updated":
                     return true;
+                
+                default: 
+                    return false;
             }
-            return false;
         },
         "presence": this.#ignoreTopicHandler,
         "leaderboard-events-v1": this.#ignoreTopicHandler,
