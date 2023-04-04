@@ -23,7 +23,9 @@
     "docker:run-linux": "docker run --rm -i -t -v ${PWD}:/app/data --sig-proxy=false",
     "drl": "npm run docker:run-linux",
     "docker:run-windows": "docker run --rm -i -t -v %cd%:/app/data --sig-proxy=false",
-    "drw": "npm run docker:run-windows"
+    "drw": "npm run docker:run-windows",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
+    "lint:fix": "eslint --fix --ext .js,.jsx,.ts,.tsx ."
   },
   "keywords": [],
   "author": "",
