@@ -149,7 +149,7 @@ export class DropCampaignsTable extends React.Component<Props, State> {
     }
 
     componentWillUnmount() {
-        clearTimeout(this.state.uiUpdateTimeoutId);
+        clearTimeout(this.state.uiUpdateTimeoutId as unknown as number);
     }
 
     /*#getProgressString(id: string) {
