@@ -337,7 +337,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "e8b98b52bbd7ccd37d0b671ad0d47be5238caa5bea637d2a65776175b4a23a64"
+                    "sha256Hash": "8d5d9b5e3f088f9d1ff39eb2caab11f7a4cf7a3353da9ce82b5778226ff37268"
                 }
             }
         });
@@ -355,7 +355,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "14b5e8a50777165cfc3971e1d93b4758613fe1c817d5542c398dce70b7a45c05"
+                    "sha256Hash": "f6396f5ffdde867a8f6f6da18286e4baf02e5b98d14689a69b5af320a4c7b7b8"
                 }
             },
             "variables": {
@@ -377,7 +377,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "9cdfc5ebf8ee497e49c5b922829d67e5bce039f3c713f0706d234944195d56ad"
+                    "sha256Hash": "37fea486d6179047c41d0f549088a4c3a7dd60c05c70956a1490262f532dccd9"
                 }
             }
         });
@@ -416,7 +416,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "d5c5df7ab9ae65c3ea0f225738c08a36a4a76e4c6c31db7f8c4b8dc064227f9e"
+                    "sha256Hash": "df4bb6cc45055237bfaf3ead608bbafb79815c7100b6ee126719fac3762ddf8b"
                 }
             }
         });
@@ -447,7 +447,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "2f884fa187b8fadb2a49db0adc033e636f7b6aaee6e76de1e2bba9a7baf0daf6"
+                    "sha256Hash": "a455deea71bdc9015b78eb49f4acfbce8baa7ccbedd28e549bb025bd0f751930"
                 }
             }
         }, {
@@ -500,7 +500,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "9d952e4aacd4f8bb9f159bd4d5886d72c398007249a8b09e604a651fc2f8ac17"
+                    "sha256Hash": "a4747cac9d8e8bf6cf80969f6da6363ca1bdbd80fe136797e71504eb404313fd"
                 }
             }
         });
@@ -533,7 +533,7 @@ export class Client {
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": "96867a58f1483929abd907a66a053ca526125dd30b2f9a8fcf3eea566915147f"
+                    "sha256Hash": "226807519d6ef966dc5a74e8d5dbad3d4d1a46b135511f1dd69e4f0b417aaf9c"
                 }
             }
         });
