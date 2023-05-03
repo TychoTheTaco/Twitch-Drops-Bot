@@ -5,7 +5,6 @@ import url from "node:url";
 
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-
 puppeteer.use(StealthPlugin());
 
 import {render} from "ink";
@@ -490,7 +489,8 @@ async function main(): Promise<void> {
         "--disable-backgrounding-occluded-windows",
         "--disable-renderer-backgrounding",
         "--window-size=1920,1080",
-        "--disable-features=HardwareMediaKeyHandling"
+        "--disable-features=HardwareMediaKeyHandling",
+        "--disable-blink-features=AutomationControlled"
     ];
 
     function getArgNames(args: string[]) {
@@ -556,7 +556,7 @@ async function main(): Promise<void> {
 
     // Start browser
     const browser = await puppeteer.launch({
-        headless: config["headless"],
+        headless: config["headless"] ? "new": false,
         executablePath: config["browser"],
         args: config["browser_args"]
     });

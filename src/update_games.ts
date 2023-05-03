@@ -15,7 +15,6 @@ import puppeteer from "puppeteer-extra";
 
 // Add stealth plugin
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-
 puppeteer.use(StealthPlugin());
 
 function onBrowserOrPageClosed() {
@@ -97,7 +96,7 @@ if (config["username"]) {
 
     // Start browser and open a new tab.
     const browser = await puppeteer.launch({
-        headless: config["headless"],
+        headless: config["headless"] ? "new" : false,
         executablePath: config["browser"],
         args: config["browser_args"]
     });
