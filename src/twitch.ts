@@ -349,7 +349,7 @@ export class Client {
             }
         });
         try {
-            return data["data"]["currentUser"]["dropCampaigns"];
+            return data["data"]["currentUser"]["dropCampaigns"] ||  [] as DropCampaign[];
         } catch (error) {
             logger.debug("Error in function getDropCampaigns! Response: " + JSON.stringify(data, null, 4));
             throw error;
@@ -529,7 +529,7 @@ export class Client {
                 }
             }
         });
-        return data["data"]["channel"]["viewerDropCampaigns"];
+        return data["data"]["channel"]["viewerDropCampaigns"] || [] as TimeBasedDrop[];
     }
 
     async getUserLoginFromId(id: string) {
