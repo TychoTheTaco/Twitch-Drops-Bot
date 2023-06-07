@@ -17,9 +17,10 @@ module.exports = {
         "unused-imports",
         "eslint-plugin-jest"
     ],
+    "ignorePatterns": ["node_modules", "dist"],
     "rules": {
         "unused-imports/no-unused-imports": "error",
         "semi": ["error", "always"],
         "quotes": ["error", "double", {"avoidEscape": true}]
     }
-}
+};

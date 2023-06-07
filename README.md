@@ -33,7 +33,7 @@ Linux: `docker run --rm -v "${PWD}":/app/data -i -t --sig-proxy=false ghcr.io/ty
 
 To detach from the docker session without terminating it, use `CTRL-P` `CTRL-Q`.
 
-##### Troubleshooting
+##### Troubleshooting Docker
 
 `docker: Error response from daemon: create %cd%: "%cd%" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.`
 
@@ -64,8 +64,8 @@ Make sure to install the latest version of Node.js, look at [this link](https://
 To install Node.js 16 use the following commands:
 
 ```sh
-$ sudo curl -sL https://deb.nodesource.com/setup_16.x | bash -
-$ sudo sudo apt-get update && apt-get install -y nodejs
+sudo curl -sL https://deb.nodesource.com/setup_16.x | bash -
+sudo sudo apt-get update && apt-get install -y nodejs
 ```
 
 ## Options
@@ -87,12 +87,12 @@ Try increasing `load_timeout_secs` to `60` or `90`.
 
 ## FAQ
 
-#### The game I want to watch is not in `games.csv`. Can I still use this bot for that game?
+### The game I want to watch is not in `games.csv`. Can I still use this bot for that game?
 
 Yes, you can use this bot for any game! The `games.csv` file is provided for convenience and might be missing some games, but you can find a game's ID yourself by following these steps.
-Open the game's main page on Twitch, for example, Rocket League: https://www.twitch.tv/directory/game/Rocket%20League. Right-click the game's image. Click `Inspect Element`. You should see something like this:
+Open the game's main page on Twitch, for example, Rocket League: <https://www.twitch.tv/directory/game/Rocket%20League>. Right-click the game's image. Click `Inspect Element`. You should see something like this:
 
-```
+```html
 <img alt="Rocket League" class="tw-image" src="https://static-cdn.jtvnw.net/ttv-boxart/30921-144x192.jpg">
 ```
 

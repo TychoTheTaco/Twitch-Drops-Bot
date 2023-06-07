@@ -15,7 +15,7 @@ import {TwitchDropsWatchdog} from "./watchdog.js";
 import {StreamPage} from "./pages/stream.js";
 import utils, {TimedSet, waitForResponseDataWithOperationName} from "./utils.js";
 import logger from "./logger.js";
-import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Tag, Inventory, isDropCompleted, getStreamUrl} from "./twitch.js";
+import {Client, TimeBasedDrop, DropCampaign, StreamTag, getInventoryDrop, Inventory, isDropCompleted, getStreamUrl} from "./twitch.js";
 import {NoStreamsError, NoProgressError, HighPriorityError, StreamLoadFailedError, StreamDownError} from "./errors.js";
 import {broadcasterComparator, endTimeComparator, gameIndexComparator} from "./comparators.js";
 
@@ -35,14 +35,15 @@ function isDropReadyToClaim(drop: TimeBasedDrop): boolean {
     return drop.self.currentMinutesWatched >= drop.requiredMinutesWatched;
 }
 
-function hasDropsEnabledTag(tags: Tag[]): boolean {
-    for (const tag of tags) {
-        if (tag.id === StreamTag.DROPS_ENABLED) {
-            return true;
-        }
-    }
-    return false;
-}
+// function hasDropsEnabledTag(freeformTags: FreeformTag[]): boolean {
+//     logger.debug("hasDropsEnabledTag tags: " + JSON.stringify(freeformTags));
+//     for (const tag of freeformTags) {
+//         if (tag.name.toLowerCase() === StreamTag.DROPS_ENABLED || tag.name.toLowerCase() === StreamTag.DROPS) {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 
 function createStreamUrl(broadcasterId: string): string {
     return "https://www.twitch.tv/" + broadcasterId;
@@ -1062,11 +1063,12 @@ export class TwitchDropsBot extends EventEmitter {
                         logger.debug("stream offline: " + broadcasterId);
                         continue;
                     }
+                    logger.debug("user.stream: " + JSON.stringify(stream));
 
                     // Check if they have drops enabled
-                    if (!hasDropsEnabledTag(stream.tags)) {
-                        continue;
-                    }
+                    // if (!hasDropsEnabledTag(stream.freeformTags)) {
+                    //     continue;
+                    // }
 
                     // Check if they are streaming the correct game
                     const streamMetadata = await this.#twitchClient.getStreamMetadata(broadcasterId);
@@ -1445,7 +1447,7 @@ export class TwitchDropsBot extends EventEmitter {
         if (!campaign) {
             throw new Error("missing campaign");
         }
-        let streams = await this.#twitchClient.getActiveStreams(campaign.game.displayName, {tags: [StreamTag.DROPS_ENABLED]});
+        let streams = await this.#twitchClient.getActiveStreams(campaign.game.displayName, {tags: [StreamTag.DROPS_ENABLED, StreamTag.DROPS]});
 
         // Filter out streams that are not in the allowed channels list, if any
         if (details.allow.isEnabled) {

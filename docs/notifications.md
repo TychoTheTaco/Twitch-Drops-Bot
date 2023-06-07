@@ -2,7 +2,7 @@
 
 ## Example
 
-```
+```json
 "notifications": {
     "discord": [
         {
@@ -67,18 +67,18 @@ Sent when a new Drops Campaign is detected.
 Sent when a Drop Reward is claimed.
 
 - `games` - One of the below options.
-    - `all` - Notify for all games.
-    - `config` - Notify only for games specified in the config.
- 
+  - `all` - Notify for all games.
+  - `config` - Notify only for games specified in the config.
+
 ### community_points_earned
 
 Sent when community points are earned.
 
 - `reasons` - A list of reasons to notify for. Options shown below. Leave blank to be notified for all reasons.
-    - `watch` - Points earned every few minutes for watching.
-    - `claim` - Points earned when clicking "claim points" button.
-    - `watch_streak` - Points earned from a watch streak.
-    - `raid` - Points earned for joining a raid.
+  - `watch` - Points earned every few minutes for watching.
+  - `claim` - Points earned when clicking "claim points" button.
+  - `watch_streak` - Points earned from a watch streak.
+  - `raid` - Points earned for joining a raid.
 
 ### drop_ready_to_claim
 

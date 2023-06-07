@@ -11,7 +11,8 @@ import logger from "./logger.js";
 import assert from "assert";
 
 export enum StreamTag {
-    DROPS_ENABLED = "c2542d6d-cd10-4532-919b-3d19f30a768b"
+    DROPS = "drops",
+    DROPS_ENABLED = "dropsenabled"
 }
 
 /*
@@ -94,6 +95,11 @@ export interface Tag {
     tagName: string
 }
 
+export interface FreeformTag {
+    id: string,
+    name: string
+}
+
 export interface Broadcaster {
     id: string,
     login: string,
@@ -101,6 +107,7 @@ export interface Broadcaster {
 }
 
 export interface Stream {
+    freeformTags: FreeformTag[];
     createdAt: string,
     game: Game,
     id: string,
@@ -342,7 +349,7 @@ export class Client {
             }
         });
         try {
-            return data["data"]["currentUser"]["dropCampaigns"];
+            return data["data"]["currentUser"]["dropCampaigns"] ||  [] as DropCampaign[];
         } catch (error) {
             logger.debug("Error in function getDropCampaigns! Response: " + JSON.stringify(data, null, 4));
             throw error;
@@ -408,7 +415,8 @@ export class Client {
                         "platform": "web"
                     },
                     "requestID": "JIRA-VXP-2397", // TODO: what is this for???
-                    "tags": options?.tags ?? []
+                    "freeformTags": options?.tags ?? [],
+                    "tags": []
                 },
                 "sortTypeIsRecency": false,
                 "limit": 30
@@ -420,6 +428,7 @@ export class Client {
                 }
             }
         });
+        
 
         const streams = data["data"]["game"]["streams"];
         if (streams === null) {
@@ -520,7 +529,7 @@ export class Client {
                 }
             }
         });
-        return data["data"]["channel"]["viewerDropCampaigns"];
+        return data["data"]["channel"]["viewerDropCampaigns"] || [] as TimeBasedDrop[];
     }
 
     async getUserLoginFromId(id: string) {
