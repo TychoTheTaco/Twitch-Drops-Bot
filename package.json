@@ -41,7 +41,7 @@
     "pidtree": "^0.6.0",
     "pidusage": "^3.0.2",
     "prompt": "^1.2.2",
-    "puppeteer": "^19.8.5",
+    "puppeteer": "^20.6.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react": "^17.0.2",
